@@ -1,0 +1,7 @@
+{
+  "/api/schedule/route": "app/api/schedule/route.js",
+  "/schedule/page": "app/schedule/page.js",
+  "/insights/page": "app/insights/page.js",
+  "/page": "app/page.js",
+  "/track-record/page": "app/track-record/page.js"
+}
