@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import LeagueBadge from "@/components/LeagueBadge";
 import FrozenStamp from "@/components/FrozenStamp";
 import ProbBar from "@/components/ProbBar";
+import BestOddsBar from "@/components/BestOddsBar";
 import type { League } from "@/lib/types";
 
 type PredState = "LOCKED" | "PENDING" | "SETTLED";
@@ -52,12 +53,21 @@ function kickoffLabel(iso: string): string {
 
 export default function SchedulePage() {
   const [rows, setRows] = useState<ScheduleRow[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [affiliates, setAffiliates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [league, setLeague] = useState<League | "ALL">("ALL");
   const [filter, setFilter] = useState<"ALL" | "LOCKED" | "PENDING" | "SETTLED">("ALL");
 
   useEffect(() => {
-    fetch("/api/schedule").then((r) => r.json()).then((d) => { setRows(d); setLoading(false); });
+    Promise.all([
+      fetch("/api/schedule").then((r) => r.json()),
+      fetch("/api/affiliates").then((r) => r.json()).catch(() => []),
+    ]).then(([schedule, affs]) => {
+      setRows(schedule);
+      setAffiliates(affs);
+      setLoading(false);
+    });
   }, []);
 
   const filtered = useMemo(() => {
@@ -144,7 +154,8 @@ export default function SchedulePage() {
               const state = predState(row);
               const p = row.prediction;
               return (
-                <div key={row.match_id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center">
+                <div key={row.match_id} className="flex flex-col">
+                <div className="flex gap-2 px-4 py-3 sm:flex-row sm:items-center">
                   {/* left: league + teams + time */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -194,6 +205,12 @@ export default function SchedulePage() {
                       <span className="font-data text-[10px] text-muted">Locks 48h before KO</span>
                     )}
                   </div>
+                </div>
+                {affiliates.length > 0 && state !== "SETTLED" && (
+                  <div className="border-t px-4 pb-2" style={{ borderColor: "rgba(247,245,240,0.06)" }}>
+                    <BestOddsBar matchId={row.match_id} affiliates={affiliates as any} />
+                  </div>
+                )}
                 </div>
               );
             })}

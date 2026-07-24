@@ -2,7 +2,10 @@ import Link from "next/link";
 import LeagueBadge from "@/components/LeagueBadge";
 import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
+import BestOddsBar from "@/components/BestOddsBar";
+import PromoStrip from "@/components/PromoStrip";
 import { getFixtures } from "@/lib/data";
+import { getAffiliateList, isLive } from "@/lib/affiliates";
 import type { League } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +23,8 @@ const WC_TOTAL = { correct: 26, total: 31 };
 const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
 
 export default async function HomePage() {
-  const allFixtures = await getFixtures();
+  const [allFixtures, affiliateList] = await Promise.all([getFixtures(), getAffiliateList()]);
+  const liveAffiliates = affiliateList.filter(isLive);
   const upcoming = allFixtures.filter((f) => f.prediction !== null).slice(0, 6);
 
   return (
@@ -139,6 +143,9 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── PROMO STRIP ──────────────────────────────────────────────── */}
+      <PromoStrip affiliates={liveAffiliates} />
+
       {/* ── UPCOMING PREDICTIONS PREVIEW ─────────────────────────────── */}
       {upcoming.length > 0 && (
         <section>
@@ -172,6 +179,10 @@ export default async function HomePage() {
                       </div>
                     </div>
                   )}
+                  <BestOddsBar
+                    matchId={fixture.match_id}
+                    affiliates={liveAffiliates}
+                  />
                 </article>
               );
             })}
