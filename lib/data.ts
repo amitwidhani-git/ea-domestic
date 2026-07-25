@@ -48,13 +48,13 @@ export interface FixtureWithPrediction {
 }
 
 /**
- * Upcoming fixtures joined to their frozen predictions, soonest first.
- * "Upcoming" = SCHEDULED or LIVE, kickoff in the next 14 days.
+ * Upcoming fixtures joined to their frozen predictions (null until frozen), soonest first.
+ * "Upcoming" = SCHEDULED or LIVE, kickoff in the next 45 days.
  */
 export async function getFixtures(): Promise<FixtureWithPrediction[]> {
   const d = await db();
   const now = new Date().toISOString();
-  const horizon = new Date(Date.now() + 14 * 86400_000).toISOString();
+  const horizon = new Date(Date.now() + 45 * 86400_000).toISOString();
 
   const matches = await d
     .collection("matches")

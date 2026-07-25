@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-bg antialiased" style={{ background: "#080808" }}>
 
         {/* ── HEADER ───────────────────────────────────────────────── */}
-        <header style={{ background: "#111111", borderBottom: "1px solid rgba(247,245,240,0.07)" }}>
+        <header className="sticky top-0 z-50" style={{ background: "#111111", borderBottom: "1px solid rgba(247,245,240,0.07)" }}>
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
             <NavLogo />
             <NavTabs />

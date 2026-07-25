@@ -5,7 +5,7 @@ export default function ProbBar({ probs, pick }: { probs: { home: number; draw: 
       <div className="flex h-2 w-full overflow-hidden bg-panel2" role="img" aria-label={`H ${(probs.home*100).toFixed(0)}% D ${(probs.draw*100).toFixed(0)}% A ${(probs.away*100).toFixed(0)}%`}>
         {segs.map((s) => <div key={s.key} style={{ width: `${s.p*100}%` }} className={s.key === pick ? "bg-accent" : "bg-line"} />)}
       </div>
-      <div className="mt-1 flex justify-between font-data text-[11px] text-muted">
+      <div className="mt-1 flex justify-between font-data text-[11px] text-ink">
         {segs.map((s) => <span key={s.key} className={s.key === pick ? "text-accent" : undefined}>{s.label} {(s.p*100).toFixed(0)}%</span>)}
       </div>
     </div>

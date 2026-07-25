@@ -76,7 +76,7 @@ export default function BestOddsBar({ matchId, affiliates, bestPrice, bestBookma
               href={affiliate.termsHref}
               target="_blank"
               rel="nofollow noopener"
-              className="font-data text-[9px] text-muted underline leading-none"
+              className="font-data text-[9px] text-ink underline leading-none"
             >
               {affiliate.termsLabel ?? "T&Cs apply"}
             </a>
@@ -96,7 +96,7 @@ export default function BestOddsBar({ matchId, affiliates, bestPrice, bestBookma
             {PICK_LABEL[pick]} {bestPrice.toFixed(2)}
           </span>
         )}
-        <span className="font-data text-[9px] text-muted" aria-label="Advertisement">
+        <span className="font-data text-[9px] text-ink" aria-label="Advertisement">
           Ad·18+
         </span>
         <a
@@ -105,7 +105,7 @@ export default function BestOddsBar({ matchId, affiliates, bestPrice, bestBookma
           rel="sponsored noopener"
           className="border border-accent bg-accent/10 px-2.5 py-1 font-data text-[11px] font-semibold text-accent transition-colors hover:bg-accent hover:text-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent whitespace-nowrap"
         >
-          {bestPrice ? `Back at ${bestPrice.toFixed(2)}` : "Bet Now"} →
+          {bestPrice ? `Back at ${bestPrice.toFixed(2)}` : "Claim Offer"} →
         </a>
       </div>
     </div>

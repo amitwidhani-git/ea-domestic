@@ -10,14 +10,14 @@ export default function AffiliateCard({ affiliate }: { affiliate: Affiliate }) {
           <span className="flex h-10 w-10 items-center justify-center font-display text-lg" style={{ background: affiliate.brandColor ?? "#C8FF00", color: "#080808" }}>{affiliate.logoInitials}</span>}
         <div>
           <h3 className="font-display text-lg leading-none tracking-wide">{affiliate.name}</h3>
-          {affiliate.tagline && <p className="mt-1 font-data text-[10px] text-muted">{affiliate.tagline}</p>}
+          {affiliate.tagline && <p className="mt-1 font-data text-[10px] text-ink">{affiliate.tagline}</p>}
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between">
-        <span className="font-data text-[9px] uppercase tracking-widest text-muted">Ad·18+</span>
+        <span className="font-data text-[9px] uppercase tracking-widest text-ink">Ad·18+</span>
         <a href={`/go/${affiliate.id}`} target="_blank" rel="sponsored noopener" className="font-data text-xs font-semibold text-accent hover:underline">Visit →</a>
       </div>
-      {affiliate.termsHref && <a href={affiliate.termsHref} target="_blank" rel="nofollow noopener" className="mt-1 inline-block font-data text-[9px] text-muted underline">{affiliate.termsLabel ?? "T&Cs apply"}</a>}
+      {affiliate.termsHref && <a href={affiliate.termsHref} target="_blank" rel="nofollow noopener" className="mt-1 inline-block font-data text-[9px] text-ink underline">{affiliate.termsLabel ?? "T&Cs apply"}</a>}
     </article>
   );
 }

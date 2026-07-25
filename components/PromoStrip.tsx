@@ -14,10 +14,10 @@ export default function PromoStrip({ affiliates }: { affiliates: Affiliate[] }) 
   return (
     <section aria-label="Betting partners">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-data text-[10px] uppercase tracking-[0.2em] text-muted">
+        <h2 className="font-data text-[10px] uppercase tracking-[0.2em] text-ink">
           Betting Partners
         </h2>
-        <span className="font-data text-[9px] text-muted">Ad · 18+ · T&Cs apply</span>
+        <span className="font-data text-[9px] text-ink">Ad · 18+ · T&Cs apply</span>
       </div>
 
       {/* Horizontal scroll on mobile, wrap on desktop */}
@@ -65,14 +65,14 @@ export default function PromoStrip({ affiliates }: { affiliates: Affiliate[] }) 
                     {a.name}
                   </p>
                   {a.tagline && (
-                    <p className="font-data text-[9px] text-muted">{a.tagline}</p>
+                    <p className="font-data text-[9px] text-ink">{a.tagline}</p>
                   )}
                 </div>
               </div>
 
               {/* Bottom: CTA */}
               <div className="mt-3 flex items-center justify-between">
-                <span className="font-data text-[8px] uppercase tracking-widest text-muted">
+                <span className="font-data text-[8px] uppercase tracking-widest text-ink">
                   Ad·18+
                 </span>
                 <span className="font-data text-[10px] font-semibold text-accent group-hover:underline">
@@ -85,7 +85,7 @@ export default function PromoStrip({ affiliates }: { affiliates: Affiliate[] }) 
       </div>
 
       {/* Terms line */}
-      <p className="mt-2 font-data text-[9px] text-muted">
+      <p className="mt-2 font-data text-[9px] text-ink">
         We earn commission if you sign up via these links — this does not affect our predictions or analysis.
         {" "}
         <a href="https://www.begambleaware.org" target="_blank" rel="noopener noreferrer"

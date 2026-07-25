@@ -4,6 +4,8 @@ import LeagueBadge from "@/components/LeagueBadge";
 import FrozenStamp from "@/components/FrozenStamp";
 import ProbBar from "@/components/ProbBar";
 import BestOddsBar from "@/components/BestOddsBar";
+import BetanoPromo from "@/components/BetanoPromo";
+import BetMazePromo from "@/components/BetMazePromo";
 import type { League } from "@/lib/types";
 
 type PredState = "LOCKED" | "PENDING" | "SETTLED";
@@ -35,13 +37,13 @@ function predState(row: ScheduleRow): PredState {
   return "LOCKED";
 }
 
-function weekLabel(iso: string): string {
+function weekKey(iso: string): string {
   const d = new Date(iso);
-  const mon = new Date(d);
-  mon.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  const fmt = (dt: Date) => dt.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  return `Week of ${fmt(mon)} – ${fmt(sun)}`;
+  const fri = new Date(d);
+  // Football weekend runs Friday–Monday; anchor each group to that Friday
+  // (Fri=0 ... Thu=6) so midweek holiday fixtures still fall in the right round.
+  fri.setDate(d.getDate() - ((d.getDay() + 2) % 7));
+  return fri.toISOString().slice(0, 10);
 }
 
 function kickoffLabel(iso: string): string {
@@ -82,10 +84,15 @@ export default function SchedulePage() {
   const grouped = useMemo(() => {
     const map = new Map<string, ScheduleRow[]>();
     for (const r of filtered) {
-      const wk = weekLabel(r.kickoff_utc);
-      map.set(wk, [...(map.get(wk) ?? []), r]);
+      const key = weekKey(r.kickoff_utc);
+      map.set(key, [...(map.get(key) ?? []), r]);
     }
-    return [...map.entries()];
+    const fmt = (dt: Date) => dt.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    return [...map.entries()].map(([key, weekRows]) => {
+      const times = weekRows.map((r) => new Date(r.kickoff_utc).getTime());
+      const label = `Week of ${fmt(new Date(Math.min(...times)))} – ${fmt(new Date(Math.max(...times)))}`;
+      return [key, label, weekRows] as const;
+    });
   }, [filtered]);
 
   const counts = useMemo(() => ({
@@ -96,12 +103,13 @@ export default function SchedulePage() {
 
   return (
     <div className="space-y-8">
+      <BetanoPromo />
       <div>
         <h1 className="font-display text-4xl tracking-wide">2026/27 Season Schedule</h1>
-        <p className="mt-2 text-sm text-muted max-w-2xl">
-          All {rows.length} fixtures across four divisions. Predictions freeze 48h before kick-off —
-          watch them lock in as the season unfolds. Every frozen prediction is permanently timestamped
-          and hashed; nothing is ever revised.
+        <p className="mt-2 text-sm text-ink max-w-2xl">
+          All {rows.length} fixtures across four divisions, updated as the season unfolds. Every
+          prediction is frozen before kick-off and permanently time-stamped. Nothing is ever
+          revised.
         </p>
       </div>
 
@@ -110,8 +118,8 @@ export default function SchedulePage() {
         {(["LOCKED", "PENDING", "SETTLED"] as const).map((s) => (
           <div key={s} className={`border p-3 cursor-pointer transition-colors ${filter === s ? "border-accent bg-accent/10" : "border-line bg-panel hover:border-muted"}`}
             onClick={() => setFilter(filter === s ? "ALL" : s)}>
-            <p className="font-data text-[9px] uppercase tracking-widest text-muted">{s}</p>
-            <p className={`mt-1 font-display text-2xl ${s === "LOCKED" ? "text-accent" : s === "SETTLED" ? "text-ink" : "text-muted"}`}>
+            <p className="font-data text-[9px] uppercase tracking-widest text-ink">{s}</p>
+            <p className={`mt-1 font-display text-2xl ${s === "LOCKED" ? "text-accent" : s === "SETTLED" ? "text-ink" : "text-ink"}`}>
               {counts[s]}
             </p>
           </div>
@@ -122,11 +130,11 @@ export default function SchedulePage() {
       <div className="flex flex-wrap gap-2">
         {LEAGUES.map((lg) => (
           <button key={lg} onClick={() => setLeague(lg)}
-            className={`border px-3 py-1 font-data text-xs tracking-widest transition-colors ${league === lg ? "border-accent text-accent" : "border-line text-muted hover:border-muted hover:text-ink"}`}>
+            className={`border px-3 py-1 font-data text-xs tracking-widest transition-colors ${league === lg ? "border-accent text-accent" : "border-line text-ink hover:border-muted hover:text-ink"}`}>
             {lg}
           </button>
         ))}
-        <span className="ml-auto font-data text-xs text-muted self-center">
+        <span className="ml-auto font-data text-xs text-ink self-center">
           {filtered.length} fixtures
         </span>
       </div>
@@ -140,13 +148,13 @@ export default function SchedulePage() {
       )}
 
       {!loading && grouped.length === 0 && (
-        <p className="font-data text-sm text-muted">No fixtures match the current filter.</p>
+        <p className="font-data text-sm text-ink">No fixtures match the current filter.</p>
       )}
 
       {/* Fixture table grouped by week */}
-      {grouped.map(([week, weekRows]) => (
-        <section key={week}>
-          <h2 className="mb-3 font-data text-[11px] uppercase tracking-widest text-muted border-b border-line pb-2">
+      {grouped.map(([key, week, weekRows]) => (
+        <section key={key}>
+          <h2 className="mb-3 font-data text-[11px] uppercase tracking-widest text-ink border-b border-line pb-2">
             {week}
           </h2>
           <div className="divide-y divide-line/60 border border-line">
@@ -160,10 +168,10 @@ export default function SchedulePage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <LeagueBadge league={row.league} />
-                      <span className="font-data text-[10px] text-muted">{kickoffLabel(row.kickoff_utc)}</span>
+                      <span className="font-data text-[10px] text-ink">{kickoffLabel(row.kickoff_utc)}</span>
                     </div>
                     <p className="font-display text-lg leading-tight tracking-wide truncate">
-                      {row.home_team} <span className="text-muted">v</span> {row.away_team}
+                      {row.home_team} <span className="text-ink">v</span> {row.away_team}
                     </p>
                     {row.status === "FINISHED" && row.score.home !== null && (
                       <p className="mt-0.5 font-data text-sm font-semibold">
@@ -177,7 +185,7 @@ export default function SchedulePage() {
                     {p ? (
                       <ProbBar probs={p.probs} pick={p.pick} />
                     ) : (
-                      <p className="font-data text-[10px] text-muted">Prediction pending</p>
+                      <p className="font-data text-[10px] text-ink">Prediction pending</p>
                     )}
                   </div>
 
@@ -196,13 +204,13 @@ export default function SchedulePage() {
                         <span className={`font-display text-xl ${p.model_correct ? "text-accent" : "text-loss"}`}>
                           {p.model_correct ? "✓" : "✗"}
                         </span>
-                        <span className="font-data text-xs text-muted">
+                        <span className="font-data text-xs text-ink">
                           {PICK_LABEL[p.pick]} ({(p.probs[p.pick] * 100).toFixed(0)}%)
                         </span>
                       </div>
                     )}
                     {state === "PENDING" && (
-                      <span className="font-data text-[10px] text-muted">Locks 48h before KO</span>
+                      <span className="font-data text-[10px] text-ink">Locks 48h before KO</span>
                     )}
                   </div>
                 </div>
@@ -217,6 +225,7 @@ export default function SchedulePage() {
           </div>
         </section>
       ))}
+      <BetMazePromo />
     </div>
   );
 }

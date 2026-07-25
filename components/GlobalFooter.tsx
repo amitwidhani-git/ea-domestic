@@ -44,7 +44,7 @@ export default function GlobalFooter() {
             fontSize: 20, letterSpacing: "0.04em",
             color: "#C8FF00", lineHeight: 1, marginBottom: 14,
           }}>
-            Beat the Game.
+            Beat the Game
           </div>
 
           <p style={{
