@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import LeagueBadge from "@/components/LeagueBadge";
 import FrozenStamp from "@/components/FrozenStamp";
 import ProbBar from "@/components/ProbBar";
-import BestOddsBar from "@/components/BestOddsBar";
+import ScheduleFixturePromo from "@/components/ScheduleFixturePromo";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
 import type { League } from "@/lib/types";
@@ -216,7 +216,7 @@ export default function SchedulePage() {
                 </div>
                 {affiliates.length > 0 && state !== "SETTLED" && (
                   <div className="border-t px-4 pb-2" style={{ borderColor: "rgba(247,245,240,0.06)" }}>
-                    <BestOddsBar matchId={row.match_id} affiliates={affiliates as any} />
+                    <ScheduleFixturePromo matchId={row.match_id} affiliates={affiliates as any} />
                   </div>
                 )}
                 </div>
