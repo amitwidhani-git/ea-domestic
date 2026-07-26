@@ -31,15 +31,15 @@ export default async function HomePage() {
         {/* accent bar */}
         <div className="h-1 w-full bg-accent" />
         <div className="px-6 py-10 sm:px-10">
-          <p className="font-data text-[11px] uppercase tracking-[0.25em] text-accent">
-            Proven at the World Cup 2026
-          </p>
-          <h1 className="mt-3 font-display text-5xl leading-none tracking-wide sm:text-7xl">
+          <h1 className="-mt-4 font-display text-base uppercase tracking-[0.15em] text-ink sm:text-lg">
+            Edge Analysts: The Football Predictions &amp; Odds Intelligence Platform
+          </h1>
+          <h2 className="mt-1 font-data text-[10px] uppercase tracking-[0.2em] text-accent sm:text-xs">
+            Premier League &amp; EFL Predictions, Frozen Pre-Kick-Off, Auditable Record
+          </h2>
+          <p className="mt-7 font-display text-5xl leading-none tracking-wide sm:text-7xl">
             WE HAVE THE DATA<br />
             <span className="text-accent">SO YOU CAN HAVE THE EDGE</span>
-          </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink">
-            Pre-kick-off predictions, published with a public tamper-proof record.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/schedule"

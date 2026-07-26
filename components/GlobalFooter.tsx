@@ -53,8 +53,9 @@ export default function GlobalFooter() {
             color: "rgba(247,245,240,0.6)",
             maxWidth: 200, lineHeight: 1.65, marginBottom: 14,
           }}>
-            UK domestic football intelligence. Transparent track record. Every prediction
-            locked before kick-off.
+            Premier League and EFL football intelligence, powered by EdgeIQ, an AI assisted
+            data model. Transparent, auditable track record. Every prediction logged before
+            kick-off.
           </p>
 
           <div style={{ display: "flex", gap: 10 }}>
@@ -87,7 +88,7 @@ export default function GlobalFooter() {
         {/* Col 3 — About */}
         <nav aria-label="About links">
           <span className="gf-heading">About</span>
-          <Link href="/track-record" className="gf-link">Track Record</Link>
+          <Link href="/about" className="gf-link">About Us</Link>
           <a href="mailto:contactus@edgeanalysts.com" className="gf-link">Contact</a>
         </nav>
 

@@ -1,0 +1,18 @@
+{
+  "intro": {
+    "lead": "Most football predictions can't be checked. Ours can.",
+    "body": "We are Edge Analysts, and every edge percentage our AI-assisted model produces is logged before kick-off, timestamped, and never edited afterward."
+  },
+  "model": {
+    "heading": "EdgeIQ",
+    "body": "That model has a name: EdgeIQ. Built in-house, not licensed or bought in, it's data-led by design. Every output is a calculated, auditable probability, not a hunch dressed up as one. Once EdgeIQ produces a prediction, it's locked. Nothing is added afterward. Nothing is quietly removed."
+  },
+  "product": {
+    "body": "What you get is a confidence-scored prediction for every match, compared against market odds, not validated by them, just placed alongside them so you can see where our model and the market disagree. No tipster hunches, no results dressed up after the fact."
+  },
+  "beliefs": {
+    "body": "We believe in probability over promises. In an edge percentage over a hunch. In a track record you can check for yourself. Transparency isn't a marketing line here, it's the entire product."
+  },
+  "closing": "We are Edge Analysts, let's Beat the Game.",
+  "disclaimer": "Model probability only. Not a betting recommendation."
+}

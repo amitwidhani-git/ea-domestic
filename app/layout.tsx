@@ -6,7 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Edge Analysts — UK Football Intelligence",
-  description: "Model-driven predictions for the Premier League, Championship, League One and League Two. Every prediction frozen before kick-off, never revised.",
+  description: "Data-driven, AI-assisted football predictions for the Premier League and EFL. Compared against bookmaker odds, logged before kick-off, never revised.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
