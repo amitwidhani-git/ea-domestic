@@ -5,7 +5,7 @@ import GlobalFooter from "@/components/GlobalFooter";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Edge Analysts — UK Football Intelligence",
+  title: "Edge Analysts | Football Predictions & Odds Comparison",
   description: "Data-driven, AI-assisted football predictions for the Premier League and EFL. Compared against bookmaker odds, logged before kick-off, never revised.",
 };
 
