@@ -163,7 +163,7 @@ export default function SchedulePage() {
               const p = row.prediction;
               return (
                 <div key={row.match_id} className="flex flex-col">
-                <div className="flex gap-2 px-4 py-3 sm:flex-row sm:items-center">
+                <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center">
                   {/* left: league + teams + time */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -190,7 +190,7 @@ export default function SchedulePage() {
                   </div>
 
                   {/* right: state indicator */}
-                  <div className="flex flex-col items-end gap-1 sm:w-48">
+                  <div className="flex flex-col items-start gap-1 sm:w-48 sm:items-end">
                     {state === "LOCKED" && p && (
                       <>
                         <span className="font-data text-xs text-accent">
@@ -210,7 +210,7 @@ export default function SchedulePage() {
                       </div>
                     )}
                     {state === "PENDING" && (
-                      <span className="font-data text-[10px] text-ink">Locks 48h before KO</span>
+                      <span className="font-data text-[10px] text-ink">Locks before KO</span>
                     )}
                   </div>
                 </div>
