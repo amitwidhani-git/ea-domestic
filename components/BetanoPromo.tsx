@@ -2,13 +2,13 @@ export default function BetanoPromo() {
   return (
     <section>
       <div className="bg-[#ff3c00]/15 p-3 sm:p-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
           <img
             src="/betano-logo.png"
             alt="Betano"
             className="h-[24.48px] w-auto shrink-0 object-contain sm:h-[30.6px]"
           />
-          <div className="hidden min-w-0 flex-1 px-4 text-center sm:block">
+          <div className="min-w-0 text-center sm:flex-1 sm:px-4">
             <p className="flex flex-wrap items-baseline justify-center gap-2">
               <span className="font-display text-xl uppercase tracking-wide text-ink sm:text-2xl">Football Rewards:</span>
               <span className="font-display text-xl uppercase tracking-wide text-ink sm:text-2xl">

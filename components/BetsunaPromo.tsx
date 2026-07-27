@@ -2,13 +2,13 @@ export default function BetsunaPromo() {
   return (
     <section>
       <div className="bg-[#F42807]/15 p-3 sm:p-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
           <img
             src="/betsuna-logo.png"
             alt="Betsuna"
             className="h-6 w-auto shrink-0 object-contain sm:h-8"
           />
-          <div className="hidden min-w-0 flex-1 text-center sm:block">
+          <div className="min-w-0 text-center sm:flex-1">
             <p className="font-display text-xl uppercase tracking-wide text-ink sm:text-2xl">
               Bet £10 <span className="text-[#F42807]">Get £50 Free Bet</span>
             </p>

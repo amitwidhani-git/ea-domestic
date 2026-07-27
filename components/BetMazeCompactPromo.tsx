@@ -2,13 +2,13 @@ export default function BetMazeCompactPromo() {
   return (
     <section>
       <div className="bg-[#0EA5E9]/15 p-1.5 sm:p-2">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
           <img
             src="/betmaze-logo.png"
             alt="BETMAZE"
             className="h-4 w-auto shrink-0 object-contain sm:h-5"
           />
-          <div className="hidden min-w-0 flex-1 px-2 text-center sm:block">
+          <div className="min-w-0 text-center sm:flex-1 sm:px-2">
             <p className="font-display text-xs uppercase tracking-wide text-ink">
               Bet £10 <span className="text-[#FFC21E]">Get £10 Free Bet</span>
             </p>

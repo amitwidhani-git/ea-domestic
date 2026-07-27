@@ -2,13 +2,13 @@ export default function MonsterCasinoPromo() {
   return (
     <section>
       <div className="bg-[#0070E0] p-3 sm:p-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
           <img
             src="/monstercasino-logo.png"
             alt="Monster Casino & Sports"
             className="h-8 w-auto shrink-0 object-contain sm:h-10"
           />
-          <div className="hidden min-w-0 flex-1 text-center sm:block">
+          <div className="min-w-0 text-center sm:flex-1">
             <p className="font-display text-xl uppercase tracking-wide text-ink sm:text-2xl">
               Bet £10 <span className="text-[#F0D000]">Get £30 Free Bets</span>
             </p>

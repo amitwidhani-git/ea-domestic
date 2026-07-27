@@ -2,13 +2,13 @@ export default function MogobetPromo() {
   return (
     <section>
       <div className="bg-[#FF0B00]/15 p-3 sm:p-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
           <img
             src="/mogobet-logo.png"
             alt="MogoBet"
             className="h-6 w-auto shrink-0 object-contain sm:h-8"
           />
-          <div className="hidden min-w-0 flex-1 text-center sm:block">
+          <div className="min-w-0 text-center sm:flex-1">
             <p className="font-display text-xl uppercase tracking-wide text-ink sm:text-2xl">
               Deposit &amp; Bet £10 <span className="text-[#FF0B00]">Get £30 Free Bet</span>
             </p>
