@@ -141,8 +141,8 @@ export default async function HomePage() {
           {[
             {
               n: "01",
-              title: "Pre-match lock",
-              body: "We lock in every prediction before kick-off and timestamp it, so we can never quietly change our pick after seeing the result.",
+              title: "Pre Match Lock",
+              body: "We lock in every football prediction before kick-off and timestamp it, so we can never quietly change our pick after seeing the result.",
             },
             {
               n: "02",
@@ -151,8 +151,8 @@ export default async function HomePage() {
             },
             {
               n: "03",
-              title: "EV signals, not tips",
-              body: "We publish where our model probability beats the best de-vigged bookmaker price. Positive expected value, not gut feel.",
+              title: "Odds Value Signals, Not Tips",
+              body: "We publish Value Signals wherever our model probability and the best available bookmaker price diverge. Information to weigh, not a tip to follow and not gut feel.",
             },
           ].map((c) => (
             <div key={c.n} className="border border-line bg-panel p-5">
