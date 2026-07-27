@@ -90,6 +90,7 @@ export default function GlobalFooter() {
           <span className="gf-heading">About</span>
           <Link href="/about" className="gf-link">About Us</Link>
           <a href="mailto:contactus@edgeanalysts.com" className="gf-link">Contact</a>
+          <Link href="/faqs" className="gf-link">FAQs</Link>
         </nav>
 
         {/* Col 4 — Legal */}

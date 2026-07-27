@@ -29,7 +29,7 @@ export default async function InsightsPage() {
         <h1 className="font-display text-4xl tracking-wide">Odds Value Signals</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink">
           We compare our model&apos;s predicted chances against the best odds on the market.
-          When our numbers say a bet is worth more than the price on offer, that&apos;s a genuine edge.
+          If our probability differs from the price on offer, that&apos;s considered a Value Signal.
         </p>
         {signals.length === 0 ? (
           <div className="mt-6 border border-line bg-panel px-6 py-10 text-center">

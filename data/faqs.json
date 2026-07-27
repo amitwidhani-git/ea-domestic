@@ -1,0 +1,70 @@
+{
+  "categories": [
+    {
+      "id": "model",
+      "title": "The Model",
+      "questions": [
+        {
+          "id": "what-is-edgeiq",
+          "question": "What is EdgeIQ and how does it work?",
+          "answer": "Edge Analysts built EdgeIQ, our proprietary AI football prediction model, in-house rather than licensing an off-the-shelf provider. For every fixture, Edge Analysts publishes a model output and an edge percentage before kick-off, logging both permanently in the audit log, delivering football predictions you can check rather than take on trust. The model is data-led, reading each fixture the same way, without adjusting after the fact. What you get is an unbiased, AI-driven prediction for every match, with a Value Signal showing how it compares against market odds.",
+          "related": ["value-signal"]
+        },
+        {
+          "id": "accuracy",
+          "question": "How accurate are Edge Analysts' AI football predictions?",
+          "answer": "Edge Analysts publishes every model output timestamped and before kick-off, so our accuracy can be checked against results at any time rather than taken on trust. We publish the full audit log, not a curated set of wins, so accuracy is judged on the complete record. Football is an unpredictable game, and no model can claim 100% accuracy. Every prediction comes with a Value Signal, so you can see how it compares against market odds for yourself.",
+          "related": ["value-signal", "immutable-log"]
+        },
+        {
+          "id": "immutable-log",
+          "question": "What is the immutable prediction log?",
+          "answer": "The immutable prediction log is Edge Analysts' public, timestamped record of every EdgeIQ model output, published before kick-off and never altered once posted. Nothing is added afterward, nothing is removed. Accuracy is calculated by comparing each logged output against the actual full-time result, so the figure reflects the complete, unedited history rather than a curated set of wins.",
+          "related": ["accuracy"]
+        },
+        {
+          "id": "can-ai-outperform-tipsters",
+          "question": "Can AI outperform human football tipsters?",
+          "answer": "Edge Analysts isn't trying to beat tipsters at gut feeling, we're removing gut feeling from the equation entirely. Where a tipster's call relies on reputation or instinct, our AI model, EdgeIQ, processes match and team data consistently, fixture after fixture, with no bias and no memory of \"who's hot right now.\" Every EdgeIQ output is published before kick-off and never changed afterward, so unlike a tipster's track record, ours can be checked against the full public log at any time, not just the wins someone chooses to highlight.",
+          "related": []
+        },
+        {
+          "id": "prediction-data",
+          "question": "What data does EdgeIQ use to predict football matches?",
+          "answer": "Edge Analysts built our prediction model on more than ten years of football data, drawing on match and team statistics, historical results, and current form to generate each output. The same approach is applied consistently to every fixture, never adjusted after the fact based on what's already happened.",
+          "related": []
+        },
+        {
+          "id": "what-makes-different",
+          "question": "What makes Edge Analysts different from other AI football prediction platforms?",
+          "answer": "Edge Analysts is different in three ways: our prediction model is proprietary and built in-house, not repackaged from a generic feed; every output is logged publicly and immutably in the audit log; and our odds comparison shows the full market, including operators we're not affiliated with, clearly marked as such. That combination, a custom-built model, a fully auditable record, and unbiased market coverage, is what sets us apart.",
+          "related": ["immutable-log", "value-signal"]
+        }
+      ]
+    },
+    {
+      "id": "compliance",
+      "title": "Compliance & Trust",
+      "questions": [
+        {
+          "id": "compliance-standards",
+          "question": "Is Edge Analysts built to UK gambling compliance standards?",
+          "answer": "Edge Analysts is built with a compliance-first posture, designed to meet the standards expected by the UKGC's regulatory framework and by UK affiliate networks. Transparency in how every model output is published and logged sits at the centre of that approach, and it's a large part of what our affiliate partners assess when evaluating us.",
+          "related": ["immutable-log"]
+        }
+      ]
+    },
+    {
+      "id": "odds",
+      "title": "Odds & Value Signals",
+      "questions": [
+        {
+          "id": "value-signal",
+          "question": "What does the Value Signal on a prediction mean?",
+          "answer": "A Value Signal shows where Edge Analysts' model probability and the best available market odds diverge. We compare our predicted chances for each outcome against live bookmaker odds. If our probability differs from the price on offer, that's shown as a Value Signal: information for you to weigh, not a recommendation to bet.",
+          "related": []
+        }
+      ]
+    }
+  ]
+}
