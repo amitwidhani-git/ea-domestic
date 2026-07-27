@@ -1,18 +1,12 @@
 {
-  "intro": {
-    "lead": "Most football predictions can't be checked. Ours can.",
-    "body": "We are Edge Analysts, and every edge percentage our AI-assisted model produces is logged before kick-off, timestamped, and never edited afterward."
-  },
-  "model": {
-    "heading": "EdgeIQ",
-    "body": "That model has a name: EdgeIQ. Built in-house, not licensed or bought in, it's data-led by design. Every output is a calculated, auditable probability, not a hunch dressed up as one. Once EdgeIQ produces a prediction, it's locked. Nothing is added afterward. Nothing is quietly removed."
-  },
-  "product": {
-    "body": "What you get is a confidence-scored prediction for every match, compared against market odds, not validated by them, just placed alongside them so you can see where our model and the market disagree. No tipster hunches, no results dressed up after the fact."
-  },
-  "beliefs": {
-    "body": "We believe in probability over promises. In an edge percentage over a hunch. In a track record you can check for yourself. Transparency isn't a marketing line here, it's the entire product."
-  },
-  "closing": "We are Edge Analysts, let's Beat the Game.",
+  "lead": "Most football predictions can't be checked. Ours can.",
+  "paragraphs": [
+    "We are Edge Analysts, a football intelligence platform built on one rule: every prediction is logged before kick-off, or it doesn't count. That work is done by our AI-assisted model. It has a name: EdgeIQ, our proprietary model, built in-house, not licensed or bought in, and data-led by design. Every output is a calculated, auditable probability, not a hunch dressed up as one.",
+    "Once EdgeIQ produces a football prediction, it's locked. Nothing is added afterward, nothing is quietly removed, and every edge percentage is timestamped the moment it's made. That record is the point. Anyone can claim a good track record after the fact. Ours exists whether we like the result or not, because it's public and permanent before the match even kicks off. You're not trusting our word for how we've done, you're checking a public timestamp.",
+    "Each prediction comes with a match-by-match comparison against market odds, not validated by them, just placed alongside them so you can see where our model and the market disagree. No tipster hunches, no results dressed up after the fact.",
+    "That same principle extends to Value Signals, our full market odds comparison. It includes operators we're affiliated with and operators we're not. Most prediction sites only show the operators paying them to. Hiding half the field isn't transparency, so we don't.",
+    "Probability over promises. An edge percentage over a hunch. A track record you can check for yourself. Transparency isn't a marketing line here, it's the entire product."
+  ],
+  "closing": "We are Edge Analysts. Let's Beat the Game.",
   "disclaimer": "Model probability only. Not a betting recommendation."
 }

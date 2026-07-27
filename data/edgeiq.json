@@ -1,0 +1,29 @@
+{
+  "heading": "What is EdgeIQ?",
+  "questions": [
+    {
+      "question": "What is EdgeIQ?",
+      "paragraphs": [
+        "Edge Analysts built EdgeIQ, our proprietary, data-led, AI-assisted football prediction model, to bring genuine accountability to football predictions and odds comparison. Every fixture gets a model output and an edge percentage, published before kick-off and logged permanently, so nothing can be added or quietly removed afterward.",
+        "Football analytics gives you more information than anyone can process. Team news, player form, market moves, transfers. Noise dressed as insight, and tipster hunches dressed as certainty. We wanted results free of bias, and we wanted transparency. We looked at the space and saw plenty of opinions and very few receipts. Credibility was being claimed, not earned. That's why EdgeIQ exists."
+      ]
+    },
+    {
+      "question": "What does EdgeIQ publish, and when?",
+      "paragraphs": [
+        "EdgeIQ publishes a model output and an edge percentage for every fixture, before kick-off. Every single one goes into the audit log. Nothing is added afterward. Nothing is removed. The record is immutable, auditable, and timestamped. What you get is an unbiased, data-led read on every match, checkable against the record, and against live market odds."
+      ]
+    },
+    {
+      "question": "How does EdgeIQ compare to market odds?",
+      "paragraphs": [
+        "Three things separate EdgeIQ from a tipster or a standard odds comparison site:"
+      ],
+      "list": [
+        "First, it's Edge Analysts' proprietary model, built in-house, not a generic AI engine.",
+        "Second, it doesn't get to change its mind after the final whistle. Once a prediction is logged, nothing can be changed.",
+        "Third, it's data-led, not opinion-led."
+      ]
+    }
+  ]
+}

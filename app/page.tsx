@@ -32,7 +32,7 @@ export default async function HomePage() {
         <div className="h-1 w-full bg-accent" />
         <div className="px-6 py-10 sm:px-10">
           <h1 className="-mt-4 font-display text-base uppercase tracking-[0.15em] text-ink sm:text-lg">
-            Edge Analysts: The Football Predictions &amp; Odds Intelligence Platform
+            Edge Analysts: Football Predictions &amp; Odds Intelligence Platform
           </h1>
           <h2 className="mt-1 font-data text-[10px] uppercase tracking-[0.2em] text-accent sm:text-xs">
             Premier League &amp; EFL Predictions, Frozen Pre-Kick-Off, Auditable Record

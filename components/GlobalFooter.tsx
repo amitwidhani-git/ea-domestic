@@ -88,7 +88,8 @@ export default function GlobalFooter() {
         {/* Col 3 — About */}
         <nav aria-label="About links">
           <span className="gf-heading">About</span>
-          <Link href="/about" className="gf-link">About Us</Link>
+          <Link href="/about" className="gf-link">Who We Are</Link>
+          <Link href="/about#what-is-edgeiq" className="gf-link">What is EdgeIQ</Link>
           <a href="mailto:contactus@edgeanalysts.com" className="gf-link">Contact</a>
           <Link href="/faqs" className="gf-link">FAQs</Link>
         </nav>
