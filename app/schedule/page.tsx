@@ -7,6 +7,7 @@ import ScheduleFixturePromo from "@/components/ScheduleFixturePromo";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
 import type { League } from "@/lib/types";
+import { IS_CUP } from "@/lib/types";
 
 type PredState = "LOCKED" | "PENDING" | "SETTLED";
 
@@ -28,7 +29,27 @@ interface ScheduleRow {
   } | null;
 }
 
-const LEAGUES: (League | "ALL")[] = ["ALL", "PL", "CH", "L1", "L2"];
+type LeagueFilter = "ALL" | "DOMESTIC" | "CUPS" | League;
+
+const FILTER_GROUPS: { key: LeagueFilter; label: string }[][] = [
+  [
+    { key: "ALL", label: "All" },
+    { key: "DOMESTIC", label: "Domestic" },
+  ],
+  [
+    { key: "PL", label: "PL" },
+    { key: "CH", label: "Championship" },
+    { key: "L1", label: "League One" },
+    { key: "L2", label: "League Two" },
+  ],
+  [
+    { key: "CUPS", label: "Cups" },
+    { key: "FAC", label: "FA Cup" },
+    { key: "LC", label: "League Cup" },
+    { key: "CS", label: "Comm. Shield" },
+  ],
+];
+
 const PICK_LABEL = { home: "H", draw: "D", away: "A" } as const;
 
 function predState(row: ScheduleRow): PredState {
@@ -58,7 +79,7 @@ export default function SchedulePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [affiliates, setAffiliates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [league, setLeague] = useState<League | "ALL">("ALL");
+  const [league, setLeague] = useState<LeagueFilter>("ALL");
   const [filter, setFilter] = useState<"ALL" | "LOCKED" | "PENDING" | "SETTLED">("ALL");
 
   useEffect(() => {
@@ -74,7 +95,9 @@ export default function SchedulePage() {
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
-      if (league !== "ALL" && r.league !== league) return false;
+      if (league === "DOMESTIC" && IS_CUP[r.league]) return false;
+      if (league === "CUPS" && !IS_CUP[r.league]) return false;
+      if (league !== "ALL" && league !== "DOMESTIC" && league !== "CUPS" && r.league !== league) return false;
       if (filter !== "ALL" && predState(r) !== filter) return false;
       return true;
     });
@@ -107,9 +130,9 @@ export default function SchedulePage() {
       <div>
         <h1 className="font-display text-4xl tracking-wide">2026/27 Season Schedule</h1>
         <p className="mt-2 text-sm text-ink max-w-2xl">
-          The next {rows.length} fixtures across four divisions, over the coming 20 days. Every
-          prediction is frozen before kick-off and permanently time-stamped. Nothing is ever
-          revised.
+          The next {rows.length} fixtures across the four divisions and major cup competitions
+          (FA Cup, League Cup, Community Shield), over the coming 20 days. Every prediction is
+          frozen before kick-off and permanently time-stamped. Nothing is ever revised.
         </p>
       </div>
 
@@ -127,12 +150,17 @@ export default function SchedulePage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {LEAGUES.map((lg) => (
-          <button key={lg} onClick={() => setLeague(lg)}
-            className={`border px-3 py-1 font-data text-xs tracking-widest transition-colors ${league === lg ? "border-accent text-accent" : "border-line text-ink hover:border-muted hover:text-ink"}`}>
-            {lg}
-          </button>
+      <div className="flex flex-wrap items-center gap-2">
+        {FILTER_GROUPS.map((group, i) => (
+          <div key={i} className="flex flex-wrap items-center gap-2">
+            {i > 0 && <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />}
+            {group.map(({ key, label }) => (
+              <button key={key} onClick={() => setLeague(key)}
+                className={`border px-3 py-1 font-data text-xs tracking-widest transition-colors ${league === key ? "border-accent text-accent" : "border-line text-ink hover:border-muted hover:text-ink"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
         ))}
         <span className="ml-auto font-data text-xs text-ink self-center">
           {filtered.length} fixtures

@@ -11,6 +11,7 @@
 
 import { MongoClient, type Db } from "mongodb";
 import type { Article, EvSignal, Fixture, League, LeagueStats, Prediction, Result, TrackRecordRow } from "./types";
+import { IS_CUP } from "./types";
 
 // ---------------------------------------------------------------- connection
 
@@ -189,13 +190,24 @@ export async function getStats(): Promise<LeagueStats[]> {
     { settled: 0, correct: 0 }
   );
 
-  const order: (League | "ALL")[] = ["ALL", "PL", "CH", "L1", "L2"];
   const byLeague = new Map(rows.map((r) => [String(r._id), r]));
+  const cupTotals = rows
+    .filter((r) => IS_CUP[r._id as League])
+    .reduce(
+      (acc, r) => ({ settled: acc.settled + r.settled, correct: acc.correct + r.correct }),
+      { settled: 0, correct: 0 }
+    );
+
+  const order: (League | "ALL" | "CUPS")[] = ["ALL", "PL", "CH", "L1", "L2", "CUPS", "FAC", "LC", "CS"];
 
   return order
-    .filter((k) => k === "ALL" ? totals.settled > 0 : byLeague.has(k))
+    .filter((k) => {
+      if (k === "ALL") return totals.settled > 0;
+      if (k === "CUPS") return cupTotals.settled > 0;
+      return byLeague.has(k);
+    })
     .map((league) => {
-      const b = league === "ALL" ? totals : byLeague.get(league)!;
+      const b = league === "ALL" ? totals : league === "CUPS" ? cupTotals : byLeague.get(league)!;
       return {
         league,
         settled: b.settled,

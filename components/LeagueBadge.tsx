@@ -5,6 +5,9 @@ const COLOURS: Record<League, string> = {
   CH: "border-sky-500/60 text-sky-400",
   L1: "border-emerald-500/60 text-emerald-400",
   L2: "border-amber-500/60 text-amber-400",
+  FAC: "border-red-500/60 text-red-400",
+  LC: "border-orange-500/60 text-orange-400",
+  CS: "border-yellow-500/60 text-yellow-400",
 };
 export default function LeagueBadge({ league }: { league: League }) {
   return (

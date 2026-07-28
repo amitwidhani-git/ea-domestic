@@ -1,9 +1,15 @@
-export type League = "PL" | "CH" | "L1" | "L2";
+export type League = "PL" | "CH" | "L1" | "L2" | "FAC" | "LC" | "CS";
 export const LEAGUE_NAMES: Record<League, string> = {
   PL: "Premier League", CH: "Championship", L1: "League One", L2: "League Two",
+  FAC: "FA Cup", LC: "League Cup", CS: "Community Shield",
 };
 export const LEAGUE_FULL: Record<League, string> = {
   PL: "Premier League", CH: "EFL Championship", L1: "EFL League One", L2: "EFL League Two",
+  FAC: "FA Cup", LC: "EFL Cup", CS: "FA Community Shield",
+};
+export const IS_CUP: Record<League, boolean> = {
+  PL: false, CH: false, L1: false, L2: false,
+  FAC: true, LC: true, CS: true,
 };
 export interface Fixture {
   match_id: string; league: League; season: string; kickoff_utc: string;
@@ -23,4 +29,4 @@ export interface EvSignal {
 }
 export interface Article { slug: string; title: string; published_at: string; summary: string; }
 export interface TrackRecordRow { fixture: Fixture; prediction: Prediction; result: Result; }
-export interface LeagueStats { league: League | "ALL"; settled: number; correct: number; accuracy: number; }
+export interface LeagueStats { league: League | "ALL" | "CUPS"; settled: number; correct: number; accuracy: number; }
