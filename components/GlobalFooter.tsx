@@ -109,6 +109,7 @@ export default function GlobalFooter() {
           <a href="https://www.gamcare.org.uk" target="_blank" rel="noopener noreferrer" className="gf-link">
             GamCare.org.uk
           </a>
+          <Link href="/cookies" className="gf-link">Cookie Policy</Link>
         </nav>
       </div>
 

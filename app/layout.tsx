@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import NavLogo from "@/components/NavLogo";
 import NavTabs from "@/components/NavTabs";
 import GlobalFooter from "@/components/GlobalFooter";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,6 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* ── FOOTER ───────────────────────────────────────────────── */}
         <GlobalFooter />
+
+        <CookieConsentBanner />
 
       </body>
     </html>

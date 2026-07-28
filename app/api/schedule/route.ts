@@ -1,13 +1,22 @@
 /**
- * /api/schedule — full season fixtures joined to predictions.
- * Client-side fetched so the 2000-fixture list doesn't block SSR.
+ * /api/schedule — next-20-days fixtures joined to predictions.
+ * Client-side fetched so the fixture list doesn't block SSR.
  * Reads from MongoDB when MONGODB_URI is set, falls back to data/fixtures.json.
+ * Results are cached in-memory (per server instance) for a few minutes, and
+ * a Cache-Control header lets the CDN/browser skip the round trip entirely.
  */
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 
-declare global { var _eaMongoClientSched: Promise<import("mongodb").MongoClient> | undefined; }
+declare global {
+  var _eaMongoClientSched: Promise<import("mongodb").MongoClient> | undefined;
+  var _eaScheduleCache: { key: string; rows: unknown[]; expiresAt: number } | undefined;
+}
+
+const DAYS_AHEAD = 30;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 5 min — plenty fresh for a schedule page, avoids hammering Mongo
+const CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=60";
 
 async function getDb() {
   const uri = process.env.MONGODB_URI;
@@ -21,12 +30,29 @@ async function getDb() {
   return client.db(process.env.MONGODB_DB ?? "edgeanalysts");
 }
 
+// Window anchored to the start of today (UTC) so today's kicked-off/settled
+// fixtures still show, through DAYS_AHEAD days out. The cache key changes
+// with the day so the window rolls forward once the TTL-based cache expires.
+function dateWindow() {
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+  const end = new Date(start.getTime() + DAYS_AHEAD * 86_400_000);
+  return { startIso: start.toISOString(), endIso: end.toISOString(), cacheKey: start.toISOString().slice(0, 10) };
+}
+
 export async function GET() {
+  const { startIso, endIso, cacheKey } = dateWindow();
+
+  const cached = global._eaScheduleCache;
+  if (cached && cached.key === cacheKey && cached.expiresAt > Date.now()) {
+    return NextResponse.json(cached.rows, { headers: { "Cache-Control": CACHE_CONTROL } });
+  }
+
   try {
     const db = await getDb();
     if (db) {
       const matches = await db.collection("matches")
-        .find({ season: "2026-27" })
+        .find({ season: "2026-27", kickoffUtc: { $gte: startIso, $lt: endIso } })
         .sort({ kickoffUtc: 1 })
         .toArray();
 
@@ -51,7 +77,9 @@ export async function GET() {
                             hash: p.hash, model_correct: p.modelCorrect } : null,
         };
       });
-      return NextResponse.json(rows);
+
+      global._eaScheduleCache = { key: cacheKey, rows, expiresAt: Date.now() + CACHE_TTL_MS };
+      return NextResponse.json(rows, { headers: { "Cache-Control": CACHE_CONTROL } });
     }
   } catch (err) {
     console.error("Schedule API Mongo error:", err);
@@ -61,7 +89,17 @@ export async function GET() {
   try {
     const raw = await fs.readFile(path.join(process.cwd(), "data", "fixtures.json"), "utf-8");
     const fixtures = JSON.parse(raw);
-    return NextResponse.json(fixtures.map((f: Record<string, unknown>) => ({ ...f, status: "SCHEDULED", score: { home: null, away: null }, prediction: null })));
+    const startMs = new Date(startIso).getTime();
+    const endMs = new Date(endIso).getTime();
+    const rows = fixtures
+      .map((f: Record<string, unknown>) => ({ ...f, status: "SCHEDULED", score: { home: null, away: null }, prediction: null }))
+      .filter((f: { kickoff_utc: string }) => {
+        const t = new Date(f.kickoff_utc).getTime();
+        return t >= startMs && t < endMs;
+      });
+
+    global._eaScheduleCache = { key: cacheKey, rows, expiresAt: Date.now() + CACHE_TTL_MS };
+    return NextResponse.json(rows, { headers: { "Cache-Control": CACHE_CONTROL } });
   } catch {
     return NextResponse.json([]);
   }

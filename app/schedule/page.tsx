@@ -107,7 +107,7 @@ export default function SchedulePage() {
       <div>
         <h1 className="font-display text-4xl tracking-wide">2026/27 Season Schedule</h1>
         <p className="mt-2 text-sm text-ink max-w-2xl">
-          All {rows.length} fixtures across four divisions, updated as the season unfolds. Every
+          The next {rows.length} fixtures across four divisions, over the coming 20 days. Every
           prediction is frozen before kick-off and permanently time-stamped. Nothing is ever
           revised.
         </p>
