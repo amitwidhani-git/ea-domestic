@@ -7,7 +7,6 @@ import ScheduleFixturePromo from "@/components/ScheduleFixturePromo";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
 import type { League } from "@/lib/types";
-import { IS_CUP } from "@/lib/types";
 
 type PredState = "LOCKED" | "PENDING" | "SETTLED";
 
@@ -29,12 +28,11 @@ interface ScheduleRow {
   } | null;
 }
 
-type LeagueFilter = "ALL" | "DOMESTIC" | "CUPS" | League;
+type LeagueFilter = "ALL" | League;
 
 const FILTER_GROUPS: { key: LeagueFilter; label: string }[][] = [
   [
     { key: "ALL", label: "All" },
-    { key: "DOMESTIC", label: "Domestic" },
   ],
   [
     { key: "PL", label: "PL" },
@@ -43,7 +41,6 @@ const FILTER_GROUPS: { key: LeagueFilter; label: string }[][] = [
     { key: "L2", label: "League Two" },
   ],
   [
-    { key: "CUPS", label: "Cups" },
     { key: "FAC", label: "FA Cup" },
     { key: "LC", label: "League Cup" },
     { key: "CS", label: "Comm. Shield" },
@@ -95,9 +92,7 @@ export default function SchedulePage() {
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
-      if (league === "DOMESTIC" && IS_CUP[r.league]) return false;
-      if (league === "CUPS" && !IS_CUP[r.league]) return false;
-      if (league !== "ALL" && league !== "DOMESTIC" && league !== "CUPS" && r.league !== league) return false;
+      if (league !== "ALL" && r.league !== league) return false;
       if (filter !== "ALL" && predState(r) !== filter) return false;
       return true;
     });

@@ -38,7 +38,7 @@ export default function TrackRecordTabs({ rows, stats }: { rows: TrackRecordRow[
               {stats.map((s) => (
                 <div key={s.league} className="border border-line bg-panel p-4">
                   <p className="font-data text-[10px] uppercase tracking-widest text-ink">
-                    {s.league === "ALL" ? "All leagues" : s.league === "CUPS" ? "Cup competitions" : LEAGUE_NAMES[s.league]}
+                    {s.league === "ALL" ? "All leagues" : LEAGUE_NAMES[s.league]}
                   </p>
                   <p className="mt-2 font-display text-3xl leading-none text-accent">
                     {(s.accuracy * 100).toFixed(1)}%

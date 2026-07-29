@@ -29,4 +29,4 @@ export interface EvSignal {
 }
 export interface Article { slug: string; title: string; published_at: string; summary: string; }
 export interface TrackRecordRow { fixture: Fixture; prediction: Prediction; result: Result; }
-export interface LeagueStats { league: League | "ALL" | "CUPS"; settled: number; correct: number; accuracy: number; }
+export interface LeagueStats { league: League | "ALL"; settled: number; correct: number; accuracy: number; }
