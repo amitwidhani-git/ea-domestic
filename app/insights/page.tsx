@@ -1,5 +1,7 @@
+import Link from "next/link";
 import AffiliateCta from "@/components/AffiliateCta";
 import BetanoPromo from "@/components/BetanoPromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
 import BetMazePromo from "@/components/BetMazePromo";
 import BetrinoPromo from "@/components/BetrinoPromo";
 import BetsunaPromo from "@/components/BetsunaPromo";
@@ -71,6 +73,7 @@ export default async function InsightsPage() {
         </p>
         <div className="mt-4 space-y-4">
           <BetanoPromo />
+          <LivescorebetPromo />
           <MogobetPromo />
           <FruityKingPromo />
           <BetrinoPromo />
@@ -80,7 +83,7 @@ export default async function InsightsPage() {
           <MonsterCasinoPromo />
         </div>
       </section>
-      <section>
+      <section id="top-stories">
         <h2 className="font-display text-2xl tracking-wide">Top Stories</h2>
         {articles.length === 0 ? (
           <p className="mt-4 text-sm text-ink">Top stories publish here automatically as the season unfolds.</p>
@@ -89,7 +92,11 @@ export default async function InsightsPage() {
             {articles.map((a) => (
               <li key={a.slug} className="py-4">
                 <p className="font-data text-[11px] text-ink">{a.published_at.slice(0, 10)}</p>
-                <h3 className="mt-1 font-display text-xl tracking-wide">{a.title}</h3>
+                <h3 className="mt-1 font-display text-xl tracking-wide">
+                  <Link href={`/insights/articles/${a.slug}`} className="hover:text-accent">
+                    {a.title}
+                  </Link>
+                </h3>
                 <p className="mt-1 text-sm text-ink">{a.summary}</p>
               </li>
             ))}

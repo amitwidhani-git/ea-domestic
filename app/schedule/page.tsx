@@ -3,11 +3,57 @@ import { useEffect, useState, useMemo } from "react";
 import LeagueBadge from "@/components/LeagueBadge";
 import FrozenStamp from "@/components/FrozenStamp";
 import ProbBar from "@/components/ProbBar";
-import ScheduleFixturePromo from "@/components/ScheduleFixturePromo";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
+import BetsunaPromo from "@/components/BetsunaPromo";
+import BetrinoPromo from "@/components/BetrinoPromo";
+import MogobetPromo from "@/components/MogobetPromo";
+import FruityKingPromo from "@/components/FruityKingPromo";
+import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
+import SpinzwinPromo from "@/components/SpinzwinPromo";
 import SubscribeRegister from "@/components/SubscribeRegister";
 import type { League } from "@/lib/types";
+
+// A single strip banner sits above each week's date line. The first match
+// week always leads with LiveScoreBet; later weeks draw a randomised pick
+// from the full pool so the schedule doesn't repeat the same partner every round.
+const STRIP_PROMOS: { id: string; Promo: React.ComponentType }[] = [
+  { id: "betano", Promo: BetanoPromo },
+  { id: "livescorebet", Promo: LivescorebetPromo },
+  { id: "betsuna", Promo: BetsunaPromo },
+  { id: "betrino", Promo: BetrinoPromo },
+  { id: "mogobet", Promo: MogobetPromo },
+  { id: "fruity-king", Promo: FruityKingPromo },
+  { id: "monster-sports", Promo: MonsterCasinoPromo },
+  { id: "spinzwin", Promo: SpinzwinPromo },
+  { id: "betmaze", Promo: BetMazePromo },
+];
+const FIRST_WEEK_ID = "livescorebet";
+
+// Deterministic PRNG seeded from the week key, so a given week always shows
+// the same partner (no reshuffle on re-render/filter) but different weeks vary.
+function mulberry32(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function seedFromKey(key: string): number {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (Math.imul(31, h) + key.charCodeAt(i)) | 0;
+  return h;
+}
+function stripPromoForWeek(weekIndex: number, weekKey: string) {
+  if (weekIndex === 0) {
+    return STRIP_PROMOS.find((p) => p.id === FIRST_WEEK_ID)!;
+  }
+  const rand = mulberry32(seedFromKey(weekKey));
+  return STRIP_PROMOS[Math.floor(rand() * STRIP_PROMOS.length)];
+}
 
 type PredState = "LOCKED" | "PENDING" | "SETTLED";
 
@@ -74,19 +120,13 @@ function kickoffLabel(iso: string): string {
 
 export default function SchedulePage() {
   const [rows, setRows] = useState<ScheduleRow[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [affiliates, setAffiliates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [league, setLeague] = useState<LeagueFilter>("ALL");
   const [filter, setFilter] = useState<"ALL" | "LOCKED" | "PENDING" | "SETTLED">("ALL");
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/schedule").then((r) => r.json()),
-      fetch("/api/affiliates").then((r) => r.json()).catch(() => []),
-    ]).then(([schedule, affs]) => {
+    fetch("/api/schedule").then((r) => r.json()).then((schedule) => {
       setRows(schedule);
-      setAffiliates(affs);
       setLoading(false);
     });
   }, []);
@@ -176,9 +216,12 @@ export default function SchedulePage() {
       )}
 
       {/* Fixture table grouped by week */}
-      {grouped.map(([key, week, weekRows]) => (
+      {grouped.map(([key, week, weekRows], weekIndex) => {
+        const { id: promoId, Promo } = stripPromoForWeek(weekIndex, key);
+        return (
         <section key={key}>
-          <h2 className="mb-3 font-data text-[11px] uppercase tracking-widest text-ink border-b border-line pb-2">
+          <Promo key={promoId} />
+          <h2 className="mb-3 mt-4 font-data text-[11px] uppercase tracking-widest text-ink border-b border-line pb-2">
             {week}
           </h2>
           <div className="divide-y divide-line/60 border border-line">
@@ -186,8 +229,7 @@ export default function SchedulePage() {
               const state = predState(row);
               const p = row.prediction;
               return (
-                <div key={row.match_id} className="flex flex-col">
-                <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center">
+                <div key={row.match_id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center">
                   {/* left: league + teams + time */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -238,17 +280,12 @@ export default function SchedulePage() {
                     )}
                   </div>
                 </div>
-                {affiliates.length > 0 && state !== "SETTLED" && (
-                  <div className="border-t px-4 pb-2" style={{ borderColor: "rgba(247,245,240,0.06)" }}>
-                    <ScheduleFixturePromo matchId={row.match_id} affiliates={affiliates as any} />
-                  </div>
-                )}
-                </div>
               );
             })}
           </div>
         </section>
-      ))}
+        );
+      })}
       <BetMazePromo />
 
       <SubscribeRegister source="schedule" compact={false} />
