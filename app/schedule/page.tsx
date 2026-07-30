@@ -6,6 +6,7 @@ import ProbBar from "@/components/ProbBar";
 import ScheduleFixturePromo from "@/components/ScheduleFixturePromo";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
+import SubscribeRegister from "@/components/SubscribeRegister";
 import type { League } from "@/lib/types";
 
 type PredState = "LOCKED" | "PENDING" | "SETTLED";
@@ -249,6 +250,8 @@ export default function SchedulePage() {
         </section>
       ))}
       <BetMazePromo />
+
+      <SubscribeRegister source="schedule" compact={false} />
     </div>
   );
 }

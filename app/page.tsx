@@ -8,6 +8,7 @@ import BetrinoBannerCard from "@/components/BetrinoBannerCard";
 import BetsunaBannerCard from "@/components/BetsunaBannerCard";
 import MogobetBannerCard from "@/components/MogobetBannerCard";
 import WorldCupProof from "@/components/WorldCupProof";
+import SubscribeRegister from "@/components/SubscribeRegister";
 import { getFixtures } from "@/lib/data";
 import type { League } from "@/lib/types";
 
@@ -108,6 +109,9 @@ export default async function HomePage() {
           </Link>
         </section>
       )}
+
+      {/* ── SUBSCRIBE / REGISTER ─────────────────────────────────────── */}
+      <SubscribeRegister source="homepage" />
 
       {/* ── OUR PARTNERS ──────────────────────────────────────────────── */}
       <section>
