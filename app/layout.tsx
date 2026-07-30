@@ -6,6 +6,7 @@ import CookieConsentBanner from "@/components/CookieConsentBanner";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://edgeanalysts.com"),
   title: "Edge Analysts | Football Predictions & Odds Comparison",
   description: "Data-driven, AI-assisted football predictions for the Premier League and EFL. Compared against bookmaker odds, logged before kick-off, never revised.",
 };

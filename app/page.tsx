@@ -4,7 +4,7 @@ import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
-import BetrinoBannerCard from "@/components/BetrinoBannerCard";
+import LivescorebetBannerCard from "@/components/LivescorebetBannerCard";
 import BetsunaBannerCard from "@/components/BetsunaBannerCard";
 import MogobetBannerCard from "@/components/MogobetBannerCard";
 import WorldCupProof from "@/components/WorldCupProof";
@@ -118,7 +118,7 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <BetrinoBannerCard />
+          <LivescorebetBannerCard />
           <BetsunaBannerCard />
           <MogobetBannerCard />
         </div>

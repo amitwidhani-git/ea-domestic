@@ -10,7 +10,7 @@
  */
 
 import { MongoClient, type Db } from "mongodb";
-import type { Article, EvSignal, Fixture, League, LeagueStats, Prediction, Result, TrackRecordRow } from "./types";
+import type { Article, ArticleDetail, EvSignal, Fixture, League, LeagueStats, Prediction, Result, TrackRecordRow } from "./types";
 
 // ---------------------------------------------------------------- connection
 
@@ -242,9 +242,27 @@ export async function getArticles(): Promise<Article[]> {
     .toArray();
 
   return docs.map((a) => ({
-    slug: String(a._id),
+    slug: (a.slug as string) ?? String(a._id),
     title: a.title as string,
     published_at: a.publishedAt as string,
     summary: a.summary as string,
   }));
+}
+
+export async function getArticleBySlug(slug: string): Promise<ArticleDetail | null> {
+  const d = await db();
+  const a = await d.collection("articles").findOne({ slug });
+  if (!a) return null;
+
+  return {
+    slug: a.slug as string,
+    title: a.title as string,
+    dek: a.dek as string | undefined,
+    published_at: a.publishedAt as string,
+    updated_at: a.updatedAt as string | undefined,
+    author: a.author as string | undefined,
+    summary: a.summary as string,
+    sections: (a.sections as ArticleDetail["sections"]) ?? [],
+    disclaimer: a.disclaimer as string | undefined,
+  };
 }
