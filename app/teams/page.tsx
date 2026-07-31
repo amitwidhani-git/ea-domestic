@@ -4,8 +4,8 @@ import ClubCrest from "@/components/ClubCrest";
 import { LEAGUE_NAMES } from "@/lib/types";
 
 export const metadata = {
-  title: "Clubs — EdgeAnalysts",
-  description: "All 104 EFL clubs with model ratings, squad news and upcoming fixtures.",
+  title: "Teams — EdgeAnalysts",
+  description: "All 104 EFL teams with model ratings, squad news and upcoming fixtures.",
 };
 
 export const dynamic = "force-dynamic";
@@ -90,9 +90,9 @@ export default async function TeamsPage() {
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="font-display text-4xl tracking-wide">Clubs</h1>
+        <h1 className="font-display text-4xl tracking-wide">Teams</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink">
-          104 clubs across the English football pyramid. Click any club for squad news, model
+          104 teams across the English football pyramid. Click any team for squad news, model
           ratings and upcoming fixtures.
         </p>
       </div>

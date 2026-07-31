@@ -94,7 +94,7 @@ const FILTER_GROUPS: { key: LeagueFilter; label: string }[][] = [
   ],
 ];
 
-const PICK_LABEL = { home: "H", draw: "D", away: "A" } as const;
+const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
 
 function predState(row: ScheduleRow): PredState {
   if (!row.prediction) return "PENDING";
@@ -245,7 +245,7 @@ export default function SchedulePage() {
               const state = predState(row);
               const p = row.prediction;
               return (
-                <div key={row.match_id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center">
+                <div key={row.match_id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-start">
                   {/* left: league + teams + time */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -262,37 +262,34 @@ export default function SchedulePage() {
                     )}
                   </div>
 
-                  {/* middle: prob bar (only when locked/settled) */}
-                  <div className="w-full sm:w-40">
+                  {/* right: prob bar on top, pick/lock commentary beneath — matches Home page card */}
+                  <div className="w-full space-y-2 sm:w-96">
                     {p ? (
-                      <ProbBar probs={p.probs} pick={p.pick} />
-                    ) : (
-                      <p className="font-data text-[10px] text-ink">Prediction pending</p>
-                    )}
-                  </div>
-
-                  {/* right: state indicator */}
-                  <div className="flex flex-col items-start gap-1 sm:w-48 sm:items-end">
-                    {state === "LOCKED" && p && (
                       <>
-                        <span className="font-data text-xs text-accent">
-                          {PICK_LABEL[p.pick]} ({(p.probs[p.pick] * 100).toFixed(0)}%)
-                        </span>
-                        <FrozenStamp frozenAt={p.frozen_at} hash={p.hash} />
+                        <ProbBar probs={p.probs} pick={p.pick} />
+                        {state === "LOCKED" && (
+                          <div className="flex flex-wrap items-center justify-between gap-1">
+                            <span className="font-data text-xs">
+                              EdgeIQ Prediction: <span className="text-accent">{PICK_LABEL[p.pick]}</span>
+                            </span>
+                            <FrozenStamp frozenAt={p.frozen_at} hash={p.hash} />
+                          </div>
+                        )}
+                        {state === "SETTLED" && (
+                          <div className="flex items-center gap-2">
+                            <span className={`font-display text-lg ${p.model_correct ? "text-accent" : "text-loss"}`}>
+                              {p.model_correct ? "✓" : "✗"}
+                            </span>
+                            <span className="font-data text-xs text-ink">
+                              EdgeIQ Prediction: <span className="text-ink">{PICK_LABEL[p.pick]}</span>
+                            </span>
+                          </div>
+                        )}
                       </>
-                    )}
-                    {state === "SETTLED" && p && (
-                      <div className="flex items-center gap-2">
-                        <span className={`font-display text-xl ${p.model_correct ? "text-accent" : "text-loss"}`}>
-                          {p.model_correct ? "✓" : "✗"}
-                        </span>
-                        <span className="font-data text-xs text-ink">
-                          {PICK_LABEL[p.pick]} ({(p.probs[p.pick] * 100).toFixed(0)}%)
-                        </span>
-                      </div>
-                    )}
-                    {state === "PENDING" && (
-                      <span className="font-data text-[10px] text-ink">Locks before KO</span>
+                    ) : (
+                      <p className="font-data text-[10px] text-ink">
+                        Prediction pending · locks 48h before kick-off
+                      </p>
                     )}
                   </div>
                 </div>

@@ -212,7 +212,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
   return (
     <div className="space-y-10">
       <Link href="/teams" className="font-data text-xs text-muted hover:text-ink">
-        ← All Clubs
+        ← All Teams
       </Link>
 
       {/* ── HEADER ───────────────────────────────────────────────── */}
@@ -285,7 +285,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
       <section>
         <h2 className="font-display text-2xl tracking-wide">Latest News</h2>
         {news.length === 0 ? (
-          <p className="mt-4 font-data text-sm text-muted">No recent news available for this club.</p>
+          <p className="mt-4 font-data text-sm text-muted">No recent news available for this team.</p>
         ) : (
           <>
             <div className="mt-4 divide-y divide-line/60 border border-line">

@@ -78,7 +78,7 @@ export default async function HomePage() {
                       <ProbBar probs={prediction.probs} pick={prediction.pick} />
                       <div className="flex flex-wrap items-center justify-between gap-1">
                         <span className="font-data text-xs">
-                          Pick: <span className="text-accent">{PICK_LABEL[prediction.pick]}</span>
+                          EdgeIQ Prediction: <span className="text-accent">{PICK_LABEL[prediction.pick]}</span>
                         </span>
                         <FrozenStamp frozenAt={prediction.frozen_at} hash={prediction.hash} />
                       </div>
