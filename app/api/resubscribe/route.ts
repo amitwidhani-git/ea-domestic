@@ -1,11 +1,10 @@
 /**
- * POST /api/subscribe — email capture for the "subscriber" tier.
- * Upserts into the "users" collection and best-effort syncs new
- * subscribers to Brevo (never fails the request if Brevo is down).
+ * POST /api/resubscribe — for someone who previously unsubscribed and wants back in.
+ * Reactivates their "users" doc and re-adds them to Brevo (never fails the
+ * request if Brevo is down). Mongo/Brevo patterns match app/api/subscribe/route.ts.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { MongoClient, MongoServerError, type Db } from "mongodb";
-import crypto from "crypto";
+import { MongoClient, type Db } from "mongodb";
 import type { SiteUser } from "@/lib/userTypes";
 
 declare global {
@@ -37,9 +36,6 @@ async function db(): Promise<Db> {
   return client.db(process.env.MONGODB_DB ?? "edgeanalysts");
 }
 
-// Guarantees at most one "users" doc per email even under concurrent
-// requests — findOne-then-insert alone has a TOCTOU race, the unique
-// index is what actually prevents duplicates.
 function ensureUsersIndex(): Promise<void> {
   if (!global._eaUsersIndexEnsured) {
     global._eaUsersIndexEnsured = db()
@@ -113,7 +109,7 @@ async function syncToBrevo(email: string, name: string | undefined): Promise<str
 }
 
 export async function POST(req: NextRequest) {
-  let body: { email?: unknown; name?: unknown; source?: unknown };
+  let body: { email?: unknown; name?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -122,7 +118,6 @@ export async function POST(req: NextRequest) {
 
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const name = typeof body.name === "string" && body.name.trim() ? body.name.trim() : undefined;
-  const source = typeof body.source === "string" && body.source ? body.source : "unknown";
 
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
@@ -133,52 +128,43 @@ export async function POST(req: NextRequest) {
     await ensureUsersIndex();
 
     const existing = await users.findOne({ email });
-    if (existing) {
-      if (existing.role === "member") {
-        return NextResponse.json({ status: "already_member" });
-      }
-      return NextResponse.json({ status: "already_subscribed" });
+
+    if (existing && existing.role !== "unsubscribed") {
+      // Already subscriber/member — and for "admin" or "invalid" (hard-bounced)
+      // we deliberately don't silently flip them back to subscriber here.
+      return NextResponse.json({ status: "already_active" });
     }
 
-    // HMAC of the email so /api/unsubscribe can verify a link wasn't forged
-    // for someone else's address: https://edgeanalysts.com/api/unsubscribe?email=...&token=...
-    const unsubscribeToken = crypto
-      .createHmac("sha256", process.env.UNSUBSCRIBE_SECRET ?? "")
-      .update(email)
-      .digest("hex");
-
-    const newUser: SiteUser = {
-      email,
-      role: "subscriber",
-      source,
-      brevoSynced: false,
-      createdAt: new Date(),
-      unsubscribeToken,
-      ...(name ? { name } : {}),
-    };
-
-    let insertedId;
-    try {
-      insertedId = (await users.insertOne(newUser)).insertedId;
-    } catch (err) {
-      if (err instanceof MongoServerError && err.code === 11000) {
-        // Lost the race to a concurrent request for the same email — they're subscribed either way.
-        return NextResponse.json({ status: "already_subscribed" });
-      }
-      throw err;
+    if (existing) {
+      await users.updateOne(
+        { email },
+        {
+          $set: { role: "subscriber", resubscribedAt: new Date() },
+          $unset: { unsubscribedAt: "" },
+        }
+      );
+    } else {
+      // No record at all — treat as a fresh subscribe rather than a dead end.
+      const newUser: SiteUser = {
+        email,
+        role: "subscriber",
+        source: "resubscribe",
+        brevoSynced: false,
+        createdAt: new Date(),
+        resubscribedAt: new Date(),
+        ...(name ? { name } : {}),
+      };
+      await users.insertOne(newUser);
     }
 
     const brevoId = await syncToBrevo(email, name);
     if (brevoId) {
-      await users.updateOne(
-        { _id: insertedId },
-        { $set: { brevoId, brevoSynced: true } }
-      );
+      await users.updateOne({ email }, { $set: { brevoId, brevoSynced: true } });
     }
 
-    return NextResponse.json({ status: "subscribed" });
+    return NextResponse.json({ status: "resubscribed" });
   } catch (err) {
-    console.error("Subscribe API error:", err);
+    console.error("Resubscribe API error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

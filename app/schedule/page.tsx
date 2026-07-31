@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
-import LeagueBadge from "@/components/LeagueBadge";
+import LeagueBadge, { LEAGUE_LOGO_URL } from "@/components/LeagueBadge";
 import FrozenStamp from "@/components/FrozenStamp";
 import ProbBar from "@/components/ProbBar";
 import BetanoPromo from "@/components/BetanoPromo";
@@ -192,7 +192,23 @@ export default function SchedulePage() {
             {i > 0 && <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />}
             {group.map(({ key, label }) => (
               <button key={key} onClick={() => setLeague(key)}
-                className={`border px-3 py-1 font-data text-xs tracking-widest transition-colors ${league === key ? "border-accent text-accent" : "border-line text-ink hover:border-muted hover:text-ink"}`}>
+                className={`flex items-center gap-1.5 border px-3 py-1 font-data text-xs tracking-widest transition-colors ${league === key ? "border-accent text-accent" : "border-line text-ink hover:border-muted hover:text-ink"}`}>
+                {key === "ALL" ? (
+                  <svg width="13" height="12" viewBox="1 -1 62 58" fill="none" aria-hidden="true" className="flex-shrink-0">
+                    <path d="M4 22 L32 2 L60 22" stroke="currentColor" strokeWidth="8" strokeLinejoin="miter" fill="none" />
+                    <path d="M4 38 L32 18 L60 38" stroke="currentColor" strokeWidth="8" strokeLinejoin="miter" fill="none" />
+                    <path d="M4 54 L32 34 L60 54" stroke="currentColor" strokeWidth="8" strokeLinejoin="miter" fill="none" />
+                  </svg>
+                ) : (
+                  <img
+                    src={LEAGUE_LOGO_URL[key]}
+                    alt=""
+                    width={14}
+                    height={14}
+                    className="h-3.5 w-3.5 flex-shrink-0 object-contain"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  />
+                )}
                 {label}
               </button>
             ))}
