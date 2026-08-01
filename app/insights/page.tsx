@@ -138,9 +138,9 @@ export default async function InsightsPage() {
       </section>
 
       <section>
-        <h2 className="font-display text-2xl tracking-wide">Settled Value Signals</h2>
+        <h2 className="font-display text-2xl tracking-wide">Settled Odds Value Signals</h2>
         <p className="mt-2 max-w-2xl text-sm text-ink">
-          Every Value Signal we&apos;ve published, win or lose — the public track record.
+          Every Value Signal we&apos;ve published, win or lose, the auditable record.
         </p>
         {settled.length === 0 ? (
           <p className="mt-4 font-data text-xs text-ink">No settled value signals yet.</p>
