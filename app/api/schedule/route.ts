@@ -73,6 +73,7 @@ export async function GET() {
           home_team: teamName.get(String(m.homeTeamId)) ?? String(m.homeTeamId),
           away_team: teamName.get(String(m.awayTeamId)) ?? String(m.awayTeamId),
           score: m.score ?? { home: null, away: null },
+          api_fixture_id: (m.sourceRefs?.apiFootballFixtureId as number | undefined) ?? null,
           prediction: p ? { probs: p.probs, pick: p.pick, frozen_at: p.frozenAt,
                             hash: p.hash, model_correct: p.modelCorrect } : null,
         };
@@ -92,7 +93,7 @@ export async function GET() {
     const startMs = new Date(startIso).getTime();
     const endMs = new Date(endIso).getTime();
     const rows = fixtures
-      .map((f: Record<string, unknown>) => ({ ...f, status: "SCHEDULED", score: { home: null, away: null }, prediction: null }))
+      .map((f: Record<string, unknown>) => ({ ...f, status: "SCHEDULED", score: { home: null, away: null }, api_fixture_id: null, prediction: null }))
       .filter((f: { kickoff_utc: string }) => {
         const t = new Date(f.kickoff_utc).getTime();
         return t >= startMs && t < endMs;

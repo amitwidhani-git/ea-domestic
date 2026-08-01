@@ -23,9 +23,16 @@ export interface Prediction {
 }
 export interface Result { match_id: string; fthg: number; ftag: number; ftr: "H" | "D" | "A"; }
 export interface EvSignal {
-  match_id: string; selection: "home" | "draw" | "away";
+  match_id: string; league: League; selection: "home" | "draw" | "away";
   model_prob: number; market_prob: number; best_price: number;
-  best_bookmaker: string; ev: number; created_at: string;
+  best_bookmaker: string; ev: number; kelly_fraction: number; book_count: number;
+  created_at: string; home_team: string; away_team: string; kickoff_utc: string;
+}
+export interface SettledEvSignal {
+  match_id: string; league: League; selection: "home" | "draw" | "away";
+  best_price: number; best_bookmaker: string; ev: number; created_at: string;
+  settled_result: "WIN" | "LOSE" | "VOID";
+  home_team: string; away_team: string;
 }
 export interface Article { slug: string; title: string; published_at: string; summary: string; }
 export interface ArticleSection { heading?: string; paragraphs: string[]; }

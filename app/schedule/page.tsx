@@ -67,6 +67,7 @@ interface ScheduleRow {
   away_team: string;
   status: string;
   score: { home: number | null; away: number | null };
+  api_fixture_id: number | null;
   prediction: {
     probs: { home: number; draw: number; away: number };
     pick: "home" | "draw" | "away";
@@ -74,6 +75,24 @@ interface ScheduleRow {
     hash: string;
     model_correct: boolean | null;
   } | null;
+}
+
+interface LiveScore {
+  apiFixtureId: number;
+  status: string;
+  elapsed: number | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  homeTeam: string;
+  awayTeam: string;
+}
+
+const DAY_MS = 86_400_000;
+
+function todayWindowUtc(): { start: number; end: number } {
+  const now = new Date();
+  const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return { start, end: start + DAY_MS };
 }
 
 type LeagueFilter = "ALL" | League;
@@ -107,6 +126,10 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true);
   const [league, setLeague] = useState<LeagueFilter>("ALL");
   const [filter, setFilter] = useState<"ALL" | "LOCKED" | "PENDING" | "SETTLED">("ALL");
+  const [liveScores, setLiveScores] = useState<Map<number, LiveScore>>(new Map());
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isMatchday, setIsMatchday] = useState(false);
+  const [nowTick, setNowTick] = useState(() => Date.now());
 
   useEffect(() => {
     fetch("/api/schedule").then((r) => r.json()).then((schedule) => {
@@ -114,6 +137,67 @@ export default function SchedulePage() {
       setLoading(false);
     });
   }, []);
+
+  // Matchday flag: any fixture kicking off today, checked once the schedule loads.
+  useEffect(() => {
+    if (rows.length === 0) return;
+    const { start, end } = todayWindowUtc();
+    const hasToday = rows.some((r) => {
+      const t = new Date(r.kickoff_utc).getTime();
+      return t >= start && t < end;
+    });
+    setIsMatchday(hasToday);
+  }, [rows]);
+
+  // Live-score polling: only while today has fixtures, and only while the
+  // clock is within (earliest today kickoff - 15min, latest today kickoff + 120min).
+  useEffect(() => {
+    if (!isMatchday) return;
+
+    const { start, end } = todayWindowUtc();
+    const todayKickoffs = rows
+      .filter((r) => {
+        const t = new Date(r.kickoff_utc).getTime();
+        return t >= start && t < end;
+      })
+      .map((r) => new Date(r.kickoff_utc).getTime());
+
+    if (todayKickoffs.length === 0) return;
+
+    const windowStart = Math.min(...todayKickoffs) - 15 * 60_000;
+    const windowEnd = Math.max(...todayKickoffs) + 120 * 60_000;
+
+    function poll() {
+      fetch("/api/live-scores")
+        .then((r) => r.json())
+        .then((data: { fixtures: LiveScore[] }) => {
+          setLiveScores(new Map((data.fixtures ?? []).map((f) => [f.apiFixtureId, f])));
+          setLastUpdated(new Date());
+        })
+        .catch(() => {});
+    }
+
+    function tick() {
+      const now = Date.now();
+      if (now < windowStart) return; // too early — nothing to poll yet
+      if (now > windowEnd) {
+        setLiveScores(new Map()); // window closed — drop any stale live overlays
+        return;
+      }
+      poll();
+    }
+
+    tick();
+    const interval = setInterval(tick, 60_000);
+    return () => clearInterval(interval);
+  }, [isMatchday, rows]);
+
+  // Separate 1s ticker purely so "updated Xs ago" counts up smoothly between polls.
+  useEffect(() => {
+    if (!isMatchday || !lastUpdated) return;
+    const t = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [isMatchday, lastUpdated]);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -171,7 +255,15 @@ export default function SchedulePage() {
 
       {/* Filters */}
       <LeagueBadgeRail value={league} onChange={setLeague} />
-      <p className="-mt-4 text-right font-data text-xs text-ink">{filtered.length} fixtures</p>
+      <div className="-mt-4 flex flex-wrap items-center justify-between gap-2">
+        {isMatchday && lastUpdated ? (
+          <span className="font-data text-xs text-muted">
+            <span className="text-green-400">●</span> Live · updated{" "}
+            {Math.max(0, Math.round((nowTick - lastUpdated.getTime()) / 1000))}s ago
+          </span>
+        ) : <span />}
+        <span className="font-data text-xs text-ink">{filtered.length} fixtures</span>
+      </div>
 
       {loading && (
         <div className="space-y-2">
@@ -198,6 +290,7 @@ export default function SchedulePage() {
             {weekRows.map((row) => {
               const state = predState(row);
               const p = row.prediction;
+              const live = row.api_fixture_id != null ? liveScores.get(row.api_fixture_id) : undefined;
               return (
                 <div key={row.match_id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-start">
                   {/* left: league + teams + time */}
@@ -205,11 +298,17 @@ export default function SchedulePage() {
                     <div className="flex items-center gap-2 mb-1">
                       <LeagueBadge league={row.league} />
                       <span className="font-data text-[10px] text-ink">{kickoffLabel(row.kickoff_utc)}</span>
+                      {live && (
+                        <span className="inline-flex items-center gap-1 border border-green-500/60 px-1.5 py-0.5 font-data text-[9px] text-green-400">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" aria-hidden="true" />
+                          {live.status === "HT" ? "HT" : live.elapsed != null ? `${live.elapsed}'` : "LIVE"}
+                        </span>
+                      )}
                     </div>
                     <p className="font-display text-lg leading-tight tracking-wide truncate">
                       {row.home_team} <span className="text-ink">v</span> {row.away_team}
                     </p>
-                    {row.status === "FINISHED" && row.score.home !== null && (
+                    {!live && row.status === "FINISHED" && row.score.home !== null && (
                       <p className="mt-0.5 font-data text-sm font-semibold">
                         {row.score.home} – {row.score.away}
                       </p>
@@ -218,7 +317,18 @@ export default function SchedulePage() {
 
                   {/* right: prob bar on top, pick/lock commentary beneath — matches Home page card */}
                   <div className="w-full space-y-2 sm:w-96">
-                    {p ? (
+                    {live ? (
+                      <div className="flex items-center gap-3">
+                        <span className="font-display text-3xl text-accent">
+                          {live.homeScore ?? 0} – {live.awayScore ?? 0}
+                        </span>
+                        {p && (
+                          <span className="font-data text-xs text-ink">
+                            EdgeIQ Prediction: <span className="text-accent">{PICK_LABEL[p.pick]}</span>
+                          </span>
+                        )}
+                      </div>
+                    ) : p ? (
                       <>
                         <ProbBar probs={p.probs} pick={p.pick} />
                         {state === "LOCKED" && (

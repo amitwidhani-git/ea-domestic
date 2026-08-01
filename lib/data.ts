@@ -10,7 +10,7 @@
  */
 
 import { MongoClient, type Db } from "mongodb";
-import type { Article, ArticleDetail, EvSignal, Fixture, League, LeagueStats, Prediction, Result, TrackRecordRow } from "./types";
+import type { Article, ArticleDetail, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow } from "./types";
 
 // ---------------------------------------------------------------- connection
 
@@ -208,26 +208,93 @@ export async function getStats(): Promise<LeagueStats[]> {
 
 // ---------------------------------------------------------------- ev signals
 
+interface FixtureInfo { homeTeam: string; awayTeam: string; kickoffUtc: string }
+
+// Shared by getEvSignals/getSettledEvSignals — resolves matchId -> display
+// names + kickoff via a single matches+teams join instead of N+1 lookups.
+async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string, FixtureInfo>> {
+  const uniqueIds = [...new Set(matchIds)];
+  if (uniqueIds.length === 0) return new Map();
+
+  const matches = await d.collection("matches").find({ _id: { $in: uniqueIds as any[] } }).toArray();
+  const matchById = new Map(matches.map((m) => [String(m._id), m]));
+
+  const teamIds = [...new Set(matches.flatMap((m) => [m.homeTeamId, m.awayTeamId]))];
+  const teamDocs = await d.collection("teams").find({ _id: { $in: teamIds as any[] } }).toArray();
+  const teamName = new Map(teamDocs.map((t) => [String(t._id), String(t.name)]));
+
+  const out = new Map<string, FixtureInfo>();
+  for (const id of uniqueIds) {
+    const m = matchById.get(id);
+    out.set(id, {
+      homeTeam: m ? teamName.get(String(m.homeTeamId)) ?? String(m.homeTeamId) : id,
+      awayTeam: m ? teamName.get(String(m.awayTeamId)) ?? String(m.awayTeamId) : "",
+      kickoffUtc: m ? (m.kickoffUtc as string) : "",
+    });
+  }
+  return out;
+}
+
+/** Live (unsettled) EV signals, highest edge first. */
 export async function getEvSignals(): Promise<EvSignal[]> {
   const d = await db();
-  const now = new Date().toISOString();
   const signals = await d
     .collection("ev_signals")
-    .find({ settledResult: null, createdAt: { $gte: new Date(Date.now() - 86400_000).toISOString() } })
+    .find({ settledResult: null })
     .sort({ ev: -1 })
     .limit(20)
     .toArray();
 
-  return signals.map((s) => ({
-    match_id: String(s.matchId),
-    selection: s.selection as EvSignal["selection"],
-    model_prob: s.modelProb as number,
-    market_prob: s.marketProb as number,
-    best_price: s.bestPrice as number,
-    best_bookmaker: s.bestBookmaker as string,
-    ev: s.ev as number,
-    created_at: s.createdAt as string,
-  }));
+  const info = await attachFixtureInfo(d, signals.map((s) => String(s.matchId)));
+
+  return signals.map((s) => {
+    const f = info.get(String(s.matchId));
+    return {
+      match_id: String(s.matchId),
+      league: s.league as League,
+      selection: s.selection as EvSignal["selection"],
+      model_prob: s.modelProb as number,
+      market_prob: s.marketProb as number,
+      best_price: s.bestPrice as number,
+      best_bookmaker: s.bestBookmaker as string,
+      ev: s.ev as number,
+      kelly_fraction: s.kellyFraction as number,
+      book_count: s.bookCount as number,
+      created_at: s.createdAt as string,
+      home_team: f?.homeTeam ?? String(s.matchId),
+      away_team: f?.awayTeam ?? "",
+      kickoff_utc: f?.kickoffUtc ?? "",
+    };
+  });
+}
+
+/** Settled EV signals (WIN/LOSE/VOID), most recent first — the public track record. */
+export async function getSettledEvSignals(): Promise<SettledEvSignal[]> {
+  const d = await db();
+  const signals = await d
+    .collection("ev_signals")
+    .find({ settledResult: { $ne: null } })
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .toArray();
+
+  const info = await attachFixtureInfo(d, signals.map((s) => String(s.matchId)));
+
+  return signals.map((s) => {
+    const f = info.get(String(s.matchId));
+    return {
+      match_id: String(s.matchId),
+      league: s.league as League,
+      selection: s.selection as SettledEvSignal["selection"],
+      best_price: s.bestPrice as number,
+      best_bookmaker: s.bestBookmaker as string,
+      ev: s.ev as number,
+      created_at: s.createdAt as string,
+      settled_result: s.settledResult as SettledEvSignal["settled_result"],
+      home_team: f?.homeTeam ?? String(s.matchId),
+      away_team: f?.awayTeam ?? "",
+    };
+  });
 }
 
 // ---------------------------------------------------------------- articles
