@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import AccuracyDonut from "@/components/AccuracyDonut";
 import LeagueBadge from "@/components/LeagueBadge";
 import WorldCupProof from "@/components/WorldCupProof";
 import type { LeagueStats, TrackRecordRow } from "@/lib/types";
@@ -35,24 +36,37 @@ export default function TrackRecordTabs({ rows, stats }: { rows: TrackRecordRow[
         <div className="space-y-10">
           {stats.length > 0 && (
             <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              {stats.map((s) => (
-                <div key={s.league} className="border border-line bg-panel p-4">
-                  <p className="font-data text-[10px] uppercase tracking-widest text-ink">
-                    {s.league === "ALL" ? "All leagues" : LEAGUE_NAMES[s.league]}
-                  </p>
-                  <p className="mt-2 font-display text-3xl leading-none text-accent">
-                    {(s.accuracy * 100).toFixed(1)}%
-                  </p>
-                  <p className="mt-1 font-data text-[11px] text-ink">{s.correct}/{s.settled} correct</p>
-                </div>
-              ))}
+              {stats.map((s) => {
+                const pct = Math.round(s.accuracy * 100);
+                const perfect = s.settled > 0 && s.correct === s.settled;
+                return (
+                  <div key={s.league}
+                    className={`flex flex-col items-center border p-4 text-center ${perfect ? "border-accent/60 bg-accent/5" : "border-line bg-panel"}`}>
+                    <div className="relative" style={{ width: 88, height: 88 }}>
+                      <AccuracyDonut pct={pct} size={88} stroke={8} emphasize={perfect} />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className={`font-display text-xl leading-none ${perfect ? "text-accent" : "text-ink"}`}>
+                          {pct}%
+                        </span>
+                      </div>
+                    </div>
+                    <p className="mt-2 font-data text-[10px] uppercase tracking-widest text-ink">
+                      {s.league === "ALL" ? "All Competitions" : LEAGUE_NAMES[s.league]}
+                    </p>
+                    <p className="mt-1 font-data text-[11px] text-ink">{s.correct}/{s.settled} correct</p>
+                  </div>
+                );
+              })}
             </section>
           )}
-          <div className="max-w-2xl border border-line bg-panel p-3 font-data text-xs text-muted">
-            How we settle predictions: League fixtures (PL, Championship, League One, League Two)
-            settle on the 90-minute result — a draw after 90 minutes is a draw. Cup fixtures (FA
-            Cup, League Cup, Community Shield) settle on the final outcome including penalty
-            shootouts where applicable — the winner advances.
+          <div className="max-w-2xl">
+            <h3 className="font-display text-xl tracking-wide">How We Settle Predictions</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink">
+              League fixtures such as Premier League, Championship etc. settle on the 90-minute
+              result, a draw after 90 minutes is a draw. Cup fixtures such as FA Cup, League Cup,
+              Community Shield settle on the final outcome including penalty shootouts where
+              applicable, resulting in the winner advancing.
+            </p>
           </div>
           <section className="overflow-x-auto">
             {rows.length === 0 ? (
