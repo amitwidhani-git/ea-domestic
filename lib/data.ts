@@ -239,19 +239,31 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
   return out;
 }
 
-/** Live (unsettled) EV signals, most recently created first, highest edge first within a day. */
+// Every match gets one ev_signals doc per selection (home/draw/away), most of
+// which are negative EV — i.e. not actually value. Without this floor the
+// unsettled query includes that noise, which both crowds out other matches
+// under the limit and shows multiple contradictory cards for the same fixture.
+const MIN_EV = 0.05;
+
+/**
+ * Live (unsettled, positive-value) EV signals, shown in kickoff order (soonest
+ * match first) so the page reads as "what's coming up", not a leaderboard.
+ * kickoff_utc only exists after the matches join below, so candidate
+ * selection happens by EV in Mongo (highest value, capped at 20) and the
+ * final display order is applied afterwards once kickoff is known.
+ */
 export async function getEvSignals(): Promise<EvSignal[]> {
   const d = await db();
   const signals = await d
     .collection("ev_signals")
-    .find({ settledResult: null })
-    .sort({ createdAt: -1, ev: -1 })
+    .find({ settledResult: null, ev: { $gte: MIN_EV } })
+    .sort({ ev: -1 })
     .limit(20)
     .toArray();
 
   const info = await attachFixtureInfo(d, signals.map((s) => String(s.matchId)));
 
-  return signals.map((s) => {
+  const rows = signals.map((s) => {
     const f = info.get(String(s.matchId));
     return {
       match_id: String(s.matchId),
@@ -269,6 +281,13 @@ export async function getEvSignals(): Promise<EvSignal[]> {
       away_team: f?.awayTeam ?? "",
       kickoff_utc: f?.kickoffUtc ?? "",
     };
+  });
+
+  return rows.sort((a, b) => {
+    if (!a.kickoff_utc) return 1; // unresolved fixtures sink to the bottom
+    if (!b.kickoff_utc) return -1;
+    if (a.kickoff_utc !== b.kickoff_utc) return a.kickoff_utc < b.kickoff_utc ? -1 : 1;
+    return b.ev - a.ev; // same kickoff — higher edge first
   });
 }
 
