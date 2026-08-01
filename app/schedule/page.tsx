@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
-import LeagueBadge, { LEAGUE_LOGO_URL } from "@/components/LeagueBadge";
+import LeagueBadge from "@/components/LeagueBadge";
+import LeagueBadgeRail from "@/components/LeagueBadgeRail";
 import FrozenStamp from "@/components/FrozenStamp";
 import ProbBar from "@/components/ProbBar";
 import BetanoPromo from "@/components/BetanoPromo";
@@ -76,23 +77,6 @@ interface ScheduleRow {
 }
 
 type LeagueFilter = "ALL" | League;
-
-const FILTER_GROUPS: { key: LeagueFilter; label: string }[][] = [
-  [
-    { key: "ALL", label: "All" },
-  ],
-  [
-    { key: "PL", label: "PL" },
-    { key: "CH", label: "Championship" },
-    { key: "L1", label: "League One" },
-    { key: "L2", label: "League Two" },
-  ],
-  [
-    { key: "FAC", label: "FA Cup" },
-    { key: "LC", label: "League Cup" },
-    { key: "CS", label: "Comm. Shield" },
-  ],
-];
 
 const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
 
@@ -186,38 +170,8 @@ export default function SchedulePage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2">
-        {FILTER_GROUPS.map((group, i) => (
-          <div key={i} className="flex flex-wrap items-center gap-2">
-            {i > 0 && <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />}
-            {group.map(({ key, label }) => (
-              <button key={key} onClick={() => setLeague(key)}
-                className={`flex items-center gap-1.5 border px-3 py-1 font-data text-xs tracking-widest transition-colors ${league === key ? "border-accent text-accent" : "border-line text-ink hover:border-muted hover:text-ink"}`}>
-                {key === "ALL" ? (
-                  <svg width="13" height="12" viewBox="1 -1 62 58" fill="none" aria-hidden="true" className="flex-shrink-0">
-                    <path d="M4 22 L32 2 L60 22" stroke="currentColor" strokeWidth="8" strokeLinejoin="miter" fill="none" />
-                    <path d="M4 38 L32 18 L60 38" stroke="currentColor" strokeWidth="8" strokeLinejoin="miter" fill="none" />
-                    <path d="M4 54 L32 34 L60 54" stroke="currentColor" strokeWidth="8" strokeLinejoin="miter" fill="none" />
-                  </svg>
-                ) : (
-                  <img
-                    src={LEAGUE_LOGO_URL[key]}
-                    alt=""
-                    width={14}
-                    height={14}
-                    className="h-3.5 w-3.5 flex-shrink-0 object-contain"
-                    onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  />
-                )}
-                {label}
-              </button>
-            ))}
-          </div>
-        ))}
-        <span className="ml-auto font-data text-xs text-ink self-center">
-          {filtered.length} fixtures
-        </span>
-      </div>
+      <LeagueBadgeRail value={league} onChange={setLeague} />
+      <p className="-mt-4 text-right font-data text-xs text-ink">{filtered.length} fixtures</p>
 
       {loading && (
         <div className="space-y-2">
@@ -235,7 +189,7 @@ export default function SchedulePage() {
       {grouped.map(([key, week, weekRows], weekIndex) => {
         const { id: promoId, Promo } = stripPromoForWeek(weekIndex, key);
         return (
-        <section key={key}>
+        <section key={key} className={weekIndex === 0 ? "-mt-6" : undefined}>
           <Promo key={promoId} />
           <h2 className="mb-3 mt-4 font-data text-[11px] uppercase tracking-widest text-ink border-b border-line pb-2">
             {week}
@@ -288,7 +242,7 @@ export default function SchedulePage() {
                       </>
                     ) : (
                       <p className="font-data text-[10px] text-ink">
-                        Prediction pending · locks 48h before kick-off
+                        Prediction pending · locks before kick-off
                       </p>
                     )}
                   </div>
