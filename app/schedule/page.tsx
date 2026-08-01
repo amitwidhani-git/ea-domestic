@@ -14,7 +14,7 @@ import FruityKingPromo from "@/components/FruityKingPromo";
 import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
 import SubscribeRegister from "@/components/SubscribeRegister";
-import type { League } from "@/lib/types";
+import { IS_CUP, type League } from "@/lib/types";
 
 // A single strip banner sits above each week's date line. The first match
 // week always leads with LiveScoreBet; later weeks draw a randomised pick
@@ -67,6 +67,7 @@ interface ScheduleRow {
   away_team: string;
   status: string;
   score: { home: number | null; away: number | null };
+  penalty_score: { home: number; away: number } | null;
   api_fixture_id: number | null;
   prediction: {
     probs: { home: number; draw: number; away: number };
@@ -292,7 +293,8 @@ export default function SchedulePage() {
               const p = row.prediction;
               const live = row.api_fixture_id != null ? liveScores.get(row.api_fixture_id) : undefined;
               return (
-                <div key={row.match_id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-start">
+                <div key={row.match_id}>
+                <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-start">
                   {/* left: league + teams + time */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -340,13 +342,23 @@ export default function SchedulePage() {
                           </div>
                         )}
                         {state === "SETTLED" && (
-                          <div className="flex items-center gap-2">
-                            <span className={`font-display text-lg ${p.model_correct ? "text-accent" : "text-loss"}`}>
-                              {p.model_correct ? "✓" : "✗"}
-                            </span>
-                            <span className="font-data text-xs text-ink">
-                              EdgeIQ Prediction: <span className="text-ink">{PICK_LABEL[p.pick]}</span>
-                            </span>
+                          <div className="space-y-1">
+                            <p className="font-display text-lg text-ink">
+                              {row.score.home}–{row.score.away}
+                              {IS_CUP[row.league] && row.penalty_score && (
+                                <span className="ml-2 font-data text-xs text-muted">
+                                  (pens {row.penalty_score.home}–{row.penalty_score.away})
+                                </span>
+                              )}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className={`font-display text-lg ${p.model_correct ? "text-accent" : "text-loss"}`}>
+                                {p.model_correct ? "✓" : "✗"}
+                              </span>
+                              <span className="font-data text-xs text-ink">
+                                EdgeIQ Prediction: <span className="text-ink">{PICK_LABEL[p.pick]}</span>
+                              </span>
+                            </div>
                           </div>
                         )}
                       </>
@@ -356,6 +368,12 @@ export default function SchedulePage() {
                       </p>
                     )}
                   </div>
+                </div>
+                {IS_CUP[row.league] && state === "LOCKED" && (
+                  <p className="font-data text-[9px] text-muted italic px-4 pb-2">
+                    Cup prediction — settles on final result inc. penalties
+                  </p>
+                )}
                 </div>
               );
             })}

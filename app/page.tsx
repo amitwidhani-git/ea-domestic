@@ -143,22 +143,26 @@ export default async function HomePage() {
               n: "01",
               title: "Pre Match Lock",
               body: "We lock in every football prediction before kick-off and timestamp it, so we can never quietly change our pick after seeing the result.",
+              note: null,
             },
             {
               n: "02",
               title: "Four divisions, one model",
               body: "EdgeIQ model uses cross-league data points covering the Premier League through League Two. Promoted clubs carry earned ratings, so no cold-start guessing.",
+              note: null,
             },
             {
               n: "03",
               title: "Odds Value Signals, Not Tips",
               body: "We publish Value Signals wherever our model probability and the best available bookmaker price diverge. Information to weigh, not a tip to follow and not gut feel.",
+              note: "Cup picks settle on the final result including penalties. League picks settle on 90 minutes — a draw is a draw.",
             },
           ].map((c) => (
             <div key={c.n} className="border border-line bg-panel p-5">
               <p className="font-display text-4xl leading-none text-accent/40">{c.n}</p>
               <h3 className="mt-2 font-display text-xl tracking-wide">{c.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink">{c.body}</p>
+              {c.note && <p className="mt-2 text-sm leading-relaxed text-ink">{c.note}</p>}
             </div>
           ))}
         </div>

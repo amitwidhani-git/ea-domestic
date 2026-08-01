@@ -153,6 +153,10 @@ export async function getTrackRecord(): Promise<TrackRecordRow[]> {
           fthg: (m.score?.home ?? 0) as number,
           ftag: (m.score?.away ?? 0) as number,
           ftr: m.ftr as Result["ftr"],
+          penalty_score: m.penaltyScore
+            ? { home: m.penaltyScore.home as number, away: m.penaltyScore.away as number }
+            : null,
+          status: m.status as string,
         },
       };
     });
@@ -235,13 +239,13 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
   return out;
 }
 
-/** Live (unsettled) EV signals, highest edge first. */
+/** Live (unsettled) EV signals, most recently created first, highest edge first within a day. */
 export async function getEvSignals(): Promise<EvSignal[]> {
   const d = await db();
   const signals = await d
     .collection("ev_signals")
     .find({ settledResult: null })
-    .sort({ ev: -1 })
+    .sort({ createdAt: -1, ev: -1 })
     .limit(20)
     .toArray();
 

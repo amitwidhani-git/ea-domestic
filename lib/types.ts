@@ -21,7 +21,11 @@ export interface Prediction {
   pick: "home" | "draw" | "away";
   frozen_at: string; hash: string; model_correct: boolean | null;
 }
-export interface Result { match_id: string; fthg: number; ftag: number; ftr: "H" | "D" | "A"; }
+export interface Result {
+  match_id: string; fthg: number; ftag: number; ftr: "H" | "D" | "A";
+  penalty_score: { home: number; away: number } | null;
+  status: string;
+}
 export interface EvSignal {
   match_id: string; league: League; selection: "home" | "draw" | "away";
   model_prob: number; market_prob: number; best_price: number;

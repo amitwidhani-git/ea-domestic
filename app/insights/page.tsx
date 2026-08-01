@@ -28,6 +28,16 @@ function kickoffLabel(iso: string): string {
   return `${get("weekday")} ${get("day")} ${get("month")} · ${get("hour")}:${get("minute")} UK`;
 }
 
+// e.g. "31 Jul 08:24" — day/month/time only, no year/weekday.
+function formatSignalTime(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(new Date(iso));
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("day")} ${get("month")} ${get("hour")}:${get("minute")}`;
+}
+
 // "betfair_ex_uk" -> "Betfair Ex Uk"
 function formatBookmaker(id: string): string {
   return id.split(/[-_]/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -55,6 +65,9 @@ function EvCard({ signal, affiliate }: { signal: EvSignal; affiliate: Awaited<Re
       {signal.kickoff_utc && (
         <p className="mt-0.5 font-data text-[10px] text-muted">{kickoffLabel(signal.kickoff_utc)}</p>
       )}
+      <p className="mt-0.5 font-data text-[10px] text-muted">
+        Signal generated: {formatSignalTime(signal.created_at)}
+      </p>
 
       <p className="mt-3 font-data text-sm text-accent">{pickLabel(signal)}</p>
 

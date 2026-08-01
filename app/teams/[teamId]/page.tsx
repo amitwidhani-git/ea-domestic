@@ -89,6 +89,32 @@ interface UpcomingFixture {
   awayName: string;
 }
 
+type InjurySeverity = "suspension" | "high" | "medium" | "low" | "international" | "unknown";
+
+interface InjuryDoc {
+  teamId: string;
+  playerId: number;
+  playerName: string;
+  position: "Goalkeeper" | "Defender" | "Midfielder" | "Attacker";
+  injuryType: string;
+  severity: InjurySeverity;
+  reason: string;
+  updatedAt: string;
+}
+
+const SEVERITY_ORDER: Record<InjurySeverity, number> = {
+  suspension: 0, high: 1, medium: 2, low: 3, international: 4, unknown: 5,
+};
+
+const SEVERITY_BADGE: Record<InjurySeverity, { label: string; className: string }> = {
+  suspension: { label: "SUSP", className: "border-loss text-loss" },
+  high: { label: "OUT", className: "border-orange-500/60 text-orange-400" },
+  medium: { label: "DOUBT", className: "border-yellow-500/60 text-yellow-400" },
+  low: { label: "50/50", className: "border-muted text-muted" },
+  international: { label: "INTL", className: "border-blue-500/60 text-blue-400" },
+  unknown: { label: "?", className: "border-muted text-muted" },
+};
+
 async function getTeam(teamId: string): Promise<TeamDoc | null> {
   return (await db()).collection<TeamDoc>("teams").findOne({ _id: teamId });
 }
@@ -136,6 +162,14 @@ async function getUpcomingFixtures(teamId: string): Promise<UpcomingFixture[]> {
   }));
 }
 
+async function getInjuries(teamId: string): Promise<InjuryDoc[]> {
+  const injuries = await (await db())
+    .collection<InjuryDoc>("injuries")
+    .find({ teamId })
+    .toArray();
+  return injuries.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+}
+
 async function getModelRatings(teamId: string): Promise<{ att: number | null; deff: number | null }> {
   const modelRun = await (await db())
     .collection<ModelRunDoc>("model_runs")
@@ -162,6 +196,16 @@ function kickoffLabel(iso: string): string {
   }).formatToParts(new Date(iso));
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
   return `${get("weekday")} ${get("day")} ${get("month")} · ${get("hour")}:${get("minute")} UK`;
+}
+
+// e.g. "31 Jul 08:00" — day/month/time only, no year/weekday, unlike kickoffLabel.
+function formatUpdatedAt(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(new Date(iso));
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("day")} ${get("month")} ${get("hour")}:${get("minute")}`;
 }
 
 function timeAgo(iso: string): string {
@@ -203,10 +247,11 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
   const team = await getTeam(teamId);
   if (!team) notFound();
 
-  const [news, fixtures, ratings] = await Promise.all([
+  const [news, fixtures, ratings, injuries] = await Promise.all([
     getClubNews(teamId),
     getUpcomingFixtures(teamId),
     getModelRatings(teamId),
+    getInjuries(teamId),
   ]);
 
   return (
@@ -278,6 +323,40 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
               </div>
             ))}
           </div>
+        )}
+      </section>
+
+      {/* ── SQUAD ABSENCES ───────────────────────────────────────── */}
+      <section>
+        <h2 className="font-display text-2xl tracking-wide">Squad Absences</h2>
+        {injuries.length === 0 ? (
+          <p className="mt-4 font-data text-sm text-muted">No injury data available for this club.</p>
+        ) : (
+          <>
+            <div className="mt-4 divide-y divide-line/60 border border-line">
+              {injuries.map((inj) => (
+                <div key={`${inj.playerId}-${inj.severity}`} className="flex items-center gap-3 px-4 py-2">
+                  <span
+                    className={`inline-block flex-shrink-0 border px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest ${SEVERITY_BADGE[inj.severity].className}`}
+                  >
+                    {SEVERITY_BADGE[inj.severity].label}
+                  </span>
+                  <p className="font-data text-sm text-ink">
+                    {inj.playerName} <span className="text-muted">·</span> {inj.position}{" "}
+                    <span className="text-muted">·</span> {inj.injuryType}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 font-data text-xs text-muted">
+              Last updated: {formatUpdatedAt(
+                injuries.reduce((latest, i) => (i.updatedAt > latest ? i.updatedAt : latest), injuries[0].updatedAt)
+              )}
+            </p>
+            <p className="mt-1 font-data text-xs text-muted">
+              Injury data from Thursday/Friday press conferences only
+            </p>
+          </>
         )}
       </section>
 
