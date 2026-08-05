@@ -83,9 +83,6 @@ function EvCard({ signal, affiliate }: { signal: EvSignal; affiliate: Awaited<Re
         {signal.best_price.toFixed(2)} at {formatBookmaker(signal.best_bookmaker)}{" "}
         <span className="text-muted">(18+)</span>
       </p>
-      <p className="mt-1 font-data text-[10px] text-muted">
-        Kelly: {(signal.kelly_fraction * 100).toFixed(1)}%
-      </p>
 
       {affiliate && (
         <div className="mt-4 border-t border-line pt-3 text-right">
