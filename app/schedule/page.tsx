@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import LeagueBadge from "@/components/LeagueBadge";
 import LeagueBadgeRail from "@/components/LeagueBadgeRail";
 import FrozenStamp from "@/components/FrozenStamp";
@@ -65,6 +66,8 @@ interface ScheduleRow {
   kickoff_utc: string;
   home_team: string;
   away_team: string;
+  home_team_id: string | null;
+  away_team_id: string | null;
   status: string;
   score: { home: number | null; away: number | null };
   penalty_score: { home: number; away: number } | null;
@@ -308,7 +311,13 @@ export default function SchedulePage() {
                       )}
                     </div>
                     <p className="font-display text-lg leading-tight tracking-wide truncate">
-                      {row.home_team} <span className="text-ink">v</span> {row.away_team}
+                      {row.home_team_id ? (
+                        <Link href={`/teams/${row.home_team_id}`} className="no-underline hover:text-accent transition-colors">{row.home_team}</Link>
+                      ) : row.home_team}{" "}
+                      <span className="text-ink">v</span>{" "}
+                      {row.away_team_id ? (
+                        <Link href={`/teams/${row.away_team_id}`} className="no-underline hover:text-accent transition-colors">{row.away_team}</Link>
+                      ) : row.away_team}
                     </p>
                     {!live && row.status === "FINISHED" && row.score.home !== null && (
                       <p className="mt-0.5 font-data text-sm font-semibold">

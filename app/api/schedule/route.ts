@@ -72,6 +72,8 @@ export async function GET() {
           kickoff_utc: m.kickoffUtc, status: m.status,
           home_team: teamName.get(String(m.homeTeamId)) ?? String(m.homeTeamId),
           away_team: teamName.get(String(m.awayTeamId)) ?? String(m.awayTeamId),
+          home_team_id: String(m.homeTeamId),
+          away_team_id: String(m.awayTeamId),
           score: m.score ?? { home: null, away: null },
           penalty_score: (m.penaltyScore as { home: number; away: number } | undefined) ?? null,
           api_fixture_id: (m.sourceRefs?.apiFootballFixtureId as number | undefined) ?? null,
@@ -94,7 +96,7 @@ export async function GET() {
     const startMs = new Date(startIso).getTime();
     const endMs = new Date(endIso).getTime();
     const rows = fixtures
-      .map((f: Record<string, unknown>) => ({ ...f, status: "SCHEDULED", score: { home: null, away: null }, penalty_score: null, api_fixture_id: null, prediction: null }))
+      .map((f: Record<string, unknown>) => ({ ...f, status: "SCHEDULED", score: { home: null, away: null }, penalty_score: null, home_team_id: (f.home_team_id as string | undefined) ?? null, away_team_id: (f.away_team_id as string | undefined) ?? null, api_fixture_id: null, prediction: null }))
       .filter((f: { kickoff_utc: string }) => {
         const t = new Date(f.kickoff_utc).getTime();
         return t >= startMs && t < endMs;

@@ -88,6 +88,8 @@ export async function getFixtures(): Promise<FixtureWithPrediction[]> {
       kickoff_utc: m.kickoffUtc as string,
       home_team: teamName.get(String(m.homeTeamId)) ?? (String(m.homeTeamId)),
       away_team: teamName.get(String(m.awayTeamId)) ?? (String(m.awayTeamId)),
+      home_team_id: String(m.homeTeamId),
+      away_team_id: String(m.awayTeamId),
     };
     const prediction: Prediction | null = pred
       ? {
@@ -138,6 +140,8 @@ export async function getTrackRecord(): Promise<TrackRecordRow[]> {
           kickoff_utc: m.kickoffUtc as string,
           home_team: teamName.get(String(m.homeTeamId)) ?? (String(m.homeTeamId)),
           away_team: teamName.get(String(m.awayTeamId)) ?? (String(m.awayTeamId)),
+          home_team_id: String(m.homeTeamId),
+          away_team_id: String(m.awayTeamId),
         },
         prediction: {
           match_id: String(p.matchId),
@@ -212,7 +216,7 @@ export async function getStats(): Promise<LeagueStats[]> {
 
 // ---------------------------------------------------------------- ev signals
 
-interface FixtureInfo { homeTeam: string; awayTeam: string; kickoffUtc: string }
+interface FixtureInfo { homeTeam: string; awayTeam: string; homeTeamId: string; awayTeamId: string; kickoffUtc: string }
 
 // Shared by getEvSignals/getSettledEvSignals — resolves matchId -> display
 // names + kickoff via a single matches+teams join instead of N+1 lookups.
@@ -233,6 +237,8 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
     out.set(id, {
       homeTeam: m ? teamName.get(String(m.homeTeamId)) ?? String(m.homeTeamId) : id,
       awayTeam: m ? teamName.get(String(m.awayTeamId)) ?? String(m.awayTeamId) : "",
+      homeTeamId: m ? String(m.homeTeamId) : "",
+      awayTeamId: m ? String(m.awayTeamId) : "",
       kickoffUtc: m ? (m.kickoffUtc as string) : "",
     });
   }
@@ -279,6 +285,8 @@ export async function getEvSignals(): Promise<EvSignal[]> {
       created_at: s.createdAt as string,
       home_team: f?.homeTeam ?? String(s.matchId),
       away_team: f?.awayTeam ?? "",
+      home_team_id: f?.homeTeamId ?? "",
+      away_team_id: f?.awayTeamId ?? "",
       kickoff_utc: f?.kickoffUtc ?? "",
     };
   });
@@ -316,6 +324,8 @@ export async function getSettledEvSignals(): Promise<SettledEvSignal[]> {
       settled_result: s.settledResult as SettledEvSignal["settled_result"],
       home_team: f?.homeTeam ?? String(s.matchId),
       away_team: f?.awayTeam ?? "",
+      home_team_id: f?.homeTeamId ?? "",
+      away_team_id: f?.awayTeamId ?? "",
     };
   });
 }

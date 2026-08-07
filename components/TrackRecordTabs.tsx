@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import AccuracyDonut from "@/components/AccuracyDonut";
 import LeagueBadge from "@/components/LeagueBadge";
 import WorldCupProof from "@/components/WorldCupProof";
@@ -102,7 +103,9 @@ export default function TrackRecordTabs({ rows, stats }: { rows: TrackRecordRow[
                           )}
                         </div>
                       </td>
-                      <td className="py-2 pr-4">{fixture.home_team} v {fixture.away_team}</td>
+                      <td className="py-2 pr-4">
+                        <Link href={`/teams/${fixture.home_team_id}`} className="no-underline hover:text-accent transition-colors">{fixture.home_team}</Link> v <Link href={`/teams/${fixture.away_team_id}`} className="no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
+                      </td>
                       <td className="py-2 pr-4">{PICK_SHORT[prediction.pick]} ({(prediction.probs[prediction.pick] * 100).toFixed(0)}%)</td>
                       <td className="py-2 pr-4">
                         {IS_CUP[fixture.league] && result.penalty_score

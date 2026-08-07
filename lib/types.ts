@@ -14,6 +14,7 @@ export const IS_CUP: Record<League, boolean> = {
 export interface Fixture {
   match_id: string; league: League; season: string; kickoff_utc: string;
   home_team: string; away_team: string;
+  home_team_id: string; away_team_id: string;
 }
 export interface Prediction {
   match_id: string; model_version: string;
@@ -31,12 +32,14 @@ export interface EvSignal {
   model_prob: number; market_prob: number; best_price: number;
   best_bookmaker: string; ev: number; kelly_fraction: number; book_count: number;
   created_at: string; home_team: string; away_team: string; kickoff_utc: string;
+  home_team_id: string; away_team_id: string;
 }
 export interface SettledEvSignal {
   match_id: string; league: League; selection: "home" | "draw" | "away";
   best_price: number; best_bookmaker: string; ev: number; created_at: string;
   settled_result: "WIN" | "LOSE" | "VOID";
   home_team: string; away_team: string;
+  home_team_id: string; away_team_id: string;
 }
 export interface Article { slug: string; title: string; published_at: string; summary: string; }
 export interface ArticleSection { heading?: string; paragraphs: string[]; }

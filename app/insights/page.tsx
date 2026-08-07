@@ -60,7 +60,9 @@ function EvCard({ signal, affiliate }: { signal: EvSignal; affiliate: Awaited<Re
       </div>
 
       <h3 className="mt-2 font-display text-xl tracking-wide">
-        {signal.home_team} <span className="text-ink">v</span> {signal.away_team}
+        <Link href={`/teams/${signal.home_team_id}`} className="no-underline hover:text-accent transition-colors">{signal.home_team}</Link>
+        {" "}<span className="text-ink">v</span>{" "}
+        <Link href={`/teams/${signal.away_team_id}`} className="no-underline hover:text-accent transition-colors">{signal.away_team}</Link>
       </h3>
       {signal.kickoff_utc && (
         <p className="mt-0.5 font-data text-[10px] text-muted">{kickoffLabel(signal.kickoff_utc)}</p>
@@ -160,7 +162,9 @@ export default async function InsightsPage() {
                   return (
                     <tr key={`${s.match_id}-${s.selection}`} className="border-b border-line/60 hover:bg-panel">
                       <td className="py-2 pr-4 text-ink">{s.created_at.slice(0, 10)}</td>
-                      <td className="py-2 pr-4 text-ink">{s.home_team} v {s.away_team}</td>
+                      <td className="py-2 pr-4 text-ink">
+                        <Link href={`/teams/${s.home_team_id}`} className="no-underline hover:text-accent transition-colors">{s.home_team}</Link> v <Link href={`/teams/${s.away_team_id}`} className="no-underline hover:text-accent transition-colors">{s.away_team}</Link>
+                      </td>
                       <td className="py-2 pr-4 text-ink">{pickLabel(s)}</td>
                       <td className="py-2 pr-4 text-ink">{s.best_price.toFixed(2)}</td>
                       <td className={`py-2 pr-4 font-bold ${s.settled_result === "WIN" ? "text-accent" : s.settled_result === "LOSE" ? "text-loss" : "text-ink"}`}>
