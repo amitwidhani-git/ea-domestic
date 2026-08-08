@@ -5,6 +5,7 @@ import LeagueBadge from "@/components/LeagueBadge";
 import LeagueBadgeRail from "@/components/LeagueBadgeRail";
 import FrozenStamp from "@/components/FrozenStamp";
 import ProbBar from "@/components/ProbBar";
+import OddsPanel from "@/components/OddsPanel";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
@@ -389,6 +390,14 @@ export default function SchedulePage() {
                   <p className="font-data text-[9px] text-muted italic px-4 pb-2">
                     Cup prediction — settles on final result inc. penalties
                   </p>
+                )}
+                {state !== "SETTLED" && (
+                  <OddsPanel
+                    matchId={row.match_id}
+                    homeTeam={row.home_team}
+                    awayTeam={row.away_team}
+                    modelProbs={row.prediction?.probs}
+                  />
                 )}
                 </div>
               );

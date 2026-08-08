@@ -5,6 +5,7 @@ import LeagueBadge from "@/components/LeagueBadge";
 import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
 import AffiliateCta from "@/components/AffiliateCta";
+import OddsPanel from "@/components/OddsPanel";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 import type { Affiliate } from "@/lib/affiliates";
 
@@ -92,6 +93,10 @@ function EvCard({ signal, affiliate }: { signal: EvSignal; affiliate: Affiliate 
           <AffiliateCta affiliate={affiliate} price={signal.best_price} />
         </div>
       )}
+
+      <div className="-mx-4 -mb-4 mt-3">
+        <OddsPanel matchId={signal.match_id} homeTeam={signal.home_team} awayTeam={signal.away_team} />
+      </div>
     </article>
   );
 }
@@ -134,6 +139,18 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
       ) : (
         <p className="mt-3 font-data text-[10px] text-muted">Locks 48h before KO</p>
       )}
+
+      <div className="-mx-4 -mb-4 mt-3">
+        <OddsPanel
+          matchId={fixture.match_id}
+          homeTeam={fixture.home_team}
+          awayTeam={fixture.away_team}
+          modelProbs={prediction?.probs}
+          ev={bestSignal?.ev}
+          selection={bestSignal?.selection}
+          bestPrice={bestSignal?.best_price}
+        />
+      </div>
     </article>
   );
 }
