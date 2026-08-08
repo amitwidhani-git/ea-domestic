@@ -10,7 +10,7 @@
  */
 
 import { MongoClient, type Db } from "mongodb";
-import type { Article, ArticleDetail, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow } from "./types";
+import type { Article, ArticleDetail, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow, UpcomingFixtureWithSignal } from "./types";
 
 // ---------------------------------------------------------------- connection
 
@@ -326,6 +326,84 @@ export async function getSettledEvSignals(): Promise<SettledEvSignal[]> {
       away_team: f?.awayTeam ?? "",
       home_team_id: f?.homeTeamId ?? "",
       away_team_id: f?.awayTeamId ?? "",
+    };
+  });
+}
+
+/**
+ * All SCHEDULED fixtures in the next 14 days, each joined to its prediction
+ * (null until frozen) and its best value signal (highest EV, unsettled) — but
+ * only when that best EV clears MIN_EV, so the "EV badge" means genuine value
+ * rather than a raw best-of-three-selections that may be negative.
+ */
+export async function getUpcomingWithSignals(): Promise<UpcomingFixtureWithSignal[]> {
+  const d = await db();
+  const now = new Date().toISOString();
+  const horizon = new Date(Date.now() + 14 * 86400_000).toISOString();
+
+  const matches = await d
+    .collection("matches")
+    .find({ status: "SCHEDULED", kickoffUtc: { $gte: now, $lte: horizon } })
+    .sort({ kickoffUtc: 1 })
+    .toArray();
+
+  if (matches.length === 0) return [];
+
+  const matchIds = matches.map((m) => m._id);
+
+  const preds = await d.collection("predictions").find({ matchId: { $in: matchIds as any[] } }).toArray();
+  const predByMatch = new Map(preds.map((p) => [String(p.matchId), p]));
+
+  const sigs = await d
+    .collection("ev_signals")
+    .find({ matchId: { $in: matchIds as any[] }, settledResult: null, ev: { $gte: MIN_EV } })
+    .toArray();
+  const bestSignalByMatch = new Map<string, (typeof sigs)[number]>();
+  for (const s of sigs) {
+    const mid = String(s.matchId);
+    const cur = bestSignalByMatch.get(mid);
+    if (!cur || (s.ev as number) > (cur.ev as number)) bestSignalByMatch.set(mid, s);
+  }
+
+  const teamIds = [...new Set(matches.flatMap((m) => [m.homeTeamId, m.awayTeamId]))];
+  const teamDocs = await d.collection("teams").find({ _id: { $in: teamIds as any[] } }).toArray();
+  const teamName = new Map(teamDocs.map((t) => [String(t._id), String(t.name)]));
+
+  return matches.map((m) => {
+    const mid = String(m._id);
+    const p = predByMatch.get(mid);
+    const s = bestSignalByMatch.get(mid);
+    const fixture: Fixture = {
+      match_id: mid,
+      league: m.league as League,
+      season: m.season as string,
+      kickoff_utc: m.kickoffUtc as string,
+      home_team: teamName.get(String(m.homeTeamId)) ?? String(m.homeTeamId),
+      away_team: teamName.get(String(m.awayTeamId)) ?? String(m.awayTeamId),
+      home_team_id: String(m.homeTeamId),
+      away_team_id: String(m.awayTeamId),
+    };
+    return {
+      fixture,
+      prediction: p
+        ? {
+            match_id: mid,
+            model_version: p.modelVersion as string,
+            probs: p.probs as Prediction["probs"],
+            pick: p.pick as Prediction["pick"],
+            frozen_at: p.frozenAt as string,
+            hash: p.hash as string,
+            model_correct: p.modelCorrect as boolean | null,
+          }
+        : null,
+      bestSignal: s
+        ? {
+            selection: s.selection as "home" | "draw" | "away",
+            ev: s.ev as number,
+            best_price: s.bestPrice as number,
+            best_bookmaker: s.bestBookmaker as string,
+          }
+        : null,
     };
   });
 }

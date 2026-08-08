@@ -50,5 +50,10 @@ export interface ArticleDetail extends Article {
   sections: ArticleSection[];
   disclaimer?: string;
 }
+export interface UpcomingFixtureWithSignal {
+  fixture: Fixture;
+  prediction: Prediction | null;
+  bestSignal: { selection: "home" | "draw" | "away"; ev: number; best_price: number; best_bookmaker: string } | null;
+}
 export interface TrackRecordRow { fixture: Fixture; prediction: Prediction; result: Result; }
 export interface LeagueStats { league: League | "ALL"; settled: number; correct: number; accuracy: number; }

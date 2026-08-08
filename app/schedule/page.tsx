@@ -376,6 +376,13 @@ export default function SchedulePage() {
                         Prediction pending · locks before kick-off
                       </p>
                     )}
+                    {(state === "LOCKED" || state === "SETTLED") && (
+                      <div className="text-right">
+                        <Link href={`/insights#match-${row.match_id}`} className="font-data text-[10px] text-muted hover:text-accent">
+                          View analysis →
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {IS_CUP[row.league] && state === "LOCKED" && (

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import AffiliateCta from "@/components/AffiliateCta";
 import BetanoPromo from "@/components/BetanoPromo";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
 import BetMazePromo from "@/components/BetMazePromo";
@@ -9,90 +8,16 @@ import MogobetPromo from "@/components/MogobetPromo";
 import FruityKingPromo from "@/components/FruityKingPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
 import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
-import LeagueBadge from "@/components/LeagueBadge";
+import InsightsFixtures from "@/components/InsightsFixtures";
 import { getAffiliateForBookmaker } from "@/lib/affiliates";
 import { getArticles, getEvSignals, getSettledEvSignals } from "@/lib/data";
-import type { EvSignal, SettledEvSignal } from "@/lib/types";
+import type { SettledEvSignal } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-// Formats a UTC ISO string as Europe/London civil time, e.g. "Sat 16 Aug · 15:00 UK".
-function kickoffLabel(iso: string): string {
-  if (!iso) return "";
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/London",
-    weekday: "short", day: "numeric", month: "short",
-    hour: "2-digit", minute: "2-digit", hour12: false,
-  }).formatToParts(new Date(iso));
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  return `${get("weekday")} ${get("day")} ${get("month")} · ${get("hour")}:${get("minute")} UK`;
-}
-
-// e.g. "31 Jul 08:24" — day/month/time only, no year/weekday.
-function formatSignalTime(iso: string): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/London",
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
-  }).formatToParts(new Date(iso));
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  return `${get("day")} ${get("month")} ${get("hour")}:${get("minute")}`;
-}
-
-// "betfair_ex_uk" -> "Betfair Ex Uk"
-function formatBookmaker(id: string): string {
-  return id.split(/[-_]/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-}
 
 function pickLabel(s: { selection: "home" | "draw" | "away"; home_team: string; away_team: string }): string {
   if (s.selection === "draw") return "Draw";
   return `${s.selection === "home" ? s.home_team : s.away_team} to win`;
-}
-
-function EvCard({ signal, affiliate }: { signal: EvSignal; affiliate: Awaited<ReturnType<typeof getAffiliateForBookmaker>> }) {
-  const edgePts = (signal.model_prob - signal.market_prob) * 100;
-  return (
-    <article className="border border-line bg-panel p-4">
-      <div className="flex items-center justify-between">
-        <LeagueBadge league={signal.league} />
-        <span className="border border-accent bg-accent/10 px-2 py-0.5 font-data text-xs font-semibold text-accent">
-          +{(signal.ev * 100).toFixed(1)}% EV
-        </span>
-      </div>
-
-      <h3 className="mt-2 font-display text-xl tracking-wide">
-        <Link href={`/teams/${signal.home_team_id}`} className="no-underline hover:text-accent transition-colors">{signal.home_team}</Link>
-        {" "}<span className="text-ink">v</span>{" "}
-        <Link href={`/teams/${signal.away_team_id}`} className="no-underline hover:text-accent transition-colors">{signal.away_team}</Link>
-      </h3>
-      {signal.kickoff_utc && (
-        <p className="mt-0.5 font-data text-[10px] text-muted">{kickoffLabel(signal.kickoff_utc)}</p>
-      )}
-      <p className="mt-0.5 font-data text-[10px] text-muted">
-        Signal generated: {formatSignalTime(signal.created_at)}
-      </p>
-
-      <p className="mt-3 font-data text-sm text-accent">{pickLabel(signal)}</p>
-
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-data text-[11px] text-ink">
-        <span>Model: {(signal.model_prob * 100).toFixed(1)}%</span>
-        <span className="text-muted">·</span>
-        <span>Market: {(signal.market_prob * 100).toFixed(1)}%</span>
-        <span className="text-muted">·</span>
-        <span>Edge: {edgePts >= 0 ? "+" : ""}{edgePts.toFixed(1)}%</span>
-      </div>
-
-      <p className="mt-2 font-data text-xs text-ink">
-        {signal.best_price.toFixed(2)} at {formatBookmaker(signal.best_bookmaker)}{" "}
-        <span className="text-muted">(18+)</span>
-      </p>
-
-      {affiliate && (
-        <div className="mt-4 border-t border-line pt-3 text-right">
-          <AffiliateCta affiliate={affiliate} price={signal.best_price} />
-        </div>
-      )}
-    </article>
-  );
 }
 
 function settledPnl(s: SettledEvSignal): number {
@@ -105,36 +30,14 @@ export default async function InsightsPage() {
   const [signals, settled, articles] = await Promise.all([
     getEvSignals(), getSettledEvSignals(), getArticles(),
   ]);
-  const affiliateBySignal = new Map(
-    await Promise.all(signals.map(async (s) =>
-      [`${s.match_id}-${s.selection}`, await getAffiliateForBookmaker(s.best_bookmaker)] as const))
-  );
+  // Affiliate lookups happen server-side; the parallel array lines up with `signals`.
+  const affiliates = await Promise.all(signals.map((s) => getAffiliateForBookmaker(s.best_bookmaker)));
+
   return (
     <div className="space-y-12">
       <BetanoPromo />
-      <section>
-        <h1 className="font-display text-4xl tracking-wide">Odds Value Signals</h1>
-        <p className="mt-2 max-w-2xl text-sm text-ink">
-          We compare our model&apos;s predicted chances against the best odds on the market.
-          If our probability differs from the price on offer, that&apos;s considered a Value Signal.
-        </p>
-        {signals.length === 0 ? (
-          <div className="mt-6 border border-line bg-panel px-6 py-10 text-center">
-            <p className="font-display text-xl text-ink">No live value signals</p>
-            <p className="mt-1 font-data text-xs text-ink">Check back on matchdays.</p>
-          </div>
-        ) : (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {signals.map((s) => (
-              <EvCard
-                key={`${s.match_id}-${s.selection}`}
-                signal={s}
-                affiliate={affiliateBySignal.get(`${s.match_id}-${s.selection}`) ?? null}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+
+      <InsightsFixtures signals={signals} affiliates={affiliates} />
 
       <section>
         <h2 className="font-display text-2xl tracking-wide">Settled Odds Value Signals</h2>

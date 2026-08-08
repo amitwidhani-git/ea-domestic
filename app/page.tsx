@@ -65,15 +65,23 @@ export default async function HomePage() {
               const ko = new Date(fixture.kickoff_utc);
               const time = ko.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" });
               return (
-                <article key={fixture.match_id} className="border border-line bg-panel p-4">
+                <article key={fixture.match_id} className="relative border border-line bg-panel p-4 transition-colors hover:border-muted">
+                  {/* Stretched link: whole card → Insights. Kept as an overlay (not a
+                      wrapping <a>) so the team-name links below stay valid, non-nested
+                      anchors and remain independently clickable via z-index. */}
+                  <Link
+                    href={`/insights#match-${fixture.match_id}`}
+                    aria-label={`View analysis for ${fixture.home_team} v ${fixture.away_team}`}
+                    className="absolute inset-0 z-10"
+                  />
                   <div className="flex items-center justify-between">
                     <LeagueBadge league={fixture.league as League} />
                     <span className="font-data text-[11px] text-ink">{time}</span>
                   </div>
                   <h3 className="mt-3 font-display text-xl leading-tight tracking-wide">
-                    <Link href={`/teams/${fixture.home_team_id}`} className="no-underline hover:text-accent transition-colors">{fixture.home_team}</Link>
+                    <Link href={`/teams/${fixture.home_team_id}`} className="relative z-20 no-underline hover:text-accent transition-colors">{fixture.home_team}</Link>
                     {" "}<span className="text-ink">v</span>{" "}
-                    <Link href={`/teams/${fixture.away_team_id}`} className="no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
+                    <Link href={`/teams/${fixture.away_team_id}`} className="relative z-20 no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
                   </h3>
                   {prediction ? (
                     <div className="mt-3 space-y-2">
