@@ -79,9 +79,9 @@ export default async function HomePage() {
                     <span className="font-data text-[11px] text-ink">{time}</span>
                   </div>
                   <h3 className="mt-3 font-display text-xl leading-tight tracking-wide">
-                    <Link href={`/teams/${fixture.home_team_id}`} className="relative z-20 no-underline hover:text-accent transition-colors">{fixture.home_team}</Link>
+                    <Link href={`/teams/${fixture.home_team_id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.home_team}</Link>
                     {" "}<span className="text-ink">v</span>{" "}
-                    <Link href={`/teams/${fixture.away_team_id}`} className="relative z-20 no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
+                    <Link href={`/teams/${fixture.away_team_id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
                   </h3>
                   {prediction ? (
                     <div className="mt-3 space-y-2">

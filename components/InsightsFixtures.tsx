@@ -44,7 +44,7 @@ const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const
 
 function teamLink(id: string, name: string) {
   return (
-    <Link href={`/teams/${id}`} className="no-underline hover:text-accent transition-colors">{name}</Link>
+    <Link href={`/teams/${id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{name}</Link>
   );
 }
 

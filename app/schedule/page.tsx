@@ -313,11 +313,11 @@ export default function SchedulePage() {
                     </div>
                     <p className="font-display text-lg leading-tight tracking-wide truncate">
                       {row.home_team_id ? (
-                        <Link href={`/teams/${row.home_team_id}`} className="no-underline hover:text-accent transition-colors">{row.home_team}</Link>
+                        <Link href={`/teams/${row.home_team_id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{row.home_team}</Link>
                       ) : row.home_team}{" "}
                       <span className="text-ink">v</span>{" "}
                       {row.away_team_id ? (
-                        <Link href={`/teams/${row.away_team_id}`} className="no-underline hover:text-accent transition-colors">{row.away_team}</Link>
+                        <Link href={`/teams/${row.away_team_id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{row.away_team}</Link>
                       ) : row.away_team}
                     </p>
                     {!live && row.status === "FINISHED" && row.score.home !== null && (

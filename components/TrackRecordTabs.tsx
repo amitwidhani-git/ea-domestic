@@ -104,7 +104,7 @@ export default function TrackRecordTabs({ rows, stats }: { rows: TrackRecordRow[
                         </div>
                       </td>
                       <td className="py-2 pr-4">
-                        <Link href={`/teams/${fixture.home_team_id}`} className="no-underline hover:text-accent transition-colors">{fixture.home_team}</Link> v <Link href={`/teams/${fixture.away_team_id}`} className="no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
+                        <Link href={`/teams/${fixture.home_team_id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.home_team}</Link> v <Link href={`/teams/${fixture.away_team_id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
                       </td>
                       <td className="py-2 pr-4">{PICK_SHORT[prediction.pick]} ({(prediction.probs[prediction.pick] * 100).toFixed(0)}%)</td>
                       <td className="py-2 pr-4">
