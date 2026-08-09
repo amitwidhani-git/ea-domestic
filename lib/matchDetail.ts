@@ -119,7 +119,8 @@ export interface MatchDetail {
     matchId: string;
     league: string | null;
     kickoffUtc: string | null;
-    status: string | null;
+    status: string | null;      // normalised: SCHEDULED | LIVE | FINISHED
+    afStatus: string | null;    // raw API-Football code for display: FT | AET | PEN | HT | 1H …
     elapsed: number | null;
     score: { home: number; away: number } | null;
     penaltyScore: { home: number; away: number } | null;
@@ -248,7 +249,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
     await Promise.all([
       d.collection("predictions").findOne({ matchId }),
       d.collection("ev_signals").find({ matchId }).toArray(),
-      apiId != null ? d.collection("match_stats").findOne({ apiFootballFixtureId: apiId }) : Promise.resolve(null),
+      d.collection("match_stats").findOne({ matchId }),
       d.collection("injuries").find({ teamId: homeId }).toArray(),
       d.collection("injuries").find({ teamId: awayId }).toArray(),
       d.collection("club_news").find({ teamId: homeId }).sort({ publishedAt: -1 }).limit(3).toArray(),
@@ -288,6 +289,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
       league: match.league ?? null,
       kickoffUtc: match.kickoffUtc ?? null,
       status: matchStats?.status ?? match.status ?? null,
+      afStatus: matchStats?.afStatus ?? null,
       elapsed: matchStats?.elapsed ?? null,
       score: match.score ?? null,
       penaltyScore: match.penaltyScore ?? null,

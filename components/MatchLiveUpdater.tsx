@@ -8,12 +8,11 @@ import MatchWidget from "@/components/MatchWidget";
 import MatchSquadTab from "@/components/MatchSquadTab";
 import type { MatchDetail, MatchEvent, MatchInjury, MatchNews, LineupPlayer, LineupTeam } from "@/lib/matchDetail";
 
-// LIVE codes are API-Football short codes that arrive via the live scores route.
-// The stored matches-collection status is only ever SCHEDULED or FINISHED — AET/
-// penalty detail lives in penaltyScore/ftr, not the status field. PRE keeps the
-// API "NS"/"TBD" codes too so phase detection works during live windows.
-const PRE = new Set(["NS", "TBD", "SCHEDULED"]);
-const LIVE = new Set(["1H", "HT", "2H", "ET", "P", "BT", "LIVE"]);
+// Both the matches and match_stats collections use normalised status values:
+// SCHEDULED | LIVE | FINISHED. The raw API-Football code (FT/AET/PEN/HT/1H…)
+// lives on fixture.afStatus and is only used for display labels.
+const PRE = new Set(["SCHEDULED"]);
+const LIVE = new Set(["LIVE"]);
 const POST = new Set(["FINISHED"]);
 
 const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
@@ -115,6 +114,7 @@ export default function MatchLiveUpdater({
             fixture: {
               ...prev.fixture,
               status: live.status ?? prev.fixture.status,
+              afStatus: live.afStatus ?? prev.fixture.afStatus,
               elapsed: live.elapsed ?? prev.fixture.elapsed,
               score: live.score ?? prev.fixture.score,
             },
@@ -150,14 +150,18 @@ export default function MatchLiveUpdater({
     statusChip = (
       <span className="inline-flex items-center gap-1 font-data text-xs text-green-400">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" aria-hidden="true" />
-        {status === "HT" ? "HT" : fixture.elapsed != null ? `${fixture.elapsed}'` : "LIVE"}
+        {fixture.afStatus === "HT" ? "HT" : fixture.elapsed != null ? `${fixture.elapsed}'` : "LIVE"}
       </span>
     );
   } else if (phase === "POST") {
-    // Status is stored as "FINISHED"; the AET/penalty detail comes from
-    // penaltyScore (and ftr), not a distinct status code.
+    // Status is normalised to "FINISHED"; the FT/AET/PEN detail for display comes
+    // from afStatus (falling back to penaltyScore when match_stats is absent).
     const pens = fixture.penaltyScore ? ` (pens ${fixture.penaltyScore.home}-${fixture.penaltyScore.away})` : "";
-    const label = fixture.penaltyScore ? "AET" : "FT";
+    const label =
+      fixture.afStatus === "PEN" ? "AET"
+      : fixture.afStatus === "AET" ? "AET"
+      : fixture.afStatus === "FT" ? "FT"
+      : fixture.penaltyScore ? "AET" : "FT";
     statusChip = <span className="font-data text-[10px] uppercase tracking-widest text-muted">{label}{pens}</span>;
   } else {
     statusChip = <span className="font-data text-[10px] text-muted">{countdown(fixture.kickoffUtc)}</span>;

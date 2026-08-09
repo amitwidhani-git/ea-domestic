@@ -23,10 +23,9 @@ interface SeriesPoint { t: number; home: number; draw: number; away: number }
 
 const OUTCOMES: Outcome[] = ["home", "draw", "away"];
 const COLORS: Record<Outcome, string> = { home: "#C8FF00", draw: "#6B7280", away: "#60A5FA" };
-// LIVE codes come from the live scores API (API-Football). Stored match status
-// from MongoDB is only ever "FINISHED" for completed games (AET/pens live in
-// penaltyScore/ftr), so that's the only finished value we check.
-const LIVE_STATUSES = new Set(["1H", "HT", "2H", "ET", "P", "BT", "LIVE"]);
+// Status values are normalised (SCHEDULED | LIVE | FINISHED); the raw API-Football
+// code lives on afStatus, not here. AET/pens detail is in penaltyScore/ftr.
+const LIVE_STATUSES = new Set(["LIVE"]);
 const FINISHED_STATUSES = new Set(["FINISHED"]);
 
 // ---------------------------------------------------------------- data helpers

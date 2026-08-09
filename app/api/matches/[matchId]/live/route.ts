@@ -23,7 +23,6 @@ async function getDb(): Promise<Db | null> {
   return client.db(process.env.MONGODB_DB ?? "edgeanalysts");
 }
 
-const LIVE_STATUSES = new Set(["1H", "HT", "2H", "ET", "P", "BT", "LIVE"]);
 const noContent = () => new NextResponse(null, { status: 204 });
 
 export async function GET(_req: Request, { params }: { params: Promise<{ matchId: string }> }) {
@@ -33,10 +32,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ matchId
     if (!db) return noContent();
 
     const stats = await db.collection("match_stats").findOne({ matchId });
-    if (!stats || !LIVE_STATUSES.has(String(stats.status))) return noContent();
+    // match_stats carries a normalised isLive flag (status === "LIVE"); only
+    // in-play matches get a live payload, everything else is 204.
+    if (!stats || !stats.isLive) return noContent();
 
     return NextResponse.json({
       status: stats.status,
+      afStatus: stats.afStatus ?? null,
       elapsed: stats.elapsed ?? null,
       score: stats.score ?? null,
       events: stats.events ?? [],
