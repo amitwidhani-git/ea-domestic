@@ -5,6 +5,7 @@
  * degrade to null/[] (a query on a missing collection returns nothing).
  */
 import { MongoClient, type Db } from "mongodb";
+import { normalizeMeeting, computeH2H } from "./h2h";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -283,6 +284,19 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
   const att = (id: string) => (modelRun?.att?.[id] as number | undefined) ?? null;
   const deff = (id: string) => (modelRun?.deff?.[id] as number | undefined) ?? null;
 
+  const homeTeam = mapTeam(homeId, teamById.get(homeId), att(homeId), deff(homeId));
+  const awayTeam = mapTeam(awayId, teamById.get(awayId), att(awayId), deff(awayId));
+
+  // Normalise meetings to the UI shape and recompute the win split from the
+  // actual results, attributed to this fixture's two teams (the stored counts
+  // dropped a side's away wins).
+  const headToHead = h2h
+    ? {
+        meetings: (h2h.meetings ?? []).map(normalizeMeeting),
+        ...computeH2H(h2h.meetings ?? [], homeTeam.name, awayTeam.name),
+      }
+    : null;
+
   return {
     fixture: {
       matchId: String(match._id),
@@ -297,8 +311,8 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
       referee: matchStats?.referee ?? match.referee ?? null,
       apiFootballFixtureId: apiId,
     },
-    homeTeam: mapTeam(homeId, teamById.get(homeId), att(homeId), deff(homeId)),
-    awayTeam: mapTeam(awayId, teamById.get(awayId), att(awayId), deff(awayId)),
+    homeTeam,
+    awayTeam,
     prediction: prediction
       ? {
           match_id: String(prediction.matchId),
@@ -319,9 +333,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
     awayInjuries: awayInjuries.map(mapInjury),
     homeNews: homeNews.map(mapNews),
     awayNews: awayNews.map(mapNews),
-    headToHead: h2h
-      ? { meetings: h2h.meetings ?? [], homeWins: h2h.homeWins ?? 0, draws: h2h.draws ?? 0, awayWins: h2h.awayWins ?? 0 }
-      : null,
+    headToHead,
     homeForm: resolveForm(homeFormMapped),
     awayForm: resolveForm(awayFormMapped),
     homeSquad: mapSquad(homeSquadRaw),

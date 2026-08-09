@@ -137,8 +137,16 @@ export default function MatchLiveUpdater({
     return () => clearInterval(id);
   }, [lastUpdated]);
 
+  // Pre-match: re-render every minute so the "Kicks off in …" countdown updates.
+  useEffect(() => {
+    if (phase !== "PRE") return;
+    const id = setInterval(() => setNowTick(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, [phase]);
+
   const { fixture, homeTeam, awayTeam, evSignals } = data;
   const score = fixture.score;
+  const hasScore = !!score && score.home != null && score.away != null;
   const bestSignal = useMemo(() => {
     const live = evSignals.filter((s) => s.settled_result == null && s.best_price != null).sort((a, b) => b.ev - a.ev)[0];
     return live ? { selection: live.selection, ev: live.ev, bestPrice: live.best_price as number, bestBookmaker: live.best_bookmaker ?? "" } : undefined;
@@ -186,8 +194,14 @@ export default function MatchLiveUpdater({
             <Link href={`/teams/${homeTeam.id}`} className="truncate font-display text-2xl tracking-wide hover:text-accent">{homeTeam.name}</Link>
           </div>
           <div className="shrink-0 text-center">
-            <div className="font-display text-3xl text-ink">{score ? `${score.home} – ${score.away}` : "v"}</div>
-            <div className="mt-0.5">{statusChip}</div>
+            <div className="font-display text-3xl text-ink">
+              {hasScore && score ? `${score.home} – ${score.away}` : phase === "PRE" ? "v" : "–"}
+            </div>
+            <div className="mt-0.5">
+              {phase === "PRE" && !hasScore
+                ? <span className="font-data text-sm text-muted">{countdown(fixture.kickoffUtc)}</span>
+                : statusChip}
+            </div>
           </div>
           <div className="flex flex-1 items-center justify-end gap-3 min-w-0">
             <Link href={`/teams/${awayTeam.id}`} className="truncate text-right font-display text-2xl tracking-wide hover:text-accent">{awayTeam.name}</Link>

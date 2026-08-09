@@ -4,6 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { MongoClient, type Db } from "mongodb";
+import { normalizeMeeting, computeH2H } from "@/lib/h2h";
 
 export const revalidate = 86400;
 
@@ -39,12 +40,13 @@ export async function GET(req: NextRequest) {
     const doc = await db.collection("head2head").findOne({ homeTeamId: home, awayTeamId: away });
     if (!doc) return NextResponse.json(null, { headers: { "Cache-Control": CACHE_CONTROL } });
 
+    // Recompute the win split from the meetings, attributed to the two fixture
+    // teams (the stored homeWins/awayWins dropped a side's away wins).
+    const meetings = doc.meetings ?? [];
     return NextResponse.json(
       {
-        meetings: doc.meetings ?? [],
-        homeWins: doc.homeWins ?? 0,
-        draws: doc.draws ?? 0,
-        awayWins: doc.awayWins ?? 0,
+        meetings: meetings.map(normalizeMeeting),
+        ...computeH2H(meetings, home, away),
       },
       { headers: { "Cache-Control": CACHE_CONTROL } }
     );
