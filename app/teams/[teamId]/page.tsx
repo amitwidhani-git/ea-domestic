@@ -42,6 +42,9 @@ interface TeamDoc {
   name: string;
   aliases?: { apiFootball?: number | null };
   elo?: number | null;
+  coach?: string | null;
+  venue?: string | null;
+  city?: string | null;
 }
 
 interface MatchDoc {
@@ -271,6 +274,8 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
             <span className="font-data text-xs text-muted">
               {team.elo != null ? `Elo ${team.elo}` : "New to our model"}
             </span>
+            {team.coach && <span className="font-data text-xs text-muted">Coach: {team.coach}</span>}
+            {team.venue && <span className="font-data text-xs text-muted">{team.venue}{team.city ? `, ${team.city}` : ""}</span>}
           </div>
         </div>
       </div>

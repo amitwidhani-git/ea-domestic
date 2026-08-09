@@ -9,7 +9,9 @@ import BetsunaBannerCard from "@/components/BetsunaBannerCard";
 import MogobetBannerCard from "@/components/MogobetBannerCard";
 import WorldCupProof from "@/components/WorldCupProof";
 import SubscribeRegister from "@/components/SubscribeRegister";
+import ClubCrest from "@/components/ClubCrest";
 import { getFixtures } from "@/lib/data";
+import { getResults } from "@/lib/results";
 import type { League } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -17,10 +19,14 @@ export const dynamic = "force-dynamic";
 const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
 
 export default async function HomePage() {
-  const allFixtures = await getFixtures();
+  const [allFixtures, recentResults] = await Promise.all([
+    getFixtures(),
+    getResults({ limit: 5, outcome: "all" }),
+  ]);
   // Grid below is sm:grid-cols-2 lg:grid-cols-3 — keep this a multiple of 6
   // so the last row is never short a card at either breakpoint.
   const upcoming = allFixtures.slice(0, 6);
+  const recent = recentResults.results;
 
   return (
     <div className="space-y-8">
@@ -66,12 +72,12 @@ export default async function HomePage() {
               const time = ko.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" });
               return (
                 <article key={fixture.match_id} className="relative border border-line bg-panel p-4 transition-colors hover:border-muted">
-                  {/* Stretched link: whole card → Insights. Kept as an overlay (not a
+                  {/* Stretched link: whole card → match centre. Kept as an overlay (not a
                       wrapping <a>) so the team-name links below stay valid, non-nested
                       anchors and remain independently clickable via z-index. */}
                   <Link
-                    href={`/insights#match-${fixture.match_id}`}
-                    aria-label={`View analysis for ${fixture.home_team} v ${fixture.away_team}`}
+                    href={`/matches/${fixture.match_id}`}
+                    aria-label={`Match centre: ${fixture.home_team} v ${fixture.away_team}`}
                     className="absolute inset-0 z-10"
                   />
                   <div className="flex items-center justify-between">
@@ -117,6 +123,46 @@ export default async function HomePage() {
           <Link href="/schedule" className="mt-4 inline-block font-data text-xs text-accent hover:underline">
             Browse the full 2026/27 schedule →
           </Link>
+        </section>
+      )}
+
+      {/* ── RECENT RESULTS ───────────────────────────────────────────── */}
+      {recent.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-baseline justify-between">
+            <h2 className="font-display text-2xl tracking-wide">Recent Results</h2>
+            <Link href="/results" className="font-data text-xs text-accent hover:underline">
+              All results →
+            </Link>
+          </div>
+          {/* Horizontal scroll on mobile, 5-up grid on desktop. */}
+          <div className="flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0">
+            {recent.map((r) => {
+              const correct = r.prediction?.modelCorrect === true;
+              const wrong = r.prediction?.modelCorrect === false;
+              const tint = correct ? "border-accent/20 bg-accent/5" : wrong ? "border-loss/20 bg-loss/5" : "border-line bg-panel";
+              const badge = correct ? "✓" : wrong ? "✗" : null;
+              const badgeColor = correct ? "text-accent" : "text-loss";
+              return (
+                <Link key={r.matchId} href={`/matches/${r.matchId}`}
+                  className={`block min-w-[220px] border p-3 transition-colors hover:border-muted sm:min-w-0 ${tint}`}>
+                  <div className="flex items-center justify-between">
+                    <LeagueBadge league={r.league as League} />
+                    {badge && <span className={`font-display text-lg leading-none ${badgeColor}`}>{badge}</span>}
+                  </div>
+                  <div className="mt-2 flex items-center gap-1.5 font-display text-base leading-tight tracking-wide">
+                    <ClubCrest apiFootballId={r.homeTeam.apiFootballId} clubName={r.homeTeam.name} size={20} />
+                    <span className="truncate">{r.homeTeam.name}</span>
+                  </div>
+                  <p className="my-1 font-display text-lg text-ink">{r.score ? `${r.score.home} – ${r.score.away}` : "–"}</p>
+                  <div className="flex items-center gap-1.5 font-display text-base leading-tight tracking-wide">
+                    <ClubCrest apiFootballId={r.awayTeam.apiFootballId} clubName={r.awayTeam.name} size={20} />
+                    <span className="truncate">{r.awayTeam.name}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </section>
       )}
 

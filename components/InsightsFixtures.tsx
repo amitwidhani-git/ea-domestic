@@ -6,6 +6,7 @@ import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
 import AffiliateCta from "@/components/AffiliateCta";
 import OddsPanel from "@/components/OddsPanel";
+import MatchWidget from "@/components/MatchWidget";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 import type { Affiliate } from "@/lib/affiliates";
 
@@ -44,7 +45,7 @@ const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const
 
 function teamLink(id: string, name: string) {
   return (
-    <Link href={`/teams/${id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{name}</Link>
+    <Link href={`/teams/${id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{name}</Link>
   );
 }
 
@@ -119,7 +120,8 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
         )}
       </div>
 
-      <h3 className="mt-2 font-display text-xl tracking-wide">
+      <h3 className="relative mt-2 font-display text-xl tracking-wide">
+        <Link href={`/matches/${fixture.match_id}`} aria-label={`Match centre: ${fixture.home_team} v ${fixture.away_team}`} className="absolute inset-0 z-10" />
         {teamLink(fixture.home_team_id, fixture.home_team)}
         {" "}<span className="text-ink">v</span>{" "}
         {teamLink(fixture.away_team_id, fixture.away_team)}
@@ -150,6 +152,24 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
           selection={bestSignal?.selection}
           bestPrice={bestSignal?.best_price}
         />
+        {prediction && (
+          <MatchWidget
+            matchId={fixture.match_id}
+            homeTeam={fixture.home_team}
+            awayTeam={fixture.away_team}
+            homeTeamId={fixture.home_team_id}
+            awayTeamId={fixture.away_team_id}
+            kickoffUtc={fixture.kickoff_utc}
+            modelProbs={prediction.probs}
+            modelPick={prediction.pick}
+            status="SCHEDULED"
+            bestSignal={
+              bestSignal
+                ? { selection: bestSignal.selection, ev: bestSignal.ev, bestPrice: bestSignal.best_price, bestBookmaker: bestSignal.best_bookmaker }
+                : undefined
+            }
+          />
+        )}
       </div>
     </article>
   );

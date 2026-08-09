@@ -6,6 +6,7 @@ import LeagueBadgeRail from "@/components/LeagueBadgeRail";
 import FrozenStamp from "@/components/FrozenStamp";
 import ProbBar from "@/components/ProbBar";
 import OddsPanel from "@/components/OddsPanel";
+import MatchWidget from "@/components/MatchWidget";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
@@ -311,13 +312,14 @@ export default function SchedulePage() {
                         </span>
                       )}
                     </div>
-                    <p className="font-display text-lg leading-tight tracking-wide truncate">
+                    <p className="relative font-display text-lg leading-tight tracking-wide truncate">
+                      <Link href={`/matches/${row.match_id}`} aria-label={`Match centre: ${row.home_team} v ${row.away_team}`} className="absolute inset-0 z-10" />
                       {row.home_team_id ? (
-                        <Link href={`/teams/${row.home_team_id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{row.home_team}</Link>
+                        <Link href={`/teams/${row.home_team_id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{row.home_team}</Link>
                       ) : row.home_team}{" "}
                       <span className="text-ink">v</span>{" "}
                       {row.away_team_id ? (
-                        <Link href={`/teams/${row.away_team_id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{row.away_team}</Link>
+                        <Link href={`/teams/${row.away_team_id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{row.away_team}</Link>
                       ) : row.away_team}
                     </p>
                     {!live && row.status === "FINISHED" && row.score.home !== null && (
@@ -397,6 +399,21 @@ export default function SchedulePage() {
                     homeTeam={row.home_team}
                     awayTeam={row.away_team}
                     modelProbs={row.prediction?.probs}
+                  />
+                )}
+                {state !== "SETTLED" && (
+                  <MatchWidget
+                    matchId={row.match_id}
+                    homeTeam={row.home_team}
+                    awayTeam={row.away_team}
+                    homeTeamId={row.home_team_id ?? ""}
+                    awayTeamId={row.away_team_id ?? ""}
+                    kickoffUtc={row.kickoff_utc}
+                    modelProbs={row.prediction?.probs}
+                    modelPick={row.prediction?.pick}
+                    currentScore={live ? { home: live.homeScore ?? 0, away: live.awayScore ?? 0 } : null}
+                    status={live?.status ?? row.status}
+                    elapsed={live?.elapsed ?? null}
                   />
                 )}
                 </div>

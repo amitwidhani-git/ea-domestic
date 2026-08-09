@@ -31,8 +31,9 @@ async function getDb() {
 }
 
 // Window anchored to the start of today (UTC) so today's kicked-off/settled
-// fixtures still show, through DAYS_AHEAD days out. The cache key changes
-// with the day so the window rolls forward once the TTL-based cache expires.
+// fixtures still show, through DAYS_AHEAD days out. Historic/finished matches
+// live on the Results page, not here. The cache key changes with the day so the
+// window rolls forward once the TTL-based cache expires.
 function dateWindow() {
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);

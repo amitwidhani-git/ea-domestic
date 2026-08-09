@@ -18,6 +18,9 @@ export default async function TrackRecordPage() {
           This is a permanent log, not a highlight reel. Every prediction goes live before
           kick-off and is never altered, removed, or rewritten, whether it&apos;s a win, loss, or draw.
         </p>
+        <Link href="/results" className="mt-3 inline-block font-data text-xs text-accent hover:underline">
+          View full results →
+        </Link>
       </section>
       <TrackRecordTabs rows={rows} stats={stats} />
 
