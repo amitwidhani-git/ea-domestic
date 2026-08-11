@@ -113,7 +113,9 @@ export async function getTrackRecord(): Promise<TrackRecordRow[]> {
 
   const preds = await d
     .collection("predictions")
-    .find({ modelCorrect: { $ne: null } })
+    // $in: [true, false] reliably matches settled predictions across drivers,
+    // where { $ne: null } can behave inconsistently.
+    .find({ modelCorrect: { $in: [true, false] } })
     .sort({ frozenAt: -1 })
     .limit(500) // last 500 settled — plenty for the page, fast query
     .toArray();
@@ -172,7 +174,7 @@ export async function getStats(): Promise<LeagueStats[]> {
   const d = await db();
 
   const pipeline = [
-    { $match: { modelCorrect: { $ne: null } } },
+    { $match: { modelCorrect: { $in: [true, false] } } },
     {
       $lookup: {
         from: "matches",
@@ -212,6 +214,30 @@ export async function getStats(): Promise<LeagueStats[]> {
         accuracy: b.settled ? b.correct / b.settled : 0,
       };
     });
+}
+
+/**
+ * Prediction coverage for the current season: how many of this season's played
+ * (FINISHED) fixtures we made a settled prediction for. Season-scoped because the
+ * matches collection also holds 20k+ historical finished fixtures — a bare
+ * count of status:"FINISHED" would be meaningless here.
+ */
+export async function getPredictionCoverage(): Promise<{ predicting: number; totalFinished: number }> {
+  const d = await db();
+  const seasons = (await d.collection("matches").distinct("season", { status: "FINISHED" })).sort();
+  const latest = seasons[seasons.length - 1];
+  if (!latest) return { predicting: 0, totalFinished: 0 };
+
+  const finished = await d
+    .collection("matches")
+    .find({ status: "FINISHED", season: latest }, { projection: { _id: 1 } })
+    .toArray();
+  const ids = finished.map((m) => m._id);
+  const predicting = ids.length
+    ? await d.collection("predictions").countDocuments({ matchId: { $in: ids as any[] }, modelCorrect: { $in: [true, false] } })
+    : 0;
+
+  return { predicting, totalFinished: finished.length };
 }
 
 // ---------------------------------------------------------------- ev signals

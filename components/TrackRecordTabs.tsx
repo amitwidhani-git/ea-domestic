@@ -9,8 +9,15 @@ import { IS_CUP, LEAGUE_NAMES } from "@/lib/types";
 
 const PICK_SHORT = { home: "H", draw: "D", away: "A" } as const;
 
-export default function TrackRecordTabs({ rows, stats }: { rows: TrackRecordRow[]; stats: LeagueStats[] }) {
+export default function TrackRecordTabs({
+  rows, stats, coverage,
+}: {
+  rows: TrackRecordRow[];
+  stats: LeagueStats[];
+  coverage?: { predicting: number; totalFinished: number };
+}) {
   const [tab, setTab] = useState<"current" | "history">("current");
+  const withoutPrediction = coverage ? coverage.totalFinished - coverage.predicting : 0;
 
   return (
     <div>
@@ -36,6 +43,7 @@ export default function TrackRecordTabs({ rows, stats }: { rows: TrackRecordRow[
       {tab === "current" ? (
         <div className="space-y-10">
           {stats.length > 0 && (
+            <div>
             <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {stats.map((s) => {
                 const pct = Math.round(s.accuracy * 100);
@@ -59,6 +67,13 @@ export default function TrackRecordTabs({ rows, stats }: { rows: TrackRecordRow[
                 );
               })}
             </section>
+            {coverage && coverage.totalFinished > 0 && (
+              <p className="mt-2 font-data text-xs text-muted text-center">
+                Predicting {coverage.predicting} of {coverage.totalFinished} fixtures played this season
+                {withoutPrediction > 0 && ` · ${withoutPrediction} without prediction (fixtures added after freeze window)`}
+              </p>
+            )}
+            </div>
           )}
           <div className="max-w-2xl">
             <h3 className="font-display text-xl tracking-wide">How We Settle Predictions</h3>

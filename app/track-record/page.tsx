@@ -5,10 +5,12 @@ import SpinzwinBannerCard from "@/components/SpinzwinBannerCard";
 import MonsterCasinoBannerCard from "@/components/MonsterCasinoBannerCard";
 import FruityKingBannerCard from "@/components/FruityKingBannerCard";
 import TrackRecordTabs from "@/components/TrackRecordTabs";
-import { getStats, getTrackRecord } from "@/lib/data";
-export const dynamic = "force-dynamic";
+import { getStats, getTrackRecord, getPredictionCoverage } from "@/lib/data";
+// Revalidate every 5 min so new results (fetch_results.py runs 07:30 BST) appear
+// automatically without a redeploy.
+export const revalidate = 300;
 export default async function TrackRecordPage() {
-  const [rows, stats] = await Promise.all([getTrackRecord(), getStats()]);
+  const [rows, stats, coverage] = await Promise.all([getTrackRecord(), getStats(), getPredictionCoverage()]);
   return (
     <div className="space-y-10">
       <BetanoPromo />
@@ -22,7 +24,7 @@ export default async function TrackRecordPage() {
           View full results →
         </Link>
       </section>
-      <TrackRecordTabs rows={rows} stats={stats} />
+      <TrackRecordTabs rows={rows} stats={stats} coverage={coverage} />
 
       {/* ── OUR PARTNERS ──────────────────────────────────────────────── */}
       <section>

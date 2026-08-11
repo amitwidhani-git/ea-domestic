@@ -68,7 +68,13 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone?:
 
 function PredictionCell({ r }: { r: ResultRow }) {
   const p = r.prediction;
-  if (!p || !p.pick || !p.probs) return <span className="font-data text-sm text-muted">—</span>;
+  if (!p || !p.pick || !p.probs)
+    return (
+      <span className="inline-block border border-line px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest text-muted"
+        title="This fixture was added to the schedule after the prediction freeze window closed.">
+        No prediction — added late
+      </span>
+    );
   const correct = p.modelCorrect === true;
   const wrong = p.modelCorrect === false;
   const prob = p.probs[p.pick as "home" | "draw" | "away"];
@@ -204,6 +210,15 @@ export default function ResultsBrowser({ initial }: { initial: ResultsResponse }
 
   const { results, total, stats } = data;
 
+  // Accuracy counts predictions only — we list every settled fixture (some were
+  // added after the freeze window and have no model pick), so dividing by the
+  // fixture count would understate accuracy. Derived from the loaded rows, whose
+  // `prediction` is reliably null when absent (the server stats miscount those).
+  const withPrediction = results.filter((r) => r.prediction !== null);
+  const correctCount = withPrediction.filter((r) => r.prediction?.modelCorrect === true).length;
+  const accuracyPct = withPrediction.length > 0 ? (correctCount / withPrediction.length * 100).toFixed(1) : "0.0";
+  const withoutPrediction = results.length - withPrediction.length;
+
   // Group loaded rows by London calendar day, preserving descending order.
   const groups: { key: string; label: string; rows: ResultRow[] }[] = [];
   for (const r of results) {
@@ -228,11 +243,16 @@ export default function ResultsBrowser({ initial }: { initial: ResultsResponse }
 
       {/* ── STATS STRIP ── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Predictions" value={String(stats.predictions)} />
-        <StatCard label="Correct" value={String(stats.correct)} />
-        <StatCard label="Accuracy" value={`${stats.accuracy.toFixed(1)}%`} />
+        <StatCard label="Predictions made" value={String(withPrediction.length)} />
+        <StatCard label="Correct" value={String(correctCount)} />
+        <StatCard label="Accuracy" value={`${accuracyPct}%`} />
         <StatCard label="EV P&L" value={`${stats.pnl >= 0 ? "+" : ""}${stats.pnl.toFixed(1)}u`} tone={stats.pnl >= 0 ? "accent" : "loss"} />
       </div>
+      {withoutPrediction > 0 && (
+        <p className="font-data text-xs text-muted text-center">
+          Accuracy calculated from {withPrediction.length} predictions. {withoutPrediction} fixture(s) had no prediction (added to schedule after freeze window).
+        </p>
+      )}
 
       {/* ── FILTER ROW ── */}
       <div className="space-y-3">
@@ -284,7 +304,7 @@ export default function ResultsBrowser({ initial }: { initial: ResultsResponse }
 
           {/* ── PAGINATION ── */}
           <div className="flex flex-col items-center gap-2 pt-2">
-            <p className="font-data text-[10px] text-muted">Showing {results.length} of {total} results</p>
+            <p className="font-data text-[10px] text-muted">Showing {results.length} of {total} fixtures ({withPrediction.length} predicted)</p>
             {results.length < total && (
               <button onClick={loadMore} disabled={loadingMore}
                 className="border border-line px-5 py-2 font-data text-xs uppercase tracking-widest text-ink transition-colors hover:border-accent hover:text-accent disabled:opacity-50">
