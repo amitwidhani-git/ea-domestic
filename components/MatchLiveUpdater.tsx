@@ -16,7 +16,7 @@ const LIVE = new Set(["LIVE"]);
 const POST = new Set(["FINISHED"]);
 
 const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
-const HOME_COLOR = "#C8FF00";
+const HOME_COLOR = "var(--accent)";
 const AWAY_COLOR = "#60A5FA";
 
 const SEVERITY_BADGE: Record<string, { label: string; className: string }> = {

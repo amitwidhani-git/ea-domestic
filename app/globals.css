@@ -1,16 +1,59 @@
 @import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Design tokens are mapped to runtime CSS variables so the whole app
+ * re-themes via [data-theme] on <html> without touching components.
+ * Existing utility names (bg-panel, text-accent, font-display …) are
+ * preserved and simply repoint at the new Edge Analysts palette.
+ * ------------------------------------------------------------------ */
 @theme {
-  --color-bg: #080808;
-  --color-panel: #101010;
-  --color-panel2: #161616;
-  --color-line: #232323;
-  --color-ink: #ededed;
-  --color-muted: #8a8a8a;
-  --color-accent: #c8ff00;
-  --color-loss: #ff4d4d;
-  --font-display: "Bebas Neue", "Arial Narrow", sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
-  --font-data: "JetBrains Mono", ui-monospace, monospace;
+  --color-bg: var(--bg);
+  --color-panel: var(--surface);
+  --color-panel2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-loss: var(--danger);
+  --color-chip: var(--chip);
+
+  --font-display: "Archivo", system-ui, -apple-system, sans-serif;
+  --font-body: "Archivo", system-ui, -apple-system, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, monospace;
+
+  --radius-card: 14px;
 }
-html { background: var(--color-bg); }
-body { color: var(--color-ink); font-family: var(--font-body); }
+
+/* Light (default) */
+:root {
+  --bg:#F4F5F7; --surface:#FFFFFF; --surface-2:#FBFBFC;
+  --ink:#0E1521; --muted:#626C79; --line:#E7EAEE;
+  --accent:#0E9F6E; --accent-ink:#0A7E57;
+  --danger:#D64545; --chip:#EEF1F4;
+  --shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+}
+:root[data-theme="dark"] {
+  --bg:#0A0E13; --surface:#121820; --surface-2:#0E141B;
+  --ink:#E8ECF1; --muted:#8A97A6; --line:#1F2833;
+  --accent:#12B886; --accent-ink:#3FD6A6;
+  --danger:#E5695B; --chip:#1A222C;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+html { background: var(--bg); }
+body {
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+}
+
+@layer base {
+  /* Archivo replaces the old condensed display face — give display text a
+     solid default weight/tracking, while explicit font-weight utilities
+     (in the higher utilities layer) still win where set. */
+  .font-display { font-weight: 700; letter-spacing: -0.02em; }
+  .font-data { font-variant-numeric: tabular-nums; letter-spacing: 0; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+}

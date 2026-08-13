@@ -22,7 +22,7 @@ interface BestSignal {
 interface SeriesPoint { t: number; home: number; draw: number; away: number }
 
 const OUTCOMES: Outcome[] = ["home", "draw", "away"];
-const COLORS: Record<Outcome, string> = { home: "#C8FF00", draw: "#6B7280", away: "#60A5FA" };
+const COLORS: Record<Outcome, string> = { home: "var(--accent)", draw: "#6B7280", away: "#60A5FA" };
 // Status values are normalised (SCHEDULED | LIVE | FINISHED); the raw API-Football
 // code lives on afStatus, not here. AET/pens detail is in penaltyScore/ftr.
 const LIVE_STATUSES = new Set(["LIVE"]);

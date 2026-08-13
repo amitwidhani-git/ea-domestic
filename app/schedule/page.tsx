@@ -292,7 +292,7 @@ export default function SchedulePage() {
           <h2 className="mb-3 mt-4 font-data text-[11px] uppercase tracking-widest text-ink border-b border-line pb-2">
             {week}
           </h2>
-          <div className="divide-y divide-line/60 border border-line">
+          <div className="overflow-hidden rounded-[14px] border border-line bg-panel shadow-[var(--shadow)] divide-y divide-line/60">
             {weekRows.map((row) => {
               const state = predState(row);
               const p = row.prediction;

@@ -42,7 +42,7 @@ export default function GlobalFooter() {
           <div style={{
             fontFamily: "var(--font-display,'Bebas Neue',sans-serif)",
             fontSize: 20, letterSpacing: "0.04em",
-            color: "#C8FF00", lineHeight: 1, marginBottom: 14,
+            color: "#12B886", lineHeight: 1, marginBottom: 14,
           }}>
             Beat the Game
           </div>

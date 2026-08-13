@@ -59,7 +59,7 @@ function frozenHours(pred: ResultPrediction, kickoffUtc: string): number | null 
 function StatCard({ label, value, tone }: { label: string; value: string; tone?: "accent" | "loss" }) {
   const color = tone === "accent" ? "text-accent" : tone === "loss" ? "text-loss" : "text-ink";
   return (
-    <div className="border border-line bg-panel p-4">
+    <div className="rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
       <p className="font-data text-[9px] uppercase tracking-widest text-muted">{label}</p>
       <p className={`mt-1 font-display text-3xl leading-none ${color}`}>{value}</p>
     </div>
@@ -120,7 +120,7 @@ function ResultCard({ r }: { r: ResultRow }) {
   const wrong = r.prediction?.modelCorrect === false;
   const tint = correct ? "border-accent/20 bg-accent/5" : wrong ? "border-loss/20 bg-loss/5" : "border-line bg-panel";
   return (
-    <article className={`grid gap-3 border p-4 sm:grid-cols-12 sm:items-center ${tint}`}>
+    <article className={`grid gap-3 rounded-[14px] border p-4 shadow-[var(--shadow)] sm:grid-cols-12 sm:items-center ${tint}`}>
       {/* Left: teams + score */}
       <div className="sm:col-span-5">
         <div className="flex items-center gap-2">

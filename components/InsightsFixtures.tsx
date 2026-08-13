@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import LeagueBadge from "@/components/LeagueBadge";
 import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
-import AffiliateCta from "@/components/AffiliateCta";
 import OddsPanel from "@/components/OddsPanel";
 import MatchWidget from "@/components/MatchWidget";
+import ValueSignalCard, { type OddsFormat } from "@/components/ValueSignalCard";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 import type { Affiliate } from "@/lib/affiliates";
 
@@ -23,82 +23,11 @@ function kickoffLabel(iso: string): string {
   return `${get("weekday")} ${get("day")} ${get("month")} · ${get("hour")}:${get("minute")} UK`;
 }
 
-function formatSignalTime(iso: string): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/London",
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
-  }).formatToParts(new Date(iso));
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  return `${get("day")} ${get("month")} ${get("hour")}:${get("minute")}`;
-}
-
-function formatBookmaker(id: string): string {
-  return id.split(/[-_]/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-}
-
-function pickLabel(s: { selection: "home" | "draw" | "away"; home_team: string; away_team: string }): string {
-  if (s.selection === "draw") return "Draw";
-  return `${s.selection === "home" ? s.home_team : s.away_team} to win`;
-}
-
 const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
 
 function teamLink(id: string, name: string) {
   return (
     <Link href={`/teams/${id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{name}</Link>
-  );
-}
-
-// ---------------------------------------------------------------- value-signal card
-
-function EvCard({ signal, affiliate }: { signal: EvSignal; affiliate: Affiliate | null }) {
-  const edgePts = (signal.model_prob - signal.market_prob) * 100;
-  return (
-    <article className="border border-line bg-panel p-4">
-      <div className="flex items-center justify-between">
-        <LeagueBadge league={signal.league} />
-        <span className="border border-accent bg-accent/10 px-2 py-0.5 font-data text-xs font-semibold text-accent">
-          +{(signal.ev * 100).toFixed(1)}% EV
-        </span>
-      </div>
-
-      <h3 className="mt-2 font-display text-xl tracking-wide">
-        {teamLink(signal.home_team_id, signal.home_team)}
-        {" "}<span className="text-ink">v</span>{" "}
-        {teamLink(signal.away_team_id, signal.away_team)}
-      </h3>
-      {signal.kickoff_utc && (
-        <p className="mt-0.5 font-data text-[10px] text-muted">{kickoffLabel(signal.kickoff_utc)}</p>
-      )}
-      <p className="mt-0.5 font-data text-[10px] text-muted">
-        Signal generated: {formatSignalTime(signal.created_at)}
-      </p>
-
-      <p className="mt-3 font-data text-sm text-accent">{pickLabel(signal)}</p>
-
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-data text-[11px] text-ink">
-        <span>Model: {(signal.model_prob * 100).toFixed(1)}%</span>
-        <span className="text-muted">·</span>
-        <span>Market: {(signal.market_prob * 100).toFixed(1)}%</span>
-        <span className="text-muted">·</span>
-        <span>Edge: {edgePts >= 0 ? "+" : ""}{edgePts.toFixed(1)}%</span>
-      </div>
-
-      <p className="mt-2 font-data text-xs text-ink">
-        {signal.best_price.toFixed(2)} at {formatBookmaker(signal.best_bookmaker)}{" "}
-        <span className="text-muted">(18+)</span>
-      </p>
-
-      {affiliate && (
-        <div className="mt-4 border-t border-line pt-3 text-right">
-          <AffiliateCta affiliate={affiliate} price={signal.best_price} />
-        </div>
-      )}
-
-      <div className="-mx-4 -mb-4 mt-3">
-        <OddsPanel matchId={signal.match_id} homeTeam={signal.home_team} awayTeam={signal.away_team} />
-      </div>
-    </article>
   );
 }
 
@@ -186,9 +115,22 @@ const SORTS: { key: SortKey; label: string }[] = [
 ];
 
 function pillClass(active: boolean): string {
-  return `border px-3 py-1 font-data text-xs tracking-widest transition-colors ${
-    active ? "border-accent text-accent" : "border-line text-ink hover:border-muted hover:text-ink"
+  return `shrink-0 rounded-full border px-3.5 py-1.5 font-body text-[13px] font-semibold transition-colors ${
+    active ? "border-ink bg-ink text-panel" : "border-line text-muted hover:border-muted hover:text-ink"
   }`;
+}
+
+function NativeOffer() {
+  return (
+    <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-dashed border-line bg-panel px-5 py-4 sm:col-span-2">
+      <span className="rounded border border-line px-1.5 py-0.5 font-body text-[9.5px] font-bold uppercase tracking-wide text-muted">Ad · Partner</span>
+      <div className="flex flex-col gap-0.5">
+        <b className="font-body text-[14.5px]">New-customer offers from our licensed partners</b>
+        <span className="font-body text-[12.5px] text-muted">Compare welcome offers before you back a pick · 18+</span>
+      </div>
+      <Link href="/#partner-offers" className="ml-auto rounded-[9px] bg-ink px-4 py-2.5 font-body text-[13px] font-bold text-panel">See offers</Link>
+    </div>
+  );
 }
 
 function tabClass(active: boolean): string {
@@ -198,9 +140,10 @@ function tabClass(active: boolean): string {
 }
 
 export default function InsightsFixtures({
-  signals, affiliates,
+  signals,
 }: { signals: EvSignal[]; affiliates: (Affiliate | null)[] }) {
   const [tab, setTab] = useState<"signals" | "fixtures">("signals");
+  const [oddsFmt, setOddsFmt] = useState<OddsFormat>("frac");
 
   const [upcoming, setUpcoming] = useState<UpcomingFixtureWithSignal[]>([]);
   const [loading, setLoading] = useState(false);
@@ -289,16 +232,62 @@ export default function InsightsFixtures({
 
       {tab === "signals" ? (
         signals.length === 0 ? (
-          <div className="mt-6 border border-line bg-panel px-6 py-10 text-center">
+          <div className="mt-6 rounded-[14px] border border-line bg-panel px-6 py-10 text-center">
             <p className="font-display text-xl text-ink">No live value signals</p>
             <p className="mt-1 font-data text-xs text-ink">Check back on matchdays.</p>
           </div>
         ) : (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {signals.map((s, i) => (
-              <EvCard key={`${s.match_id}-${s.selection}`} signal={s} affiliate={affiliates[i] ?? null} />
-            ))}
-          </div>
+          <>
+            {/* competition sub-nav + odds format toggle */}
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {LEAGUE_FILTERS.map((lg) => (
+                  <button key={lg} onClick={() => setLeague(lg)} className={pillClass(league === lg)}>
+                    {lg === "ALL" ? "All" : lg}
+                  </button>
+                ))}
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                <span className="font-data text-[11px] uppercase tracking-widest text-muted">Odds</span>
+                <div className="inline-flex rounded-lg bg-chip p-0.5">
+                  {(["frac", "dec"] as OddsFormat[]).map((f) => (
+                    <button key={f} onClick={() => setOddsFmt(f)}
+                      className={`rounded-md px-3 py-1.5 font-body text-xs font-semibold transition-colors ${
+                        oddsFmt === f ? "bg-panel text-ink shadow-sm" : "text-muted hover:text-ink"
+                      }`}>
+                      {f === "frac" ? "Fractional" : "Decimal"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {(() => {
+              const sigList = league === "ALL" ? signals : signals.filter((s) => s.league === league);
+              if (sigList.length === 0) {
+                return <p className="mt-8 font-data text-sm text-muted">No value signals for this competition.</p>;
+              }
+              const featured = [...sigList].sort((a, b) => (b.model_prob - b.market_prob) - (a.model_prob - a.market_prob))[0];
+              return (
+                <>
+                  <div className="mt-4">
+                    <h2 className="mb-3 font-data text-[13px] font-bold uppercase tracking-wider text-muted">Biggest edge this weekend</h2>
+                    <ValueSignalCard signal={featured} oddsFmt={oddsFmt} featured />
+                  </div>
+
+                  <h2 className="mb-3 mt-8 font-data text-[13px] font-bold uppercase tracking-wider text-muted">All value signals</h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {sigList.map((s, i) => (
+                      <Fragment key={`${s.match_id}-${s.selection}`}>
+                        <ValueSignalCard signal={s} oddsFmt={oddsFmt} />
+                        {i === 2 && <NativeOffer />}
+                      </Fragment>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+          </>
         )
       ) : (
         <div className="mt-6">

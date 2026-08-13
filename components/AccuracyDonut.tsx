@@ -8,7 +8,7 @@ export default function AccuracyDonut({ pct, size, stroke, emphasize }: { pct: n
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#232323" strokeWidth={stroke} />
       <circle
         cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke="#c8ff00"
+        stroke="var(--accent)"
         strokeOpacity={emphasize ? 1 : 0.75}
         strokeWidth={stroke}
         strokeLinecap="round"

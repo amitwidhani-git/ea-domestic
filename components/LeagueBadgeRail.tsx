@@ -29,7 +29,7 @@ function Badge({
     >
       <span
         className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#F7F5F0] transition-shadow"
-        style={active ? { boxShadow: "0 0 0 2px #C8FF00, 0 0 14px 2px rgba(200,255,0,0.55)" } : undefined}
+        style={active ? { boxShadow: "0 0 0 2px var(--accent), 0 0 14px 2px rgba(18,184,134,0.45)" } : undefined}
       >
         {children}
       </span>

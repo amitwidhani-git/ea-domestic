@@ -71,7 +71,7 @@ export default async function HomePage() {
               const ko = new Date(fixture.kickoff_utc);
               const time = ko.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" });
               return (
-                <article key={fixture.match_id} className="relative border border-line bg-panel p-4 transition-colors hover:border-muted">
+                <article key={fixture.match_id} className="relative rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)] transition-colors hover:border-muted">
                   {/* Stretched link: whole card → match centre. Kept as an overlay (not a
                       wrapping <a>) so the team-name links below stay valid, non-nested
                       anchors and remain independently clickable via z-index. */}
@@ -145,7 +145,7 @@ export default async function HomePage() {
               const badgeColor = correct ? "text-accent" : "text-loss";
               return (
                 <Link key={r.matchId} href={`/matches/${r.matchId}`}
-                  className={`block min-w-[220px] border p-3 transition-colors hover:border-muted sm:min-w-0 ${tint}`}>
+                  className={`block min-w-[220px] rounded-[14px] border p-3 shadow-[var(--shadow)] transition-colors hover:border-muted sm:min-w-0 ${tint}`}>
                   <div className="flex items-center justify-between">
                     <LeagueBadge league={r.league as League} />
                     {badge && <span className={`font-display text-lg leading-none ${badgeColor}`}>{badge}</span>}
@@ -170,7 +170,7 @@ export default async function HomePage() {
       <SubscribeRegister source="homepage" />
 
       {/* ── OUR PARTNERS ──────────────────────────────────────────────── */}
-      <section>
+      <section id="partner-offers" className="scroll-mt-24">
         <div className="mb-4 flex items-baseline justify-between">
           <h2 className="font-display text-2xl tracking-wide">Partner Offers</h2>
           <Link href="/insights#our-partners" className="font-data text-xs text-accent hover:underline">
