@@ -7,6 +7,7 @@ import FrozenStamp from "@/components/FrozenStamp";
 import OddsPanel from "@/components/OddsPanel";
 import MatchWidget from "@/components/MatchWidget";
 import ValueSignalCard, { type OddsFormat } from "@/components/ValueSignalCard";
+import OddsRow from "@/components/OddsRow";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 import type { Affiliate } from "@/lib/affiliates";
 
@@ -133,6 +134,29 @@ function NativeOffer() {
   );
 }
 
+type WhenKey = "today" | "weekend" | "week";
+const WHENS: { key: WhenKey; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "weekend", label: "This weekend" },
+  { key: "week", label: "Full week" },
+];
+// Loose timeframe filter over a fixture's kickoff time (Europe/London aware).
+function inWhen(iso: string, when: WhenKey): boolean {
+  if (!iso) return when === "week";
+  const now = new Date();
+  const t = new Date(iso);
+  const diffDays = (t.getTime() - now.getTime()) / 86_400_000;
+  if (when === "today") {
+    const f = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" });
+    return f.format(now) === f.format(t);
+  }
+  if (when === "weekend") {
+    const wd = t.getUTCDay(); // Fri 5 · Sat 6 · Sun 0
+    return (wd === 5 || wd === 6 || wd === 0) && diffDays >= -1 && diffDays <= 9;
+  }
+  return diffDays >= -1 && diffDays <= 14; // full week (generous)
+}
+
 function tabClass(active: boolean): string {
   return active
     ? "border border-accent bg-accent px-5 py-2.5 font-display text-lg tracking-wider text-bg transition-colors"
@@ -144,6 +168,7 @@ export default function InsightsFixtures({
 }: { signals: EvSignal[]; affiliates: (Affiliate | null)[] }) {
   const [tab, setTab] = useState<"signals" | "fixtures">("signals");
   const [oddsFmt, setOddsFmt] = useState<OddsFormat>("frac");
+  const [when, setWhen] = useState<WhenKey>("week");
 
   const [upcoming, setUpcoming] = useState<UpcomingFixtureWithSignal[]>([]);
   const [loading, setLoading] = useState(false);
@@ -159,6 +184,15 @@ export default function InsightsFixtures({
     if (hash.startsWith("#match-")) {
       setTab("fixtures");
       setPendingHash(hash.slice(1));
+    }
+  }, []);
+
+  // Deep link from the Teams-by-division menu: /insights?lg=PL preselects a competition.
+  useEffect(() => {
+    const lg = new URLSearchParams(window.location.search).get("lg");
+    if (lg && (LEAGUE_FILTERS as string[]).includes(lg)) {
+      setLeague(lg as League);
+      setTab("signals");
     }
   }, []);
 
@@ -238,13 +272,11 @@ export default function InsightsFixtures({
           </div>
         ) : (
           <>
-            {/* competition sub-nav + odds format toggle */}
+            {/* timeframe + odds format toggle */}
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {LEAGUE_FILTERS.map((lg) => (
-                  <button key={lg} onClick={() => setLeague(lg)} className={pillClass(league === lg)}>
-                    {lg === "ALL" ? "All" : lg}
-                  </button>
+                {WHENS.map((w) => (
+                  <button key={w.key} onClick={() => setWhen(w.key)} className={pillClass(when === w.key)}>{w.label}</button>
                 ))}
               </div>
               <div className="ml-auto flex items-center gap-2">
@@ -262,25 +294,38 @@ export default function InsightsFixtures({
               </div>
             </div>
 
+            {/* competition chips */}
+            <div className="mt-3 -mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {LEAGUE_FILTERS.map((lg) => (
+                <button key={lg} onClick={() => setLeague(lg)} className={pillClass(league === lg)}>
+                  {lg === "ALL" ? "All" : lg}
+                </button>
+              ))}
+            </div>
+
             {(() => {
-              const sigList = league === "ALL" ? signals : signals.filter((s) => s.league === league);
-              if (sigList.length === 0) {
-                return <p className="mt-8 font-data text-sm text-muted">No value signals for this competition.</p>;
+              const list = signals.filter((s) => (league === "ALL" || s.league === league) && inWhen(s.kickoff_utc, when));
+              if (list.length === 0) {
+                return <p className="mt-8 font-data text-sm text-muted">No value signals for this filter.</p>;
               }
-              const featured = [...sigList].sort((a, b) => (b.model_prob - b.market_prob) - (a.model_prob - a.market_prob))[0];
+              const featured = [...list].sort((a, b) => (b.model_prob - b.market_prob) - (a.model_prob - a.market_prob))[0];
               return (
                 <>
-                  <div className="mt-4">
-                    <h2 className="mb-3 font-data text-[13px] font-bold uppercase tracking-wider text-muted">Biggest edge this weekend</h2>
+                  <h2 className="mb-3 mt-6 flex items-center gap-2 font-data text-[13px] font-bold uppercase tracking-wider text-muted">
+                    Biggest edge
+                    <span title="Edge = our model's probability minus the probability implied by the best available price. Positive means we rate it likelier than the market does."
+                      className="inline-flex h-[15px] w-[15px] cursor-help items-center justify-center rounded-full border border-muted/60 text-[10px] font-bold normal-case tracking-normal text-muted">?</span>
+                  </h2>
+                  <div className="max-w-xl">
                     <ValueSignalCard signal={featured} oddsFmt={oddsFmt} featured />
                   </div>
 
-                  <h2 className="mb-3 mt-8 font-data text-[13px] font-bold uppercase tracking-wider text-muted">All value signals</h2>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {sigList.map((s, i) => (
+                  <h2 className="mb-3 mt-8 font-data text-[13px] font-bold uppercase tracking-wider text-muted">All odds &amp; value</h2>
+                  <div className="flex flex-col gap-2.5">
+                    {list.map((s, i) => (
                       <Fragment key={`${s.match_id}-${s.selection}`}>
-                        <ValueSignalCard signal={s} oddsFmt={oddsFmt} />
-                        {i === 2 && <NativeOffer />}
+                        <OddsRow signal={s} oddsFmt={oddsFmt} />
+                        {i === 3 && <NativeOffer />}
                       </Fragment>
                     ))}
                   </div>

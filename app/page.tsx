@@ -1,231 +1,133 @@
 import Link from "next/link";
-import LeagueBadge from "@/components/LeagueBadge";
-import ProbBar from "@/components/ProbBar";
-import FrozenStamp from "@/components/FrozenStamp";
-import BetanoPromo from "@/components/BetanoPromo";
-import BetMazePromo from "@/components/BetMazePromo";
-import LivescorebetBannerCard from "@/components/LivescorebetBannerCard";
-import BetsunaBannerCard from "@/components/BetsunaBannerCard";
-import MogobetBannerCard from "@/components/MogobetBannerCard";
-import WorldCupProof from "@/components/WorldCupProof";
-import SubscribeRegister from "@/components/SubscribeRegister";
-import ClubCrest from "@/components/ClubCrest";
-import { getFixtures } from "@/lib/data";
-import { getResults } from "@/lib/results";
-import type { League } from "@/lib/types";
+import ValueSignalCard from "@/components/ValueSignalCard";
+import OddsRow from "@/components/OddsRow";
+import { getEvSignals, getStats, getArticles } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
-const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
+function TrustCell({ title, body, icon }: { title: string; body: string; icon: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-line bg-panel p-4 shadow-[var(--shadow)]">
+      <span className="mt-0.5 shrink-0 text-accent">{icon}</span>
+      <div>
+        <b className="block font-body text-[13.5px]">{title}</b>
+        <span className="font-body text-xs text-muted">{body}</span>
+      </div>
+    </div>
+  );
+}
 
 export default async function HomePage() {
-  const [allFixtures, recentResults] = await Promise.all([
-    getFixtures(),
-    getResults({ limit: 5, outcome: "all" }),
-  ]);
-  // Grid below is sm:grid-cols-2 lg:grid-cols-3 — keep this a multiple of 6
-  // so the last row is never short a card at either breakpoint.
-  const upcoming = allFixtures.slice(0, 6);
-  const recent = recentResults.results;
+  const [signals, stats, articles] = await Promise.all([getEvSignals(), getStats(), getArticles()]);
+
+  const byEdge = [...signals].sort((a, b) => (b.model_prob - b.market_prob) - (a.model_prob - a.market_prob));
+  const best = byEdge[0] ?? null;
+  const weekend = signals.slice(0, 5);
+  const all = stats.find((s) => s.league === "ALL");
+  const accuracy = all ? Math.round(all.accuracy * 100) : null;
+  const logged = all ? all.settled : 0;
+  const stories = articles.slice(0, 3);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
+      {/* ── HERO ── */}
+      <section className="max-w-3xl pt-2">
+        <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-accent-ink">Value signals · Premier League &amp; EFL</p>
+        <h1 className="mt-3.5 font-display text-[clamp(1.9rem,5vw,2.4rem)] font-extrabold leading-[1.07] tracking-[-0.03em]">
+          Where our model and the bookmakers disagree.
+        </h1>
+        <p className="mt-3.5 max-w-xl font-body text-base text-muted">
+          One model across four divisions. Every pick frozen before kick-off, timestamped and never rewritten
+          <span className="text-ink"> — then we link you straight to the best price.</span>
+        </p>
+      </section>
 
-      <BetanoPromo />
+      {/* ── TODAY'S BEST CALL ── */}
+      {best && (
+        <section>
+          <h2 className="mb-3.5 font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">Today&apos;s best call</h2>
+          <div className="max-w-xl">
+            <ValueSignalCard signal={best} oddsFmt="frac" featured />
+          </div>
+        </section>
+      )}
 
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-panel">
-        {/* accent bar */}
-        <div className="h-1 w-full bg-accent" />
-        <div className="px-6 py-10 sm:px-10">
-          <h1 className="-mt-4 font-display uppercase tracking-[0.15em] text-ink text-[clamp(0.95rem,2vw,1.5rem)]">
-            Edge Analysts: Football Predictions &amp; Odds Intelligence Platform
-          </h1>
-          <h2 className="mt-1 font-data text-[10px] uppercase tracking-[0.2em] text-accent sm:text-xs">
-            Premier League &amp; EFL Predictions, Frozen Pre-Kick-Off, Auditable Record
+      {/* ── THIS WEEKEND'S EDGES ── */}
+      {weekend.length > 0 && (
+        <section>
+          <h2 className="mb-3.5 flex items-center font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">
+            This weekend&apos;s edges
+            <Link href="/insights" className="ml-auto font-body text-xs font-semibold normal-case tracking-normal text-accent-ink hover:underline">Full odds →</Link>
           </h2>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/schedule"
-              className="border border-accent bg-accent px-5 py-2.5 font-display text-lg tracking-wider text-bg transition-colors hover:bg-accent/80">
-              VIEW FIXTURES
-            </Link>
-            <Link href="/track-record"
-              className="border border-line px-5 py-2.5 font-display text-lg tracking-wider text-ink transition-colors hover:border-accent hover:text-accent">
-              TRACK RECORD
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── UPCOMING PREDICTIONS PREVIEW ─────────────────────────────── */}
-      {upcoming.length > 0 && (
-        <section>
-          <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="font-display text-2xl tracking-wide">Upcoming Matches</h2>
-            <Link href="/schedule" className="font-data text-xs text-accent hover:underline">
-              Full schedule →
-            </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {upcoming.map(({ fixture, prediction }) => {
-              const ko = new Date(fixture.kickoff_utc);
-              const time = ko.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" });
-              return (
-                <article key={fixture.match_id} className="relative rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)] transition-colors hover:border-muted">
-                  {/* Stretched link: whole card → match centre. Kept as an overlay (not a
-                      wrapping <a>) so the team-name links below stay valid, non-nested
-                      anchors and remain independently clickable via z-index. */}
-                  <Link
-                    href={`/matches/${fixture.match_id}`}
-                    aria-label={`Match centre: ${fixture.home_team} v ${fixture.away_team}`}
-                    className="absolute inset-0 z-10"
-                  />
-                  <div className="flex items-center justify-between">
-                    <LeagueBadge league={fixture.league as League} />
-                    <span className="font-data text-[11px] text-ink">{time}</span>
-                  </div>
-                  <h3 className="mt-3 font-display text-xl leading-tight tracking-wide">
-                    <Link href={`/teams/${fixture.home_team_id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.home_team}</Link>
-                    {" "}<span className="text-ink">v</span>{" "}
-                    <Link href={`/teams/${fixture.away_team_id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
-                  </h3>
-                  {prediction ? (
-                    <div className="mt-3 space-y-2">
-                      <ProbBar probs={prediction.probs} pick={prediction.pick} />
-                      <div className="flex flex-wrap items-center justify-between gap-1">
-                        <span className="font-data text-xs">
-                          EdgeIQ Prediction: <span className="text-accent">{PICK_LABEL[prediction.pick]}</span>
-                        </span>
-                        <FrozenStamp frozenAt={prediction.frozen_at} hash={prediction.hash} />
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="mt-3 font-data text-[10px] text-ink">
-                      Prediction pending · locks 48h before kick-off
-                    </p>
-                  )}
-                </article>
-              );
-            })}
+          <div className="flex flex-col gap-2.5">
+            {weekend.map((s) => <OddsRow key={`${s.match_id}-${s.selection}`} signal={s} oddsFmt="frac" />)}
           </div>
         </section>
       )}
 
-      {/* ── NO PREDICTIONS YET ───────────────────────────────────────── */}
-      {upcoming.length === 0 && (
-        <section className="border border-line bg-panel px-6 py-10 text-center">
-          <p className="font-display text-2xl tracking-wide text-ink">
-            Predictions lock from 12 August
-          </p>
-          <p className="mt-2 text-sm text-ink">
-            Model runs daily at 07:00 and freezes predictions 48h before kick-off.
-          </p>
-          <Link href="/schedule" className="mt-4 inline-block font-data text-xs text-accent hover:underline">
-            Browse the full 2026/27 schedule →
-          </Link>
-        </section>
-      )}
-
-      {/* ── RECENT RESULTS ───────────────────────────────────────────── */}
-      {recent.length > 0 && (
-        <section>
-          <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="font-display text-2xl tracking-wide">Recent Results</h2>
-            <Link href="/results" className="font-data text-xs text-accent hover:underline">
-              All results →
-            </Link>
-          </div>
-          {/* Horizontal scroll on mobile, 5-up grid on desktop. */}
-          <div className="flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0">
-            {recent.map((r) => {
-              const correct = r.prediction?.modelCorrect === true;
-              const wrong = r.prediction?.modelCorrect === false;
-              const tint = correct ? "border-accent/20 bg-accent/5" : wrong ? "border-loss/20 bg-loss/5" : "border-line bg-panel";
-              const badge = correct ? "✓" : wrong ? "✗" : null;
-              const badgeColor = correct ? "text-accent" : "text-loss";
-              return (
-                <Link key={r.matchId} href={`/matches/${r.matchId}`}
-                  className={`block min-w-[220px] rounded-[14px] border p-3 shadow-[var(--shadow)] transition-colors hover:border-muted sm:min-w-0 ${tint}`}>
-                  <div className="flex items-center justify-between">
-                    <LeagueBadge league={r.league as League} />
-                    {badge && <span className={`font-display text-lg leading-none ${badgeColor}`}>{badge}</span>}
-                  </div>
-                  <div className="mt-2 flex items-center gap-1.5 font-display text-base leading-tight tracking-wide">
-                    <ClubCrest apiFootballId={r.homeTeam.apiFootballId} clubName={r.homeTeam.name} size={20} />
-                    <span className="truncate">{r.homeTeam.name}</span>
-                  </div>
-                  <p className="my-1 font-display text-lg text-ink">{r.score ? `${r.score.home} – ${r.score.away}` : "–"}</p>
-                  <div className="flex items-center gap-1.5 font-display text-base leading-tight tracking-wide">
-                    <ClubCrest apiFootballId={r.awayTeam.apiFootballId} clubName={r.awayTeam.name} size={20} />
-                    <span className="truncate">{r.awayTeam.name}</span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ── SUBSCRIBE / REGISTER ─────────────────────────────────────── */}
-      <SubscribeRegister source="homepage" />
-
-      {/* ── OUR PARTNERS ──────────────────────────────────────────────── */}
-      <section id="partner-offers" className="scroll-mt-24">
-        <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="font-display text-2xl tracking-wide">Partner Offers</h2>
-          <Link href="/insights#our-partners" className="font-data text-xs text-accent hover:underline">
-            All Partner Offers →
-          </Link>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <LivescorebetBannerCard />
-          <BetsunaBannerCard />
-          <MogobetBannerCard />
-        </div>
-      </section>
-
-      {/* ── WORLD CUP PROOF STRIP ────────────────────────────────────── */}
+      {/* ── NATIVE OFFER ── */}
       <section>
-        <h2 className="mb-4 font-display text-2xl tracking-wide">Track Record</h2>
-        <WorldCupProof />
-      </section>
-
-      {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
-      <section>
-        <h2 className="mb-6 font-display text-2xl tracking-wide">What Makes Us Different</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {[
-            {
-              n: "01",
-              title: "Pre Match Lock",
-              body: "We lock in every football prediction before kick-off and timestamp it, so we can never quietly change our pick after seeing the result.",
-              note: null,
-            },
-            {
-              n: "02",
-              title: "Four divisions, one model",
-              body: "EdgeIQ model uses cross-league data points covering the Premier League through League Two. Promoted clubs carry earned ratings, so no cold-start guessing.",
-              note: null,
-            },
-            {
-              n: "03",
-              title: "Odds Value Signals, Not Tips",
-              body: "We publish Value Signals wherever our model probability and the best available bookmaker price diverge. Information to weigh, not a tip to follow and not gut feel.",
-              note: "Cup picks settle on the final result including penalties. League picks settle on 90 minutes — a draw is a draw.",
-            },
-          ].map((c) => (
-            <div key={c.n} className="border border-line bg-panel p-5">
-              <p className="font-display text-4xl leading-none text-accent/40">{c.n}</p>
-              <h3 className="mt-2 font-display text-xl tracking-wide">{c.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink">{c.body}</p>
-              {c.note && <p className="mt-2 text-sm leading-relaxed text-ink">{c.note}</p>}
-            </div>
-          ))}
+        <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-dashed border-line bg-panel px-5 py-4">
+          <span className="rounded border border-line px-1.5 py-0.5 font-body text-[9.5px] font-bold uppercase tracking-wide text-muted">Ad · Partner</span>
+          <div className="flex flex-col gap-0.5">
+            <b className="font-body text-[14.5px]">New-customer offers from our licensed partners</b>
+            <span className="font-body text-[12.5px] text-muted">Compare welcome offers before you back a pick · 18+</span>
+          </div>
+          <Link href="/insights#our-partners" className="ml-auto rounded-[9px] bg-ink px-4 py-2.5 font-body text-[13px] font-bold text-panel">See offers</Link>
         </div>
       </section>
 
-      <BetMazePromo />
+      {/* ── TRACK RECORD ── */}
+      <section>
+        <h2 className="mb-3.5 flex items-center font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">
+          Track record
+          <Link href="/track-record" className="ml-auto font-body text-xs font-semibold normal-case tracking-normal text-accent-ink hover:underline">See full audit →</Link>
+        </h2>
+        <div className="flex flex-wrap items-center gap-7 rounded-[14px] border border-line bg-panel p-6 shadow-[var(--shadow)]">
+          <div className="flex flex-col">
+            <b className="font-data text-[44px] font-semibold leading-none tracking-[-0.03em]">{accuracy != null ? `${accuracy}%` : "—"}</b>
+            <em className="mt-1 font-body text-xs not-italic uppercase tracking-wider text-muted">Season accuracy</em>
+          </div>
+          <div className="flex flex-col">
+            <b className="font-data text-[44px] font-semibold leading-none tracking-[-0.03em]">{logged}</b>
+            <em className="mt-1 font-body text-xs not-italic uppercase tracking-wider text-muted">Picks logged</em>
+          </div>
+          <p className="max-w-[280px] font-body text-[12.5px] text-muted">
+            Every call published before kick-off, hashed and time-stamped. Nothing edited after the whistle.
+          </p>
+        </div>
+      </section>
 
+      {/* ── LATEST ANALYSIS ── */}
+      {stories.length > 0 && (
+        <section>
+          <h2 className="mb-3.5 font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">Latest analysis</h2>
+          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+            {stories.map((a) => (
+              <Link key={a.slug} href={`/insights/articles/${a.slug}`}
+                className="rounded-xl border border-line bg-panel p-4 shadow-[var(--shadow)] transition-transform hover:-translate-y-0.5">
+                <div className="font-body text-[10px] font-bold uppercase tracking-wider text-accent-ink">Analysis</div>
+                <h4 className="mt-2 font-body text-[15px] font-semibold leading-snug">{a.title}</h4>
+                <p className="mt-1.5 font-body text-[12.5px] leading-relaxed text-muted">{a.summary}</p>
+                <div className="mt-2.5 font-body text-[10.5px] text-muted">{a.published_at.slice(0, 10)}</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── WHY EDGE ANALYSTS ── */}
+      <section>
+        <h2 className="mb-3.5 font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">Why Edge Analysts</h2>
+        <div className="grid gap-3.5 sm:grid-cols-3">
+          <TrustCell title="Locked pre-kick-off" body="Predictions frozen and hashed before a ball is kicked."
+            icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>} />
+          <TrustCell title="Four divisions, one model" body="Premier League to League Two, priced the same way."
+            icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18" /><path d="M7 14l4-4 3 3 5-6" /></svg>} />
+          <TrustCell title="Value, not tips" body="We show the gap to the market — you decide."
+            icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>} />
+        </div>
+      </section>
     </div>
   );
 }

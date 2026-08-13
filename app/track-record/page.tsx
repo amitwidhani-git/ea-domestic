@@ -24,6 +24,42 @@ export default async function TrackRecordPage() {
           View full results →
         </Link>
       </section>
+
+      {/* ── STAT HERO + DIVISION GRID ── */}
+      {(() => {
+        const all = stats.find((s) => s.league === "ALL");
+        if (!all) return null;
+        const DIVS: [string, string][] = [["PL", "Prem"], ["CH", "Champ"], ["L1", "League 1"], ["L2", "League 2"]];
+        return (
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-center gap-7 rounded-[14px] border border-line bg-panel p-6 shadow-[var(--shadow)]">
+              <div className="flex flex-col">
+                <b className="font-data text-[44px] font-semibold leading-none tracking-[-0.03em]">{Math.round(all.accuracy * 100)}%</b>
+                <em className="mt-1 font-body text-xs not-italic uppercase tracking-wider text-muted">All competitions</em>
+              </div>
+              <div className="flex flex-col">
+                <b className="font-data text-[44px] font-semibold leading-none tracking-[-0.03em]">{all.correct}/{all.settled}</b>
+                <em className="mt-1 font-body text-xs not-italic uppercase tracking-wider text-muted">Correct picks</em>
+              </div>
+              <p className="max-w-[300px] font-body text-[12.5px] text-muted">
+                Aggregate stats and recent results are always public. Every pick is logged before kick-off, hashed and time-stamped.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {DIVS.map(([lg, label]) => {
+                const d = stats.find((s) => s.league === lg);
+                return (
+                  <div key={lg} className="rounded-xl border border-line bg-panel p-3.5 text-center shadow-[var(--shadow)]">
+                    <b className="font-data text-[22px] font-semibold">{d ? `${Math.round(d.accuracy * 100)}%` : "—"}</b>
+                    <em className="mt-0.5 block font-body text-[10px] not-italic uppercase tracking-wider text-muted">{label}</em>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
+
       <TrackRecordTabs rows={rows} stats={stats} coverage={coverage} />
 
       {/* ── OUR PARTNERS ──────────────────────────────────────────────── */}

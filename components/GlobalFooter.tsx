@@ -2,9 +2,9 @@ import Link from "next/link";
 
 const PLATFORM_LINKS = [
   ["Home", "/"],
-  ["Schedule", "/schedule"],
+  ["Odds & value", "/insights"],
   ["Track Record", "/track-record"],
-  ["Insights", "/insights"],
+  ["Teams", "/teams"],
 ];
 
 const RG_ORGS = [

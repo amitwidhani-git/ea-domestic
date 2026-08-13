@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import NavLogo from "@/components/NavLogo";
 import NavTabs from "@/components/NavTabs";
 import MobileNav from "@/components/MobileNav";
 import ThemeToggle from "@/components/ThemeToggle";
+import SubscribeModal, { SubscribeButton } from "@/components/SubscribeModal";
 import GlobalFooter from "@/components/GlobalFooter";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import "./globals.css";
@@ -36,16 +36,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="hidden sm:block">
               <NavTabs />
             </div>
-            <div className="ml-auto flex items-center gap-3">
-              <Link
-                href="/track-record"
-                className="hidden items-center gap-1 rounded-full bg-accent/10 px-3 py-1.5 font-data text-xs text-accent-ink transition-colors hover:bg-accent/15 sm:inline-flex"
-              >
-                Every pick logged pre-KO
-              </Link>
+            <div className="ml-auto flex items-center gap-2.5">
               <div className="hidden sm:block">
                 <ThemeToggle />
               </div>
+              <SubscribeButton className="rounded-[9px] bg-accent px-4 py-2 font-body text-[13px] font-bold text-white transition-[filter] hover:brightness-105">
+                Subscribe
+              </SubscribeButton>
             </div>
           </div>
         </header>
@@ -58,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* ── FOOTER ───────────────────────────────────────────────── */}
         <GlobalFooter />
 
+        <SubscribeModal />
         <CookieConsentBanner />
 
       </body>
