@@ -19,7 +19,7 @@ const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('ea-theme');if(
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" data-theme="light">
+    <html lang="en-GB" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

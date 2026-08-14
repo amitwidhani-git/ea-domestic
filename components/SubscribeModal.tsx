@@ -3,12 +3,18 @@ import { useEffect, useState } from "react";
 
 const OPEN_EVENT = "ea:subscribe-open";
 
+// Feature toggle — off by default, same convention as SubscribeRegister.
+// Set NEXT_PUBLIC_SUBSCRIBE_ENABLED=true to turn subscribe UI back on.
+export const SUBSCRIBE_ENABLED = process.env.NEXT_PUBLIC_SUBSCRIBE_ENABLED === "true";
+
 export function openSubscribe() {
+  if (!SUBSCRIBE_ENABLED) return;
   window.dispatchEvent(new CustomEvent(OPEN_EVENT));
 }
 
 /** Reusable trigger — dispatches the open event picked up by <SubscribeModal>. */
 export function SubscribeButton({ className, children }: { className?: string; children: React.ReactNode }) {
+  if (!SUBSCRIBE_ENABLED) return null;
   return (
     <button type="button" onClick={() => openSubscribe()} className={className}>
       {children}
@@ -17,6 +23,12 @@ export function SubscribeButton({ className, children }: { className?: string; c
 }
 
 export default function SubscribeModal() {
+  // Hook-free gate so the early return never sits above conditional hooks.
+  if (!SUBSCRIBE_ENABLED) return null;
+  return <SubscribeModalInner />;
+}
+
+function SubscribeModalInner() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");

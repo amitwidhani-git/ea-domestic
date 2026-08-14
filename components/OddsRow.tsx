@@ -3,11 +3,27 @@ import { useState } from "react";
 import Link from "next/link";
 import type { EvSignal } from "@/lib/types";
 import type { OddsFormat } from "@/components/ValueSignalCard";
+import type { CtaAffiliate } from "@/lib/affiliates";
 
 interface ApiOddsRow {
   bookmaker: string;
   displayName: string;
   prices: { home: number | null; draw: number | null; away: number | null };
+  cta: CtaAffiliate | null;
+}
+
+// Small branded badge so a CTA's real destination is always clear — including
+// when it's a stand-in partner (Betano/LiveScoreBet) rather than the priced book.
+function AffiliateLogo({ cta }: { cta: CtaAffiliate }) {
+  return (
+    <span
+      className="flex h-5 w-5 shrink-0 items-center justify-center rounded font-display text-[9px] font-bold leading-none"
+      style={{ background: cta.brandColor ?? "#ffffff", color: "#0E1521" }}
+      title={cta.name}
+    >
+      {cta.logoInitials}
+    </span>
+  );
 }
 
 // ---- odds display helpers (mirrors ValueSignalCard) ----------------------
@@ -68,8 +84,8 @@ export default function OddsRow({ signal, oddsFmt }: { signal: EvSignal; oddsFmt
   }
 
   const priceRows = (odds ?? [])
-    .map((o) => ({ book: o.bookmaker, name: o.displayName, price: o.prices?.[signal.selection] ?? null }))
-    .filter((r): r is { book: string; name: string; price: number } => typeof r.price === "number")
+    .map((o) => ({ book: o.bookmaker, name: o.displayName, price: o.prices?.[signal.selection] ?? null, cta: o.cta }))
+    .filter((r): r is { book: string; name: string; price: number; cta: CtaAffiliate | null } => typeof r.price === "number")
     .sort((a, b) => b.price - a.price);
 
   return (
@@ -95,11 +111,16 @@ export default function OddsRow({ signal, oddsFmt }: { signal: EvSignal; oddsFmt
               {edge > 0 ? `+${edge.toFixed(0)}% edge` : "no edge"}
             </span>
           </div>
-          <a href={`/go/${signal.best_bookmaker}`} rel="sponsored nofollow" target="_blank"
-            className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-3 py-2 font-body text-[13px] font-bold text-white transition-[filter] hover:brightness-105">
-            <span className="font-data text-sm">{showPrice(signal.best_price, oddsFmt)}</span>
-            <Arrow />
-          </a>
+          {signal.cta ? (
+            <a href={`/go/${signal.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
+              className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-3 py-2 font-body text-[13px] font-bold text-white transition-[filter] hover:brightness-105">
+              <AffiliateLogo cta={signal.cta} />
+              <span className="font-data text-sm">{showPrice(signal.best_price, oddsFmt)}</span>
+              <Arrow />
+            </a>
+          ) : (
+            <span className="rounded-[9px] border border-line px-3 py-2 font-data text-sm text-muted">{showPrice(signal.best_price, oddsFmt)}</span>
+          )}
           <button onClick={toggle} aria-label={open ? "Hide prices" : "Show all prices"} className="flex text-muted transition-transform hover:text-ink"
             style={{ transform: open ? "rotate(180deg)" : "none" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg>
@@ -120,8 +141,15 @@ export default function OddsRow({ signal, oddsFmt }: { signal: EvSignal; oddsFmt
                 <span className="font-body text-[13.5px] font-semibold">{r.name}</span>
                 {i === 0 && <span className="rounded bg-accent/10 px-1.5 py-0.5 font-body text-[9px] font-bold uppercase tracking-wide text-accent-ink">Best</span>}
                 <span className="ml-auto font-data text-sm font-semibold">{showPrice(r.price, oddsFmt)}</span>
-                <a href={`/go/${r.book}`} rel="sponsored nofollow" target="_blank"
-                  className="inline-flex items-center gap-1 rounded-[7px] bg-accent px-3 py-1.5 font-body text-[11.5px] font-bold text-white hover:brightness-105">Bet</a>
+                {/* Only a genuine (non-fallback) affiliate match gets a Bet button here —
+                    with ~20 books listed, defaulting every row to the same partner would
+                    misleadingly imply we're partnered with all of them. */}
+                {r.cta && !r.cta.isFallback && (
+                  <a href={`/go/${r.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
+                    className="inline-flex items-center gap-1.5 rounded-[7px] bg-accent px-3 py-1.5 font-body text-[11.5px] font-bold text-white hover:brightness-105">
+                    <AffiliateLogo cta={r.cta} /> Bet
+                  </a>
+                )}
               </div>
             ))
           )}

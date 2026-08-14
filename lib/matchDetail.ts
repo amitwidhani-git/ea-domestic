@@ -6,6 +6,7 @@
  */
 import { MongoClient, type Db } from "mongodb";
 import { normalizeMeeting, computeH2H } from "./h2h";
+import { deriveInjurySeverity } from "./injuries";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -227,7 +228,7 @@ const mapEvSignal = (s: Doc): MatchEvSignal => ({
 });
 const mapInjury = (i: Doc): MatchInjury => ({
   playerName: i.playerName ?? null, position: i.position ?? null, injuryType: i.injuryType ?? null,
-  severity: i.severity ?? null, reason: i.reason ?? null, updatedAt: toIso(i.updatedAt),
+  severity: deriveInjurySeverity(i), reason: i.reason ?? null, updatedAt: toIso(i.updatedAt),
 });
 const mapNews = (a: Doc): MatchNews => ({
   title: a.title ?? null, url: a.url ?? null, published_at: toIso(a.publishedAt), source: a.source ?? null, summary: a.summary ?? null,

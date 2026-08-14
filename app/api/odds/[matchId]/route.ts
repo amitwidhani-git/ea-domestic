@@ -5,6 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { MongoClient, type Db } from "mongodb";
+import { resolveCtaAffiliates } from "@/lib/affiliates";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -57,6 +58,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ matchId
       .sort({ bookmaker: 1 })
       .toArray();
 
+    // One affiliate-list fetch resolves every row's Bet-CTA destination (falls
+    // back to Betano/LiveScoreBet when there's no direct deal for that book).
+    const ctaByBookmaker = await resolveCtaAffiliates(snaps.map((s) => String(s.bookmaker)));
+
     const rows = snaps.map((s) => ({
       bookmaker: String(s.bookmaker),
       displayName: displayName(String(s.bookmaker)),
@@ -64,6 +69,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ matchId
       impliedProbs: s.impliedProbs ?? { home: null, draw: null, away: null },
       overround: s.overround ?? null,
       fetchedAt: s.fetchedAt instanceof Date ? s.fetchedAt.toISOString() : String(s.fetchedAt ?? ""),
+      cta: ctaByBookmaker.get(String(s.bookmaker)) ?? null,
     }));
 
     return NextResponse.json(rows);

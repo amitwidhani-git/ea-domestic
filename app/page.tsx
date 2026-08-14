@@ -1,7 +1,9 @@
 import Link from "next/link";
 import ValueSignalCard from "@/components/ValueSignalCard";
-import OddsRow from "@/components/OddsRow";
 import { getEvSignals, getStats, getArticles } from "@/lib/data";
+
+// Display order for grouping the best upcoming edges by competition.
+const LEAGUE_ORDER = ["PL", "CH", "L1", "L2", "FAC", "LC", "CS"];
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +22,24 @@ function TrustCell({ title, body, icon }: { title: string; body: string; icon: R
 export default async function HomePage() {
   const [signals, stats, articles] = await Promise.all([getEvSignals(), getStats(), getArticles()]);
 
-  const byEdge = [...signals].sort((a, b) => (b.model_prob - b.market_prob) - (a.model_prob - a.market_prob));
-  const best = byEdge[0] ?? null;
-  const weekend = signals.slice(0, 5);
+  // Best upcoming edge per match (a match can carry more than one signal),
+  // then the top two per league/cup, in standard competition order.
+  const edgeOf = (s: (typeof signals)[number]) => s.model_prob - s.market_prob;
+  const bestPerMatch = new Map<string, (typeof signals)[number]>();
+  for (const s of signals) {
+    const cur = bestPerMatch.get(s.match_id);
+    if (!cur || edgeOf(s) > edgeOf(cur)) bestPerMatch.set(s.match_id, s);
+  }
+  const byLeague = new Map<string, (typeof signals)[number][]>();
+  for (const s of bestPerMatch.values()) {
+    const arr = byLeague.get(s.league) ?? [];
+    arr.push(s);
+    byLeague.set(s.league, arr);
+  }
+  const topEdges = LEAGUE_ORDER
+    .filter((lg) => byLeague.has(lg))
+    .flatMap((lg) => byLeague.get(lg)!.sort((a, b) => edgeOf(b) - edgeOf(a)).slice(0, 2));
+
   const all = stats.find((s) => s.league === "ALL");
   const accuracy = all ? Math.round(all.accuracy * 100) : null;
   const logged = all ? all.settled : 0;
@@ -42,25 +59,17 @@ export default async function HomePage() {
         </p>
       </section>
 
-      {/* ── TODAY'S BEST CALL ── */}
-      {best && (
-        <section>
-          <h2 className="mb-3.5 font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">Today&apos;s best call</h2>
-          <div className="max-w-xl">
-            <ValueSignalCard signal={best} oddsFmt="frac" featured />
-          </div>
-        </section>
-      )}
-
-      {/* ── THIS WEEKEND'S EDGES ── */}
-      {weekend.length > 0 && (
+      {/* ── BEST UPCOMING EDGES ── */}
+      {topEdges.length > 0 && (
         <section>
           <h2 className="mb-3.5 flex items-center font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">
-            This weekend&apos;s edges
+            Best upcoming edges
             <Link href="/insights" className="ml-auto font-body text-xs font-semibold normal-case tracking-normal text-accent-ink hover:underline">Full odds →</Link>
           </h2>
-          <div className="flex flex-col gap-2.5">
-            {weekend.map((s) => <OddsRow key={`${s.match_id}-${s.selection}`} signal={s} oddsFmt="frac" />)}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {topEdges.map((s) => (
+              <ValueSignalCard key={`${s.match_id}-${s.selection}`} signal={s} oddsFmt="frac" featured />
+            ))}
           </div>
         </section>
       )}

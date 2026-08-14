@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import type { Metadata } from "next";
 import { getMatchDetail } from "@/lib/matchDetail";
 import MatchLiveUpdater from "@/components/MatchLiveUpdater";
+import BackLink from "@/components/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
 
   return (
     <div className="space-y-6">
-      <Link href="/schedule" className="font-data text-xs text-muted hover:text-ink">← Schedule</Link>
+      <BackLink fallbackHref="/insights" />
       <MatchLiveUpdater matchId={matchId} initialData={detail} isLive={isLive} />
     </div>
   );

@@ -11,6 +11,7 @@
 
 import { MongoClient, type Db } from "mongodb";
 import type { Article, ArticleDetail, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow, UpcomingFixtureWithSignal } from "./types";
+import { resolveCtaAffiliates } from "./affiliates";
 
 // ---------------------------------------------------------------- connection
 
@@ -294,6 +295,9 @@ export async function getEvSignals(): Promise<EvSignal[]> {
     .toArray();
 
   const info = await attachFixtureInfo(d, signals.map((s) => String(s.matchId)));
+  // One affiliate-list fetch resolves every row's Back-CTA destination (falls
+  // back to Betano/LiveScoreBet when there's no direct deal for that bookmaker).
+  const ctaByBookmaker = await resolveCtaAffiliates(signals.map((s) => String(s.bestBookmaker)));
 
   const rows = signals.map((s) => {
     const f = info.get(String(s.matchId));
@@ -314,6 +318,7 @@ export async function getEvSignals(): Promise<EvSignal[]> {
       home_team_id: f?.homeTeamId ?? "",
       away_team_id: f?.awayTeamId ?? "",
       kickoff_utc: f?.kickoffUtc ?? "",
+      cta: ctaByBookmaker.get(String(s.bestBookmaker)) ?? null,
     };
   });
 

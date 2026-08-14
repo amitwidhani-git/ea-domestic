@@ -1,3 +1,5 @@
+import type { CtaAffiliate } from "@/lib/affiliates";
+
 export type League = "PL" | "CH" | "L1" | "L2" | "FAC" | "LC" | "CS";
 export const LEAGUE_NAMES: Record<League, string> = {
   PL: "Premier League", CH: "Championship", L1: "League One", L2: "League Two",
@@ -33,6 +35,9 @@ export interface EvSignal {
   best_bookmaker: string; ev: number; kelly_fraction: number; book_count: number;
   created_at: string; home_team: string; away_team: string; kickoff_utc: string;
   home_team_id: string; away_team_id: string;
+  /** Resolved Back-CTA destination (falls back to Betano/LiveScoreBet when
+   *  best_bookmaker has no direct affiliate deal); null if neither exists. */
+  cta: CtaAffiliate | null;
 }
 export interface SettledEvSignal {
   match_id: string; league: League; selection: "home" | "draw" | "away";

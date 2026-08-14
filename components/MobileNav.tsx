@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
-import { openSubscribe } from "@/components/SubscribeModal";
+import { openSubscribe, SUBSCRIBE_ENABLED } from "@/components/SubscribeModal";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -87,10 +87,12 @@ export default function MobileNav() {
         </nav>
 
         <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4">
-          <button onClick={() => { setOpen(false); openSubscribe(); }}
-            className="w-full rounded-[9px] bg-accent px-4 py-2.5 font-body text-sm font-bold text-white transition-[filter] hover:brightness-105">
-            Subscribe — free
-          </button>
+          {SUBSCRIBE_ENABLED && (
+            <button onClick={() => { setOpen(false); openSubscribe(); }}
+              className="w-full rounded-[9px] bg-accent px-4 py-2.5 font-body text-sm font-bold text-white transition-[filter] hover:brightness-105">
+              Subscribe — free
+            </button>
+          )}
           <div className="flex items-center justify-between">
             <span className="font-body text-sm text-muted">Appearance</span>
             <ThemeToggle />
@@ -112,13 +114,15 @@ export default function MobileNav() {
             </Link>
           );
         })}
-        <button onClick={() => openSubscribe()}
-          className="flex flex-1 flex-col items-center gap-1 py-1 font-body text-[10.5px] font-semibold text-muted">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M4 4h16v16H4z" /><polyline points="4 6 12 13 20 6" />
-          </svg>
-          Subscribe
-        </button>
+        {SUBSCRIBE_ENABLED && (
+          <button onClick={() => openSubscribe()}
+            className="flex flex-1 flex-col items-center gap-1 py-1 font-body text-[10.5px] font-semibold text-muted">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 4h16v16H4z" /><polyline points="4 6 12 13 20 6" />
+            </svg>
+            Subscribe
+          </button>
+        )}
       </nav>
     </>
   );

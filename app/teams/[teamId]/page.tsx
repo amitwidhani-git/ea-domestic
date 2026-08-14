@@ -7,6 +7,7 @@ import LeagueBadge from "@/components/LeagueBadge";
 import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
 import type { League } from "@/lib/types";
+import { deriveInjurySeverity, type InjurySeverity } from "@/lib/injuries";
 
 export const dynamic = "force-dynamic";
 
@@ -92,8 +93,6 @@ interface UpcomingFixture {
   awayName: string;
 }
 
-type InjurySeverity = "suspension" | "high" | "medium" | "low" | "international" | "unknown";
-
 interface InjuryDoc {
   teamId: string;
   playerId: number;
@@ -111,10 +110,10 @@ const SEVERITY_ORDER: Record<InjurySeverity, number> = {
 
 const SEVERITY_BADGE: Record<InjurySeverity, { label: string; className: string }> = {
   suspension: { label: "SUSP", className: "border-loss text-loss" },
-  high: { label: "OUT", className: "border-orange-500/60 text-orange-400" },
-  medium: { label: "DOUBT", className: "border-yellow-500/60 text-yellow-400" },
+  high: { label: "OUT", className: "border-warn/60 text-warn" },
+  medium: { label: "DOUBT", className: "border-caution/60 text-caution" },
   low: { label: "50/50", className: "border-muted text-muted" },
-  international: { label: "INTL", className: "border-blue-500/60 text-blue-400" },
+  international: { label: "INTL", className: "border-info/60 text-info" },
   unknown: { label: "?", className: "border-muted text-muted" },
 };
 
@@ -170,7 +169,7 @@ async function getInjuries(teamId: string): Promise<InjuryDoc[]> {
     .collection<InjuryDoc>("injuries")
     .find({ teamId })
     .toArray();
-  return injuries.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+  return injuries.sort((a, b) => SEVERITY_ORDER[deriveInjurySeverity(a)] - SEVERITY_ORDER[deriveInjurySeverity(b)]);
 }
 
 async function getModelRatings(teamId: string): Promise<{ att: number | null; deff: number | null }> {
@@ -339,19 +338,23 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
         ) : (
           <>
             <div className="mt-4 divide-y divide-line/60 border border-line">
-              {injuries.map((inj) => (
-                <div key={`${inj.playerId}-${inj.severity}`} className="flex items-center gap-3 px-4 py-2">
-                  <span
-                    className={`inline-block flex-shrink-0 border px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest ${SEVERITY_BADGE[inj.severity].className}`}
-                  >
-                    {SEVERITY_BADGE[inj.severity].label}
-                  </span>
-                  <p className="font-data text-sm text-ink">
-                    {inj.playerName} <span className="text-muted">·</span> {inj.position}{" "}
-                    <span className="text-muted">·</span> {inj.injuryType}
-                  </p>
-                </div>
-              ))}
+              {injuries.map((inj) => {
+                const severity = deriveInjurySeverity(inj);
+                return (
+                  <div key={`${inj.playerId}-${inj.severity}`} className="flex items-center gap-3 px-4 py-2">
+                    <span
+                      className={`inline-block flex-shrink-0 border px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest ${SEVERITY_BADGE[severity].className}`}
+                    >
+                      {SEVERITY_BADGE[severity].label}
+                    </span>
+                    <p className="font-data text-sm text-ink">
+                      {inj.playerName}
+                      {inj.position && <><span className="text-muted"> · </span>{inj.position}</>}
+                      {inj.injuryType && inj.injuryType.toLowerCase() !== "unknown" && <><span className="text-muted"> · </span>{inj.injuryType}</>}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
             <p className="mt-3 font-data text-xs text-muted">
               Last updated: {formatUpdatedAt(

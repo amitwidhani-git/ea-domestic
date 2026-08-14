@@ -7,10 +7,10 @@ type Doc = Record<string, any>;
 
 const SEVERITY_BADGE: Record<string, { label: string; className: string }> = {
   suspension: { label: "SUSP", className: "border-loss text-loss" },
-  high: { label: "OUT", className: "border-orange-500/60 text-orange-400" },
-  medium: { label: "DOUBT", className: "border-yellow-500/60 text-yellow-400" },
+  high: { label: "OUT", className: "border-warn/60 text-warn" },
+  medium: { label: "DOUBT", className: "border-caution/60 text-caution" },
   low: { label: "50/50", className: "border-muted text-muted" },
-  international: { label: "INTL", className: "border-blue-500/60 text-blue-400" },
+  international: { label: "INTL", className: "border-info/60 text-info" },
   unknown: { label: "?", className: "border-muted text-muted" },
 };
 
@@ -66,7 +66,7 @@ function InjuryList({ injuries }: { injuries: MatchInjury[] }) {
         return (
           <div key={i} className="flex items-center gap-2">
             <span className={`inline-block shrink-0 border px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest ${badge.className}`}>{badge.label}</span>
-            <span className="font-data text-xs text-ink">{inj.playerName}{inj.position ? <span className="text-muted"> · {inj.position}</span> : null}{inj.injuryType ? <span className="text-muted"> · {inj.injuryType}</span> : null}</span>
+            <span className="font-data text-xs text-ink">{inj.playerName}{inj.position ? <span className="text-muted"> · {inj.position}</span> : null}{inj.injuryType && inj.injuryType.toLowerCase() !== "unknown" ? <span className="text-muted"> · {inj.injuryType}</span> : null}</span>
           </div>
         );
       })}

@@ -107,3 +107,54 @@ export async function getAffiliateForBookmaker(bookmaker: string): Promise<Affil
     ) ?? null
   );
 }
+
+// ---------------------------------------------------------------- Bet/Back CTA resolution
+
+export interface CtaAffiliate {
+  affiliateId: string;
+  name: string;
+  logoInitials: string;
+  brandColor?: string;
+  /** true when this isn't literally that bookmaker's own deal — a stand-in
+   *  partner (Betano, then LiveScoreBet) so the CTA always goes somewhere real. */
+  isFallback: boolean;
+}
+
+// Preferred order for the "no direct deal for this bookmaker" stand-in —
+// our only two partners currently tied to live odds-feed prices.
+const FALLBACK_AFFILIATE_IDS = ["betano", "livescorebet"];
+
+/**
+ * Resolve every bookmaker key in one pass (single affiliate-list fetch) to a
+ * CTA-ready affiliate, falling back to Betano/LiveScoreBet when there's no
+ * direct partner for that specific bookmaker — so a "Back"/"Bet" button is
+ * never a dead link, and always shows the real destination's branding.
+ */
+export async function resolveCtaAffiliates(bookmakers: string[]): Promise<Map<string, CtaAffiliate | null>> {
+  const list = (await getAffiliateList()).filter(isLive);
+  const byNormId = new Map(list.map((a) => [norm(a.id), a]));
+  const fallback = FALLBACK_AFFILIATE_IDS.map((id) => byNormId.get(id)).find((a): a is Affiliate => !!a) ?? null;
+
+  const findExact = (key: string): Affiliate | undefined => {
+    const k = norm(key);
+    return list.find(
+      (a) => norm(a.id) === k || norm(a.name) === k || (a.aliases ?? []).some((al) => norm(al) === k)
+    );
+  };
+  const toCta = (a: Affiliate, isFallback: boolean): CtaAffiliate => ({
+    affiliateId: a.id, name: a.name, logoInitials: a.logoInitials, brandColor: a.brandColor, isFallback,
+  });
+
+  const out = new Map<string, CtaAffiliate | null>();
+  for (const key of new Set(bookmakers)) {
+    const exact = findExact(key);
+    const chosen = exact ? toCta(exact, false) : fallback ? toCta(fallback, true) : null;
+    out.set(key, chosen);
+  }
+  return out;
+}
+
+/** Single-key convenience wrapper over {@link resolveCtaAffiliates}. */
+export async function resolveCtaAffiliate(bookmaker: string): Promise<CtaAffiliate | null> {
+  return (await resolveCtaAffiliates([bookmaker])).get(bookmaker) ?? null;
+}
