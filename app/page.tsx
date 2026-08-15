@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ValueSignalCard from "@/components/ValueSignalCard";
-import { getEvSignals, getStats, getArticles } from "@/lib/data";
+import LiveMatchesBar from "@/components/LiveMatchesBar";
+import { getEvSignals, getStats, getArticles, getLiveMatches } from "@/lib/data";
 
 // Display order for grouping the best upcoming edges by competition.
 const LEAGUE_ORDER = ["PL", "CH", "L1", "L2", "FAC", "LC", "CS"];
@@ -20,7 +21,9 @@ function TrustCell({ title, body, icon }: { title: string; body: string; icon: R
 }
 
 export default async function HomePage() {
-  const [signals, stats, articles] = await Promise.all([getEvSignals(), getStats(), getArticles()]);
+  const [signals, stats, articles, liveMatches] = await Promise.all([
+    getEvSignals(), getStats(), getArticles(), getLiveMatches(),
+  ]);
 
   // Best upcoming edge per match (a match can carry more than one signal),
   // then the top two per league/cup, in standard competition order.
@@ -47,6 +50,8 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-12">
+      <LiveMatchesBar initial={liveMatches} />
+
       {/* ── HERO ── */}
       <section className="max-w-3xl pt-2">
         <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-accent-ink">Value signals · Premier League &amp; EFL</p>

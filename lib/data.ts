@@ -11,7 +11,8 @@
 
 import { MongoClient, type Db } from "mongodb";
 import type { Article, ArticleDetail, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow, UpcomingFixtureWithSignal } from "./types";
-import { resolveCtaAffiliates } from "./affiliates";
+import { resolveCtaAffiliates, getAffiliateList, pickRandomAffiliate, type CtaAffiliate } from "./affiliates";
+import { getLiveApiFixtures } from "./liveScores";
 
 // ---------------------------------------------------------------- connection
 
@@ -327,6 +328,86 @@ export async function getEvSignals(): Promise<EvSignal[]> {
     if (!b.kickoff_utc) return -1;
     if (a.kickoff_utc !== b.kickoff_utc) return a.kickoff_utc < b.kickoff_utc ? -1 : 1;
     return b.ev - a.ev; // same kickoff — higher edge first
+  });
+}
+
+// ---------------------------------------------------------------- live matches
+
+export interface LiveMatchCard {
+  matchId: string;
+  league: League;
+  homeTeam: string; awayTeam: string;
+  homeTeamId: string; awayTeamId: string;
+  homeApiFootballId: number | null; awayApiFootballId: number | null;
+  score: { home: number; away: number } | null;
+  elapsed: number | null;
+  afStatus: string | null; // raw API-Football code (1H/HT/2H/…) for display
+  modelPick: "home" | "draw" | "away" | null;
+  modelProb: number | null;  // our model's probability of modelPick
+  marketProb: number | null; // market-implied probability of that same outcome
+  cta: CtaAffiliate | null;  // random Betano/LiveScoreBet split — no single "best bookmaker" for a live match
+}
+
+/**
+ * Currently in-play matches for the homepage live bar, sourced from the same
+ * real-time API-Football feed as /api/live-scores (not the match_stats
+ * collection's `isLive` flag — that's written by a separate background
+ * pipeline job that can lag several minutes behind actual kickoff). Empty
+ * array (not an error) when nothing is live right now.
+ */
+export async function getLiveMatches(): Promise<LiveMatchCard[]> {
+  const liveFixtures = await getLiveApiFixtures();
+  if (liveFixtures.length === 0) return [];
+
+  const d = await db();
+  const apiIds = liveFixtures.map((f) => f.apiFixtureId);
+  const matches = await d.collection("matches").find({ "sourceRefs.apiFootballFixtureId": { $in: apiIds } }).toArray();
+  if (matches.length === 0) return [];
+
+  const matchIds = matches.map((m) => String(m._id));
+  const [preds, sigs, affiliateList] = await Promise.all([
+    d.collection("predictions").find({ matchId: { $in: matchIds as any[] } }).toArray(),
+    d.collection("ev_signals").find({ matchId: { $in: matchIds as any[] } }).toArray(),
+    getAffiliateList(),
+  ]);
+  const predByMatch = new Map(preds.map((p) => [String(p.matchId), p]));
+  const sigByKey = new Map(sigs.map((s) => [`${s.matchId}:${s.selection}`, s]));
+
+  const teamIds = [...new Set(matches.flatMap((m) => [m.homeTeamId, m.awayTeamId]))];
+  const teams = teamIds.length ? await d.collection("teams").find({ _id: { $in: teamIds as any[] } }).toArray() : [];
+  const teamById = new Map(teams.map((t) => [String(t._id), t]));
+
+  const fixtureByApiId = new Map(liveFixtures.map((f) => [f.apiFixtureId, f]));
+
+  return matches.map((m): LiveMatchCard => {
+    const mid = String(m._id);
+    const apiId = m.sourceRefs?.apiFootballFixtureId as number | undefined;
+    const live = apiId != null ? fixtureByApiId.get(apiId) : undefined;
+    const p = predByMatch.get(mid);
+    const pick = p?.pick as "home" | "draw" | "away" | undefined;
+    const sig = pick ? sigByKey.get(`${mid}:${pick}`) : undefined;
+    const homeId = String(m.homeTeamId);
+    const awayId = String(m.awayTeamId);
+    const homeTeam = teamById.get(homeId);
+    const awayTeam = teamById.get(awayId);
+
+    return {
+      matchId: mid,
+      league: (m.league ?? "PL") as League,
+      homeTeam: homeTeam ? String(homeTeam.name) : homeId,
+      awayTeam: awayTeam ? String(awayTeam.name) : awayId,
+      homeTeamId: homeId,
+      awayTeamId: awayId,
+      homeApiFootballId: homeTeam?.aliases?.apiFootball ?? null,
+      awayApiFootballId: awayTeam?.aliases?.apiFootball ?? null,
+      score: live ? { home: live.homeScore ?? 0, away: live.awayScore ?? 0 } : null,
+      elapsed: live?.elapsed ?? null,
+      afStatus: live?.status ?? null,
+      modelPick: pick ?? null,
+      modelProb: pick && p?.probs ? (p.probs[pick] as number) : null,
+      marketProb: sig ? (sig.marketProb as number) : null,
+      cta: pickRandomAffiliate(affiliateList),
+    };
   });
 }
 

@@ -158,3 +158,18 @@ export async function resolveCtaAffiliates(bookmakers: string[]): Promise<Map<st
 export async function resolveCtaAffiliate(bookmaker: string): Promise<CtaAffiliate | null> {
   return (await resolveCtaAffiliates([bookmaker])).get(bookmaker) ?? null;
 }
+
+// ---------------------------------------------------------------- live-bar CTA (random)
+
+// Live matches have no single "best bookmaker" context, so the CTA just
+// splits traffic evenly between our two feed-connected partners.
+const LIVE_BAR_PARTNER_IDS = ["betano", "livescorebet"];
+
+/** Pure picker — random affiliate from `list` matching `ids`, for reuse across many rows without refetching. */
+export function pickRandomAffiliate(list: Affiliate[], ids: string[] = LIVE_BAR_PARTNER_IDS): CtaAffiliate | null {
+  const byNormId = new Map(list.filter(isLive).map((a) => [norm(a.id), a]));
+  const candidates = ids.map((id) => byNormId.get(norm(id))).filter((a): a is Affiliate => !!a);
+  if (candidates.length === 0) return null;
+  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+  return { affiliateId: chosen.id, name: chosen.name, logoInitials: chosen.logoInitials, brandColor: chosen.brandColor, isFallback: false };
+}
