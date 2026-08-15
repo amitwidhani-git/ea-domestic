@@ -62,7 +62,7 @@ const Arrow = () => (
   </svg>
 );
 
-export default function OddsRow({ signal, oddsFmt }: { signal: EvSignal; oddsFmt: OddsFormat }) {
+export default function OddsRow({ signal, oddsFmt, featured = false }: { signal: EvSignal; oddsFmt: OddsFormat; featured?: boolean }) {
   const [open, setOpen] = useState(false);
   const [odds, setOdds] = useState<ApiOddsRow[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -89,7 +89,7 @@ export default function OddsRow({ signal, oddsFmt }: { signal: EvSignal; oddsFmt
     .sort((a, b) => b.price - a.price);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-panel shadow-[var(--shadow)]">
+    <div className={`overflow-hidden rounded-xl border bg-panel shadow-[var(--shadow)] ${featured ? "border-accent" : "border-line"}`}>
       <div className="flex items-center gap-3 p-3.5">
         <span className="hidden shrink-0 rounded-md bg-chip px-1.5 py-1 font-data text-[10.5px] font-semibold tracking-wide text-muted sm:inline-block">{signal.league}</span>
 
