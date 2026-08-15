@@ -32,7 +32,8 @@ export default function ClubCrest({ apiFootballId, clubName, size = 24 }: Props)
       width={size}
       height={size}
       loading="lazy"
-      className="inline-block flex-shrink-0 object-contain"
+      className="inline-block flex-shrink-0 object-cover"
+      style={{ width: size, height: size }}
       onError={() => setFailed(true)}
     />
   );

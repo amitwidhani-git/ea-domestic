@@ -63,7 +63,7 @@ const TrendUp = () => (
 function AffiliateLogo({ cta }: { cta: CtaAffiliate }) {
   return (
     <span
-      className="flex h-5 w-5 shrink-0 items-center justify-center rounded font-display text-[9px] font-bold leading-none"
+      className="flex h-5 w-5 shrink-0 items-center justify-center rounded font-data text-[9px] font-bold leading-none"
       style={{ background: cta.brandColor ?? "#ffffff", color: "#0E1521" }}
       title={cta.name}
     >
@@ -120,7 +120,7 @@ export default function ValueSignalCard({
 
   const edgePill = (
     <span
-      className={`mt-1 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 font-body text-xs font-semibold ${
+      className={`mt-1 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 font-data text-xs font-semibold ${
         edgeCls === "none" ? "bg-chip text-muted" : "bg-accent/10 text-accent-ink"
       }`}
     >
@@ -144,20 +144,20 @@ export default function ValueSignalCard({
       <div className="relative mb-3.5 flex items-center gap-2.5">
         <Link href={`/matches/${signal.match_id}`} aria-label={`Match centre: ${signal.home_team} v ${signal.away_team}`} className="absolute inset-0 z-10" />
         <div className="flex min-w-0 flex-1 items-center gap-2 text-[15.5px] font-semibold">
-          <ClubCrest apiFootballId={null} clubName={signal.home_team} size={26} />
+          <ClubCrest apiFootballId={signal.home_api_football_id} clubName={signal.home_team} size={26} />
           <Link href={`/teams/${signal.home_team_id}`} className="relative z-20 truncate hover:text-accent">{signal.home_team}</Link>
         </div>
         <span className="font-data text-[11px] text-muted">v</span>
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-[15.5px] font-semibold">
           <Link href={`/teams/${signal.away_team_id}`} className="relative z-20 truncate hover:text-accent">{signal.away_team}</Link>
-          <ClubCrest apiFootballId={null} clubName={signal.away_team} size={26} />
+          <ClubCrest apiFootballId={signal.away_api_football_id} clubName={signal.away_team} size={26} />
         </div>
       </div>
 
       {/* pick */}
       <div className="mb-3.5 flex items-center gap-2.5 rounded-[10px] border border-line bg-panel2 px-3 py-2.5">
-        <span className="font-body text-[10px] font-bold uppercase tracking-wider text-muted">Pick</span>
-        <span className="font-body text-sm font-bold">{pickName} win</span>
+        <span className="font-data text-[10px] font-bold uppercase tracking-wider text-muted">Pick</span>
+        <span className="font-data text-sm font-bold">{pickName} win</span>
         <span className="ml-auto font-data text-lg font-semibold">{model.toFixed(0)}%</span>
       </div>
 
@@ -172,20 +172,20 @@ export default function ValueSignalCard({
       {signal.cta ? (
         <a
           href={`/go/${signal.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
-          className="mt-3.5 flex items-center gap-2.5 rounded-[10px] bg-accent px-3.5 py-2.5 font-body text-sm font-bold text-white transition-[filter] hover:brightness-105"
+          className="mt-3.5 flex items-center gap-2.5 rounded-[10px] bg-accent px-3.5 py-2.5 font-data text-sm font-bold text-white transition-[filter] hover:brightness-105"
         >
           <AffiliateLogo cta={signal.cta} />
           Back {pickName} <span className="ml-auto font-data text-[15px]">{showPrice(signal.best_price, oddsFmt)}</span>
           <span className="flex"><Arrow /></span>
         </a>
       ) : (
-        <div className="mt-3.5 flex items-center gap-2.5 rounded-[10px] border border-line px-3.5 py-2.5 font-body text-sm text-muted">
+        <div className="mt-3.5 flex items-center gap-2.5 rounded-[10px] border border-line px-3.5 py-2.5 font-data text-sm text-muted">
           Best price <span className="ml-auto font-data text-[15px]">{showPrice(signal.best_price, oddsFmt)}</span>
         </div>
       )}
 
       {/* tools */}
-      <div className="mt-2.5 flex items-center gap-3.5 font-body text-xs">
+      <div className="mt-2.5 flex items-center gap-3.5 font-data text-xs">
         <button onClick={toggleCompare} className="inline-flex items-center gap-1 font-semibold text-muted hover:text-ink">
           Compare books <Chevron open={drawer === "compare"} />
         </button>
@@ -206,15 +206,15 @@ export default function ValueSignalCard({
           ) : (
             cmpRows.map((r, i) => (
               <div key={r.book} className="flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 hover:bg-panel2">
-                <span className="font-body text-sm font-semibold">{r.name}</span>
-                {i === 0 && <span className="rounded bg-accent/10 px-1.5 py-0.5 font-body text-[9px] font-bold uppercase tracking-wide text-accent-ink">Best</span>}
+                <span className="font-data text-sm font-semibold">{r.name}</span>
+                {i === 0 && <span className="rounded bg-accent/10 px-1.5 py-0.5 font-data text-[9px] font-bold uppercase tracking-wide text-accent-ink">Best</span>}
                 <span className="ml-auto font-data text-sm font-semibold">{showPrice(r.price, oddsFmt)}</span>
                 {/* Only a genuine (non-fallback) affiliate match gets a Bet button here —
                     with ~20 books listed, defaulting every row to the same partner would
                     misleadingly imply we're partnered with all of them. */}
                 {r.cta && !r.cta.isFallback && (
                   <a href={`/go/${r.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
-                    className="flex items-center gap-1.5 rounded-[7px] border border-accent/40 px-2.5 py-1 font-body text-[11.5px] font-bold text-accent-ink hover:bg-accent/10">
+                    className="flex items-center gap-1.5 rounded-[7px] border border-accent/40 px-2.5 py-1 font-data text-[11.5px] font-bold text-accent-ink hover:bg-accent/10">
                     <AffiliateLogo cta={r.cta} /> Bet
                   </a>
                 )}
@@ -235,7 +235,7 @@ export default function ValueSignalCard({
         </div>
       )}
 
-      <span className="mt-3 inline-flex items-center gap-1.5 border-t border-line pt-3 font-body text-[11px] text-muted">
+      <span className="mt-3 inline-flex items-center gap-1.5 border-t border-line pt-3 font-data text-[11px] text-muted">
         <Lock /> Logged pre-kick-off · never revised
       </span>
     </article>
@@ -245,7 +245,7 @@ export default function ValueSignalCard({
 function BarRow({ label, pct, color }: { label: string; pct: number; color: string }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="w-11 font-body text-[10.5px] font-medium uppercase tracking-wide text-muted">{label}</span>
+      <span className="w-11 font-data text-[10.5px] font-medium uppercase tracking-wide text-muted">{label}</span>
       <span className="h-[7px] flex-1 overflow-hidden rounded-full" style={{ background: "var(--line)" }}>
         <span className="block h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, pct))}%`, background: color }} />
       </span>

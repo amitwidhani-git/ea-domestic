@@ -35,6 +35,7 @@ export interface EvSignal {
   best_bookmaker: string; ev: number; kelly_fraction: number; book_count: number;
   created_at: string; home_team: string; away_team: string; kickoff_utc: string;
   home_team_id: string; away_team_id: string;
+  home_api_football_id: number | null; away_api_football_id: number | null;
   /** Resolved Back-CTA destination (falls back to Betano/LiveScoreBet when
    *  best_bookmaker has no direct affiliate deal); null if neither exists. */
   cta: CtaAffiliate | null;

@@ -244,7 +244,10 @@ export async function getPredictionCoverage(): Promise<{ predicting: number; tot
 
 // ---------------------------------------------------------------- ev signals
 
-interface FixtureInfo { homeTeam: string; awayTeam: string; homeTeamId: string; awayTeamId: string; kickoffUtc: string }
+interface FixtureInfo {
+  homeTeam: string; awayTeam: string; homeTeamId: string; awayTeamId: string; kickoffUtc: string;
+  homeApiFootballId: number | null; awayApiFootballId: number | null;
+}
 
 // Shared by getEvSignals/getSettledEvSignals — resolves matchId -> display
 // names + kickoff via a single matches+teams join instead of N+1 lookups.
@@ -258,6 +261,7 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
   const teamIds = [...new Set(matches.flatMap((m) => [m.homeTeamId, m.awayTeamId]))];
   const teamDocs = await d.collection("teams").find({ _id: { $in: teamIds as any[] } }).toArray();
   const teamName = new Map(teamDocs.map((t) => [String(t._id), String(t.name)]));
+  const teamApiFootballId = new Map(teamDocs.map((t) => [String(t._id), (t.aliases?.apiFootball as number | undefined) ?? null]));
 
   const out = new Map<string, FixtureInfo>();
   for (const id of uniqueIds) {
@@ -268,6 +272,8 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
       homeTeamId: m ? String(m.homeTeamId) : "",
       awayTeamId: m ? String(m.awayTeamId) : "",
       kickoffUtc: m ? (m.kickoffUtc as string) : "",
+      homeApiFootballId: m ? teamApiFootballId.get(String(m.homeTeamId)) ?? null : null,
+      awayApiFootballId: m ? teamApiFootballId.get(String(m.awayTeamId)) ?? null : null,
     });
   }
   return out;
@@ -318,6 +324,8 @@ export async function getEvSignals(): Promise<EvSignal[]> {
       away_team: f?.awayTeam ?? "",
       home_team_id: f?.homeTeamId ?? "",
       away_team_id: f?.awayTeamId ?? "",
+      home_api_football_id: f?.homeApiFootballId ?? null,
+      away_api_football_id: f?.awayApiFootballId ?? null,
       kickoff_utc: f?.kickoffUtc ?? "",
       cta: ctaByBookmaker.get(String(s.bestBookmaker)) ?? null,
     };

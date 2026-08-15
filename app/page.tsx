@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import ValueSignalCard from "@/components/ValueSignalCard";
 import LiveMatchesBar from "@/components/LiveMatchesBar";
@@ -7,6 +8,11 @@ import { getEvSignals, getStats, getArticles, getLiveMatches } from "@/lib/data"
 const LEAGUE_ORDER = ["PL", "CH", "L1", "L2", "FAC", "LC", "CS"];
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Edge Analysts: Football Predictions & Odds Intelligence Platform",
+  description: "Premier League & EFL Predictions, Frozen Pre-Kick-Off, Auditable Record",
+};
 
 function TrustCell({ title, body, icon }: { title: string; body: string; icon: React.ReactNode }) {
   return (
@@ -54,14 +60,12 @@ export default async function HomePage() {
 
       {/* ── HERO ── */}
       <section className="max-w-3xl pt-2">
-        <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-accent-ink">Value signals · Premier League &amp; EFL</p>
-        <h1 className="mt-3.5 font-display text-[clamp(1.9rem,5vw,2.4rem)] font-extrabold leading-[1.07] tracking-[-0.03em]">
-          Where our model and the bookmakers disagree.
+        <h1 className="font-display text-[clamp(1.9rem,5vw,2.4rem)] font-extrabold leading-[1.07] tracking-[-0.03em]">
+          Edge Analysts: Football Predictions &amp; Odds Intelligence Platform
         </h1>
-        <p className="mt-3.5 max-w-xl font-body text-base text-muted">
-          One model across four divisions. Every pick frozen before kick-off, timestamped and never rewritten
-          <span className="text-ink"> — then we link you straight to the best price.</span>
-        </p>
+        <h2 className="mt-3.5 max-w-xl font-body text-base font-bold text-accent">
+          Premier League &amp; EFL Predictions, Frozen Pre-Kick-Off, Auditable Record
+        </h2>
       </section>
 
       {/* ── BEST UPCOMING EDGES ── */}

@@ -31,7 +31,7 @@ export default function GlobalFooter() {
               <path d="M4 54 L32 34 L60 54" stroke="rgba(247,245,240,0.7)" strokeWidth="6" strokeLinejoin="miter" fill="none"/>
             </svg>
             <span style={{
-              fontFamily: "var(--font-display,'Bebas Neue',sans-serif)",
+              fontFamily: "'Bebas Neue', sans-serif",
               fontSize: 16, letterSpacing: "0.1em",
               color: "rgba(247,245,240,0.85)", lineHeight: 1,
             }}>
@@ -40,7 +40,7 @@ export default function GlobalFooter() {
           </div>
 
           <div style={{
-            fontFamily: "var(--font-display,'Bebas Neue',sans-serif)",
+            fontFamily: "'Bebas Neue', sans-serif",
             fontSize: 20, letterSpacing: "0.04em",
             color: "#12B886", lineHeight: 1, marginBottom: 14,
           }}>

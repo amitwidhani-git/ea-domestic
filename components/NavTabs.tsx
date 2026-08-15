@@ -29,7 +29,7 @@ export default function NavTabs() {
   useEffect(() => { setTeamsOpen(false); }, [pathname]);
 
   const linkCls = (active: boolean) =>
-    `border-b-2 pb-0.5 pt-0.5 font-body text-sm font-medium transition-colors ${active ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"}`;
+    `border-b-2 pb-0.5 pt-0.5 font-body text-sm font-medium leading-none transition-colors ${active ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"}`;
 
   return (
     <nav aria-label="Primary" className="flex items-center gap-5">
@@ -41,7 +41,7 @@ export default function NavTabs() {
         <button
           onClick={() => setTeamsOpen((o) => !o)}
           aria-expanded={teamsOpen}
-          className={`inline-flex items-center gap-1 font-body text-sm font-medium transition-colors ${pathname.startsWith("/teams") ? "text-ink" : "text-muted hover:text-ink"}`}
+          className={`inline-flex -translate-y-[2px] items-center gap-1 border-b-2 border-transparent pb-0.5 pt-0.5 font-body text-sm font-medium leading-none transition-colors ${pathname.startsWith("/teams") ? "text-ink" : "text-muted hover:text-ink"}`}
         >
           Teams
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"
