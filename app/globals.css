@@ -21,9 +21,9 @@
   --color-caution: var(--caution);
   --color-info: var(--info);
 
-  --font-display: "Archivo", system-ui, -apple-system, sans-serif;
-  --font-body: "Archivo", system-ui, -apple-system, sans-serif;
-  --font-data: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Inter", system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-data: "Inter", system-ui, -apple-system, sans-serif;
 
   --radius-card: 14px;
 }
@@ -58,10 +58,23 @@ body {
 }
 
 @layer base {
-  /* Archivo replaces the old condensed display face — give display text a
-     solid default weight/tracking, while explicit font-weight utilities
-     (in the higher utilities layer) still win where set. */
+  /* Inter is the single body/display/data face on this branch (Bebas Neue
+     stays reserved for the wordmark) — give display text a solid default
+     weight/tracking, while explicit font-weight utilities (in the higher
+     utilities layer) still win where set. Tabular figures keep numeric
+     columns aligned without needing a separate monospace face. */
   .font-display { font-weight: 700; letter-spacing: -0.02em; }
   .font-data { font-variant-numeric: tabular-nums; letter-spacing: 0; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+}
+
+/* Continuous horizontal ticker (e.g. homepage "recent results") — the track
+   renders its children twice back to back and scrolls exactly one copy's
+   width, so the loop point is invisible. Pauses on hover so a result can
+   actually be read/clicked, and sits still for reduced-motion users. */
+@keyframes ea-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ea-ticker-track { animation: ea-ticker 28s linear infinite; }
+.ea-ticker-track:hover { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .ea-ticker-track { animation: none; }
 }

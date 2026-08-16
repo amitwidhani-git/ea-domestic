@@ -35,7 +35,7 @@ function Badge({
       </span>
       <span
         className={`w-full text-center text-[10px] leading-tight transition-colors ${active ? "text-accent" : "text-[#F7F5F0]/75"}`}
-        style={{ fontFamily: '"DM Mono", monospace' }}
+        style={{ fontFamily: "var(--font-body)" }}
       >
         {label}
       </span>

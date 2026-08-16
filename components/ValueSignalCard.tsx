@@ -60,7 +60,19 @@ const TrendUp = () => (
 
 // Small branded badge so a CTA's real destination is always clear — including
 // when it's a stand-in partner (Betano/LiveScoreBet) rather than the priced book.
+// Betano gets its real "B" logomark (cropped from the wordmark asset); everyone
+// else still falls back to the initials chip until a mark is available for them.
 function AffiliateLogo({ cta }: { cta: CtaAffiliate }) {
+  if (cta.affiliateId?.toLowerCase() === "betano") {
+    return (
+      <span
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white p-[3px]"
+        title={cta.name}
+      >
+        <img src="/betano-mark.png" alt="" className="h-full w-full object-contain" />
+      </span>
+    );
+  }
   return (
     <span
       className="flex h-5 w-5 shrink-0 items-center justify-center rounded font-data text-[9px] font-bold leading-none"
