@@ -5,7 +5,7 @@ import ClubCrest from "@/components/ClubCrest";
 import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
 import MatchWidget from "@/components/MatchWidget";
-import MatchSquadTab from "@/components/MatchSquadTab";
+import MatchSquadTab, { FormRow } from "@/components/MatchSquadTab";
 import type { MatchDetail, MatchEvent, MatchInjury, MatchNews, LineupPlayer, LineupTeam } from "@/lib/matchDetail";
 
 // Both the matches and match_stats collections use normalised status values:
@@ -187,7 +187,7 @@ export default function MatchLiveUpdater({
   return (
     <div className="space-y-6">
       {/* ── HEADER ── */}
-      <div className="border border-line bg-panel p-4">
+      <div className="rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-1 items-center gap-3 min-w-0">
             <ClubCrest apiFootballId={homeTeam.apiFootballId} clubName={homeTeam.name} size={48} />
@@ -222,7 +222,7 @@ export default function MatchLiveUpdater({
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`shrink-0 border px-4 py-2 font-data text-xs uppercase tracking-widest transition-colors ${
+            className={`shrink-0 rounded-[10px] border px-4 py-2 font-data text-xs uppercase tracking-widest transition-colors ${
               tab === t.key ? "border-accent bg-accent/10 text-accent" : "border-line text-ink hover:border-muted"
             }`}>
             {t.label}
@@ -254,7 +254,7 @@ function PredictionTab({ data, phase, bestSignal }: {
   data: MatchDetail; phase: "PRE" | "LIVE" | "POST";
   bestSignal?: { selection: "home" | "draw" | "away"; ev: number; bestPrice: number; bestBookmaker: string };
 }) {
-  const { fixture, homeTeam, awayTeam, prediction, evSignals } = data;
+  const { fixture, homeTeam, awayTeam, prediction, evSignals, homeForm, awayForm } = data;
   return (
     <div className="space-y-6">
       {!prediction || !prediction.probs ? (
@@ -262,7 +262,7 @@ function PredictionTab({ data, phase, bestSignal }: {
       ) : (
         <>
           {phase === "POST" && prediction.model_correct != null && (
-            <div className="border border-line bg-panel p-4">
+            <div className="rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
               <span className={`font-display text-3xl ${prediction.model_correct ? "text-accent" : "text-loss"}`}>
                 {prediction.model_correct ? "✓ CORRECT" : "✗ WRONG"}
               </span>
@@ -275,7 +275,7 @@ function PredictionTab({ data, phase, bestSignal }: {
             </div>
           )}
 
-          <div className="border border-line bg-panel p-4">
+          <div className="rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
             <ProbBar probs={prediction.probs} pick={prediction.pick ?? "home"} />
             {prediction.pick && (
               <div className="mt-2 flex flex-wrap items-center justify-between gap-1">
@@ -302,10 +302,18 @@ function PredictionTab({ data, phase, bestSignal }: {
         </>
       )}
 
+      <div>
+        <h2 className="mb-3 font-display text-xl tracking-wide">Form Guide</h2>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <FormRow team={homeTeam.name} form={homeForm} />
+          <FormRow team={awayTeam.name} form={awayForm} />
+        </div>
+      </div>
+
       {evSignals.length > 0 && (
         <div>
           <p className="mb-2 font-data text-[9px] uppercase tracking-widest text-muted">Value Signals</p>
-          <div className="divide-y divide-line/60 border border-line">
+          <div className="divide-y divide-line/60 overflow-hidden rounded-[14px] border border-line">
             {evSignals.map((s, i) => {
               const sel = s.selection === "draw" ? "Draw" : s.selection === "home" ? homeTeam.name : awayTeam.name;
               const kelly = s.kelly_fraction != null ? `${(s.kelly_fraction * 100).toFixed(1)}%` : "—";
@@ -335,7 +343,7 @@ function StatBar({ home, away, label }: { home: number | string; away: number | 
         <span className="text-[10px] uppercase tracking-widest text-muted">{label}</span>
         <span>{away ?? 0}</span>
       </div>
-      <div className="mt-1 flex h-1.5 overflow-hidden rounded bg-line/30">
+      <div className="mt-1 flex h-1.5 overflow-hidden rounded-full bg-line/30">
         <div className="h-full" style={{ width: `${(h / total) * 100}%`, background: HOME_COLOR }} />
         <div className="h-full" style={{ width: `${(a / total) * 100}%`, background: AWAY_COLOR }} />
       </div>
@@ -359,7 +367,7 @@ function StatsTab({ data, phase }: { data: MatchDetail; phase: "PRE" | "LIVE" | 
           {phase === "PRE" && <p className="font-data text-[10px] text-muted">Recent form data not yet available.</p>}
         </div>
       ) : (
-        <div className="space-y-3 border border-line bg-panel p-4">
+        <div className="space-y-3 rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
           <div className="flex items-center justify-between font-display text-sm">
             <span className="text-accent">{homeTeam.name}</span>
             <span className="text-sky-400">{awayTeam.name}</span>
@@ -373,7 +381,7 @@ function StatsTab({ data, phase }: { data: MatchDetail; phase: "PRE" | "LIVE" | 
       {events && events.length > 0 && (
         <div>
           <p className="mb-2 font-data text-[9px] uppercase tracking-widest text-muted">Timeline</p>
-          <div className="space-y-2 border border-line bg-panel p-4">
+          <div className="space-y-2 rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
             {[...events].reverse().map((e, i) => {
               const away = e.side === "away";
               return (
@@ -407,7 +415,7 @@ function H2HTab({ data }: { data: MatchDetail }) {
           <span className="text-muted">Draws {draws}</span>
           <span className="text-sky-400">{awayTeam.name} {awayWins}</span>
         </div>
-        <div className="mt-1 flex h-2 overflow-hidden rounded bg-line/30">
+        <div className="mt-1 flex h-2 overflow-hidden rounded-full bg-line/30">
           <div className="h-full" style={{ width: `${(homeWins / total) * 100}%`, background: HOME_COLOR }} />
           <div className="h-full" style={{ width: `${(draws / total) * 100}%`, background: "#8a8a8a" }} />
           <div className="h-full" style={{ width: `${(awayWins / total) * 100}%`, background: AWAY_COLOR }} />
@@ -497,7 +505,7 @@ function NewsColumn({ team, articles }: { team: string; articles: MatchNews[] })
       {articles.length === 0 ? (
         <p className="font-data text-xs text-muted">No recent news.</p>
       ) : (
-        <div className="divide-y divide-line/60 border border-line">
+        <div className="divide-y divide-line/60 overflow-hidden rounded-[14px] border border-line">
           {articles.map((a, i) => (
             <div key={i} className="px-3 py-3">
               <a href={a.url ?? "#"} target="_blank" rel="noopener noreferrer" className="font-medium text-ink hover:text-accent">{a.title}</a>
@@ -527,7 +535,7 @@ function InjuryList({ injuries }: { injuries: MatchInjury[] }) {
         const badge = SEVERITY_BADGE[inj.severity ?? "unknown"] ?? SEVERITY_BADGE.unknown;
         return (
           <div key={i} className="flex items-center gap-2">
-            <span className={`inline-block shrink-0 border px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest ${badge.className}`}>{badge.label}</span>
+            <span className={`inline-block shrink-0 rounded-md border px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest ${badge.className}`}>{badge.label}</span>
             <span className="font-data text-xs text-ink">{inj.playerName}{inj.position ? <span className="text-muted"> · {inj.position}</span> : null}{inj.injuryType && inj.injuryType.toLowerCase() !== "unknown" ? <span className="text-muted"> · {inj.injuryType}</span> : null}</span>
           </div>
         );

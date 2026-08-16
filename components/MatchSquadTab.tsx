@@ -39,7 +39,7 @@ const fmtRating = (att: number | null) =>
 
 function OverviewColumn({ team, lineup }: { team: MatchTeam; lineup: LineupTeam | undefined }) {
   return (
-    <div className="rounded border border-line bg-panel2 p-3">
+    <div className="rounded-[14px] border border-line bg-panel2 p-3">
       <div className="flex items-center gap-2">
         <ClubCrest apiFootballId={team.apiFootballId} clubName={team.name} size={32} />
         <span className="font-display text-lg tracking-wide">{team.name}</span>
@@ -65,7 +65,7 @@ function InjuryList({ injuries }: { injuries: MatchInjury[] }) {
         const badge = SEVERITY_BADGE[inj.severity ?? "unknown"] ?? SEVERITY_BADGE.unknown;
         return (
           <div key={i} className="flex items-center gap-2">
-            <span className={`inline-block shrink-0 border px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest ${badge.className}`}>{badge.label}</span>
+            <span className={`inline-block shrink-0 rounded-md border px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest ${badge.className}`}>{badge.label}</span>
             <span className="font-data text-xs text-ink">{inj.playerName}{inj.position ? <span className="text-muted"> · {inj.position}</span> : null}{inj.injuryType && inj.injuryType.toLowerCase() !== "unknown" ? <span className="text-muted"> · {inj.injuryType}</span> : null}</span>
           </div>
         );
@@ -84,7 +84,7 @@ function XIColumn({ team, lineup }: { team: string; lineup: LineupTeam | undefin
       <li key={i} className="flex items-center gap-2 font-data text-xs">
         <span className="w-5 shrink-0 text-right text-muted">{p.number ?? ""}</span>
         <span className="flex-1 truncate text-ink">{p.name}</span>
-        <span className={`shrink-0 border px-1 py-0.5 text-[8px] uppercase tracking-widest ${badge.className}`}>{badge.label}</span>
+        <span className={`shrink-0 rounded-md border px-1 py-0.5 text-[8px] uppercase tracking-widest ${badge.className}`}>{badge.label}</span>
       </li>
     );
   };
@@ -155,7 +155,7 @@ function SquadColumn({ team, squad }: { team: string; squad: TeamSquad | null })
           return (
             <div key={key}>
               <div className="mb-1 flex items-center gap-2">
-                <span className={`border px-1 py-0.5 font-data text-[8px] uppercase tracking-widest ${badgeClass}`}>{badge}</span>
+                <span className={`rounded-md border px-1 py-0.5 font-data text-[8px] uppercase tracking-widest ${badgeClass}`}>{badge}</span>
                 <span className="font-data text-[9px] uppercase tracking-widest text-muted">{label}</span>
               </div>
               <ul className="space-y-1">
@@ -223,7 +223,7 @@ function PerformanceTable({ title, players }: { title: string; players: PlayerSt
         </table>
       </div>
       {motm && (
-        <div className="mt-2 rounded border border-accent/30 bg-accent/5 p-3 font-data text-xs">
+        <div className="mt-2 rounded-[10px] border border-accent/30 bg-accent/5 p-3 font-data text-xs">
           <p className="text-[9px] uppercase tracking-widest text-muted">★ Best performer</p>
           <p className="mt-1 text-ink">
             {motm.playerName} <span className={ratingColor(motm.rating)}>{motm.rating}</span>
@@ -238,7 +238,7 @@ function PerformanceTable({ title, players }: { title: string; players: PlayerSt
 
 // ---------------------------------------------------------------- section 4 (form)
 
-function FormRow({ team, form }: { team: string; form: FormResult[] }) {
+export function FormRow({ team, form }: { team: string; form: FormResult[] }) {
   const wins = form.filter((f) => f.result === "W").length;
   const draws = form.filter((f) => f.result === "D").length;
   const losses = form.filter((f) => f.result === "L").length;
@@ -259,7 +259,7 @@ function FormRow({ team, form }: { team: string; form: FormResult[] }) {
             {form.map((f, i) => (
               <span key={i}
                 title={`vs ${f.opponent} (${f.homeOrAway}) ${f.goalsFor}-${f.goalsAgainst}`}
-                className={`flex h-6 w-6 items-center justify-center border font-data text-[10px] font-semibold ${pillClass(f.result)}`}>
+                className={`flex h-6 w-6 items-center justify-center rounded-full border font-data text-[10px] font-semibold ${pillClass(f.result)}`}>
                 {f.result}
               </span>
             ))}
@@ -287,6 +287,15 @@ export default function MatchSquadTab({ data, phase }: { data: MatchDetail; phas
       <div className="grid gap-4 sm:grid-cols-2">
         <OverviewColumn team={homeTeam} lineup={lineups?.home} />
         <OverviewColumn team={awayTeam} lineup={lineups?.away} />
+      </div>
+
+      {/* ── Form guide ── */}
+      <div>
+        <h2 className="mb-3 font-display text-xl tracking-wide">Form Guide</h2>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <FormRow team={homeTeam.name} form={homeForm} />
+          <FormRow team={awayTeam.name} form={awayForm} />
+        </div>
       </div>
 
       {/* ── Reported absences ── */}
@@ -330,15 +339,6 @@ export default function MatchSquadTab({ data, phase }: { data: MatchDetail; phas
             <p className="mt-4 font-data text-xs text-muted">Lineups confirmed ~1 hour before kick-off.</p>
           </>
         )}
-      </div>
-
-      {/* ── Form guide ── */}
-      <div>
-        <h2 className="mb-3 font-display text-xl tracking-wide">Form Guide</h2>
-        <div className="grid gap-6 sm:grid-cols-2">
-          <FormRow team={homeTeam.name} form={homeForm} />
-          <FormRow team={awayTeam.name} form={awayForm} />
-        </div>
       </div>
     </div>
   );

@@ -274,10 +274,10 @@ function MatchWidgetInner({
                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: COLORS[k] }} aria-hidden="true" />
                   <span className="w-24 shrink-0 truncate font-data text-xs text-ink">{label}</span>
                   <div className="flex-1 space-y-0.5">
-                    <div className="h-1 w-full overflow-hidden rounded bg-line/30">
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-line/30">
                       <div className="h-full" style={{ width: `${(market ?? 0) * 100}%`, background: COLORS[k] }} />
                     </div>
-                    <div className="h-1 w-full overflow-hidden rounded bg-line/30">
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-line/30">
                       <div className="h-full" style={{ width: `${(model ?? 0) * 100}%`, background: COLORS[k], opacity: 0.45 }} />
                     </div>
                   </div>
@@ -300,7 +300,7 @@ function MatchWidgetInner({
             const kelly = Math.max(0, (bestSignal.bestPrice * modelP - 1) / (bestSignal.bestPrice - 1));
             const selName = sel === "draw" ? "Draw" : sel === "home" ? homeTeam : awayTeam;
             return (
-              <div className="rounded border border-accent/30 bg-accent/5 p-2 font-data text-xs text-ink">
+              <div className="rounded-[10px] border border-accent/30 bg-accent/5 p-2 font-data text-xs text-ink">
                 ⚡ Value: {selName} @ {bestSignal.bestPrice.toFixed(2)} ({bestSignal.bestBookmaker})<br />
                 Model {(modelP * 100).toFixed(1)}% vs market {(marketP * 100).toFixed(1)}% · Edge: +{(bestSignal.ev * 100).toFixed(1)}% · Kelly: {(kelly * 100).toFixed(1)}%
               </div>

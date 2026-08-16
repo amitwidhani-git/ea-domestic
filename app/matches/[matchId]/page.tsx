@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { getMatchDetail } from "@/lib/matchDetail";
 import MatchLiveUpdater from "@/components/MatchLiveUpdater";
 import BackLink from "@/components/BackLink";
+import BetanoPromo from "@/components/BetanoPromo";
+import BetMazePromo from "@/components/BetMazePromo";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +24,10 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
 
   return (
     <div className="space-y-6">
+      <BetanoPromo />
       <BackLink fallbackHref="/insights" />
       <MatchLiveUpdater matchId={matchId} initialData={detail} isLive={isLive} />
+      <BetMazePromo />
     </div>
   );
 }
