@@ -180,8 +180,8 @@ function MatchWidgetInner({
                 {homeTeam} {currentScore ? `${currentScore.home} – ${currentScore.away}` : "–"} {awayTeam}
               </span>
               {isLive ? (
-                <span className="inline-flex items-center gap-1 font-data text-xs text-green-400">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" aria-hidden="true" />
+                <span className="inline-flex items-center gap-1 font-data text-xs text-live">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-live" aria-hidden="true" />
                   LIVE{elapsed != null ? <span className="text-muted"> {elapsed}&apos;</span> : null}
                 </span>
               ) : (

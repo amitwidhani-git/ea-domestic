@@ -156,8 +156,8 @@ export default function MatchLiveUpdater({
   let statusChip: React.ReactNode = null;
   if (phase === "LIVE") {
     statusChip = (
-      <span className="inline-flex items-center gap-1 font-data text-xs text-green-400">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1 font-data text-xs text-live">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-live" aria-hidden="true" />
         {fixture.afStatus === "HT" ? "HT" : fixture.elapsed != null ? `${fixture.elapsed}'` : "LIVE"}
       </span>
     );
@@ -239,7 +239,7 @@ export default function MatchLiveUpdater({
 
       {phase === "LIVE" && lastUpdated && (
         <p className="text-center font-data text-[10px] text-muted">
-          <span className="text-green-400">●</span> Last updated {Math.max(0, Math.round((nowTick - lastUpdated.getTime()) / 1000))}s ago
+          <span className="text-live">●</span> Last updated {Math.max(0, Math.round((nowTick - lastUpdated.getTime()) / 1000))}s ago
         </p>
       )}
     </div>
@@ -356,7 +356,7 @@ function StatsTab({ data, phase }: { data: MatchDetail; phase: "PRE" | "LIVE" | 
   return (
     <div className="space-y-6">
       {phase === "LIVE" && (
-        <p className="font-data text-[10px] text-muted"><span className="text-green-400">●</span> Updating every 60s</p>
+        <p className="font-data text-[10px] text-muted"><span className="text-live">●</span> Updating every 60s</p>
       )}
 
       {!stats ? (

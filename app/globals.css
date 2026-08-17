@@ -17,6 +17,7 @@
   --color-accent-ink: var(--accent-ink);
   --color-accent-fg: var(--accent-fg);
   --color-loss: var(--danger);
+  --color-live: var(--live);
   --color-chip: var(--chip);
   --color-warn: var(--warn);
   --color-caution: var(--caution);
@@ -39,6 +40,11 @@
      which flips light in light theme) no longer has enough contrast there. */
   --accent-fg:#0A0E13;
   --danger:#D64545; --chip:#EEF1F4;
+  /* Distinct from --danger (wrong-prediction/error semantics) — this is
+     purely the "match is live right now" broadcast-style indicator, so it
+     stays a fixed vivid acid red in both themes rather than following the
+     page's dark/light palette. */
+  --live:#FF1E3D;
   /* Status badges (injury severity etc.) — darker "700" shades so they stay
      legible on a light/white background; dark theme below uses the paler
      "400" shades that read well on a near-black one. */
@@ -51,6 +57,7 @@
   --accent:#00FFA8; --accent-ink:#00FFA8;
   --accent-fg:#0A0E13;
   --danger:#E5695B; --chip:#1A222C;
+  --live:#FF1E3D;
   --warn:#FB923C; --caution:#FACC15; --info:#60A5FA;
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
 }

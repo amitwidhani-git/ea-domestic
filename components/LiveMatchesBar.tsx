@@ -17,8 +17,8 @@ function Card({ m }: { m: LiveMatchCard }) {
 
       <div className="flex items-center gap-2">
         <LeagueBadge league={m.league as League} />
-        <span className="ml-auto inline-flex items-center gap-1.5 font-data text-[10px] font-bold uppercase tracking-wide text-loss">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-loss" aria-hidden="true" />
+        <span className="ml-auto inline-flex items-center gap-1.5 font-data text-[10px] font-bold uppercase tracking-wide text-live">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-live" aria-hidden="true" />
           {statusLabel}
         </span>
       </div>
@@ -72,7 +72,7 @@ export default function LiveMatchesBar({ initial }: { initial: LiveMatchCard[] }
   return (
     <section>
       <h2 className="mb-3.5 flex items-center gap-2 font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-loss" aria-hidden="true" /> Live now
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-live" aria-hidden="true" /> Live now
       </h2>
       <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {matches.map((m) => <Card key={m.matchId} m={m} />)}
