@@ -17,6 +17,10 @@ export interface Fixture {
   match_id: string; league: League; season: string; kickoff_utc: string;
   home_team: string; away_team: string;
   home_team_id: string; away_team_id: string;
+  // Optional — only populated where the producer already has the teams join
+  // handy (e.g. getUpcomingWithSignals); ClubCrest treats a missing id the
+  // same as null (initials fallback), so other Fixture producers are unaffected.
+  home_api_football_id?: number | null; away_api_football_id?: number | null;
 }
 export interface Prediction {
   match_id: string; model_version: string;

@@ -488,6 +488,7 @@ export async function getUpcomingWithSignals(): Promise<UpcomingFixtureWithSigna
   const teamIds = [...new Set(matches.flatMap((m) => [m.homeTeamId, m.awayTeamId]))];
   const teamDocs = await d.collection("teams").find({ _id: { $in: teamIds as any[] } }).toArray();
   const teamName = new Map(teamDocs.map((t) => [String(t._id), String(t.name)]));
+  const teamApiFootballId = new Map(teamDocs.map((t) => [String(t._id), (t.aliases?.apiFootball as number | undefined) ?? null]));
 
   return matches.map((m) => {
     const mid = String(m._id);
@@ -502,6 +503,8 @@ export async function getUpcomingWithSignals(): Promise<UpcomingFixtureWithSigna
       away_team: teamName.get(String(m.awayTeamId)) ?? String(m.awayTeamId),
       home_team_id: String(m.homeTeamId),
       away_team_id: String(m.awayTeamId),
+      home_api_football_id: teamApiFootballId.get(String(m.homeTeamId)) ?? null,
+      away_api_football_id: teamApiFootballId.get(String(m.awayTeamId)) ?? null,
     };
     return {
       fixture,

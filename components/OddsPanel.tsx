@@ -175,7 +175,7 @@ export default function OddsPanel({
           {/* Section 4 — Full bookmaker table */}
           <div className="border-t border-line pt-3">
             <p className="font-data text-[9px] uppercase tracking-widest text-muted">All Bookmaker Prices</p>
-            <div className="mt-2 max-h-80 overflow-auto">
+            <div className="mt-2 max-h-80 overflow-auto pr-1 [scrollbar-color:var(--muted)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-thumb]:hover:bg-muted [&::-webkit-scrollbar-track]:bg-transparent">
               <table className="w-full border-collapse font-data text-xs">
                 <thead className="sticky top-0 bg-panel2">
                   <tr className="text-[9px] uppercase tracking-widest text-muted">

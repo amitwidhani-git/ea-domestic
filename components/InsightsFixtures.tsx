@@ -1,14 +1,57 @@
 "use client";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import LeagueBadge from "@/components/LeagueBadge";
+import ClubCrest from "@/components/ClubCrest";
 import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
 import OddsPanel from "@/components/OddsPanel";
 import MatchWidget from "@/components/MatchWidget";
 import ValueSignalCard, { type OddsFormat } from "@/components/ValueSignalCard";
+import BetanoPromo from "@/components/BetanoPromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
+import BetMazePromo from "@/components/BetMazePromo";
+import BetrinoPromo from "@/components/BetrinoPromo";
+import BetsunaPromo from "@/components/BetsunaPromo";
+import FruityKingPromo from "@/components/FruityKingPromo";
+import MogobetPromo from "@/components/MogobetPromo";
+import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
+import SpinzwinPromo from "@/components/SpinzwinPromo";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 import type { Affiliate } from "@/lib/affiliates";
+
+// The real partner strip banners — randomised into the All Fixtures list
+// (replacing the generic placeholder AffiliateBar used on Value Signals).
+const STRIP_BANNERS = [
+  BetanoPromo, LivescorebetPromo, BetMazePromo, BetrinoPromo, BetsunaPromo,
+  FruityKingPromo, MogobetPromo, MonsterCasinoPromo, SpinzwinPromo,
+];
+
+function shuffled<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Extends `prev` up to `needed` items drawn from `pool`, "shuffle-bag" style:
+// each full pass through the pool is a fresh shuffle (so nothing repeats
+// until every other option has appeared once), and a pass boundary is
+// nudged so it never lands on the same item that just preceded it either.
+// With pool.length <= 1 a repeat is unavoidable — falls through gracefully.
+function extendNoAdjacentDupes<T>(prev: T[], pool: T[], needed: number): T[] {
+  const result = [...prev];
+  while (result.length < needed) {
+    const bag = shuffled(pool);
+    if (result.length > 0 && bag.length > 1 && bag[0] === result[result.length - 1]) {
+      const swapAt = 1 + Math.floor(Math.random() * (bag.length - 1));
+      [bag[0], bag[swapAt]] = [bag[swapAt], bag[0]];
+    }
+    result.push(...bag);
+  }
+  return result.slice(0, needed);
+}
 
 // ---------------------------------------------------------------- helpers
 
@@ -38,27 +81,44 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
   return (
     <article
       id={`match-${fixture.match_id}`}
-      className={`border bg-panel p-4 transition-colors duration-700 ${highlighted ? "border-accent" : "border-line"}`}
+      className={`relative flex flex-col overflow-hidden rounded-[14px] border bg-panel p-4 transition-colors duration-700 ${highlighted ? "border-accent" : "border-line hover:border-muted"}`}
+      style={{ boxShadow: "var(--shadow)" }}
     >
-      <div className="flex items-center justify-between">
-        <LeagueBadge league={fixture.league} />
+      {/* top row */}
+      <div className="mb-3.5 flex items-center gap-2">
+        <span className="rounded-md bg-chip px-1.5 py-1 font-data text-[10.5px] font-semibold tracking-wide text-muted">{fixture.league}</span>
+        <span className="font-data text-xs text-muted">{kickoffLabel(fixture.kickoff_utc)}</span>
         {bestSignal && (
-          <span className="border border-accent bg-accent/10 px-2 py-0.5 font-data text-xs font-semibold text-accent">
+          <span className="ml-auto rounded-full bg-accent/10 px-2.5 py-1 font-data text-xs font-semibold text-accent-ink">
             +{(bestSignal.ev * 100).toFixed(1)}% EV
           </span>
         )}
       </div>
 
-      <h3 className="relative mt-2 font-display text-xl tracking-wide">
+      {/* teams — the whole title area links to the match centre */}
+      <div className="relative mb-3.5 flex items-center gap-2.5">
         <Link href={`/matches/${fixture.match_id}`} aria-label={`Match centre: ${fixture.home_team} v ${fixture.away_team}`} className="absolute inset-0 z-10" />
-        {teamLink(fixture.home_team_id, fixture.home_team)}
-        {" "}<span className="text-ink">v</span>{" "}
-        {teamLink(fixture.away_team_id, fixture.away_team)}
-      </h3>
-      <p className="mt-0.5 font-data text-[10px] text-muted">{kickoffLabel(fixture.kickoff_utc)}</p>
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-[15.5px] font-semibold">
+          <ClubCrest apiFootballId={fixture.home_api_football_id ?? null} clubName={fixture.home_team} size={26} />
+          {teamLink(fixture.home_team_id, fixture.home_team)}
+        </div>
+        <span className="font-data text-[11px] text-muted">v</span>
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-[15.5px] font-semibold">
+          {teamLink(fixture.away_team_id, fixture.away_team)}
+          <ClubCrest apiFootballId={fixture.away_api_football_id ?? null} clubName={fixture.away_team} size={26} />
+        </div>
+      </div>
 
       {prediction ? (
-        <div className="mt-3 space-y-2">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2.5 rounded-[10px] border border-line bg-panel2 px-3 py-2.5">
+            <span className="font-data text-[10px] font-bold uppercase tracking-wider text-muted">Pick</span>
+            <span className="font-data text-sm font-bold">
+              {prediction.pick === "draw" ? "Draw" : prediction.pick === "home" ? fixture.home_team : fixture.away_team}
+              {prediction.pick !== "draw" ? " win" : ""}
+            </span>
+            <span className="ml-auto font-data text-lg font-semibold">{(prediction.probs[prediction.pick] * 100).toFixed(0)}%</span>
+          </div>
           <ProbBar probs={prediction.probs} pick={prediction.pick} />
           <div className="flex flex-wrap items-center justify-between gap-1">
             <span className="font-data text-xs">
@@ -68,10 +128,10 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
           </div>
         </div>
       ) : (
-        <p className="mt-3 font-data text-[10px] text-muted">Locks 48h before KO</p>
+        <p className="font-data text-[10px] text-muted">Prediction locks before KO</p>
       )}
 
-      <div className="-mx-4 -mb-4 mt-3">
+      <div className="-mx-4 -mb-4 mt-3.5">
         <OddsPanel
           matchId={fixture.match_id}
           homeTeam={fixture.home_team}
@@ -172,9 +232,9 @@ function inWhen(iso: string, when: WhenKey): boolean {
 }
 
 function tabClass(active: boolean): string {
-  return active
-    ? "border border-accent bg-accent px-5 py-2.5 font-display text-lg tracking-wider text-bg transition-colors"
-    : "border border-line px-5 py-2.5 font-display text-lg tracking-wider text-ink transition-colors hover:border-accent hover:text-accent";
+  return `rounded-[10px] border px-4 py-2 font-data text-xs uppercase tracking-widest transition-colors ${
+    active ? "border-accent bg-accent/10 text-accent" : "border-line text-ink hover:border-muted"
+  }`;
 }
 
 export default function InsightsFixtures({
@@ -201,12 +261,18 @@ export default function InsightsFixtures({
   useEffect(() => {
     if (affiliates.length === 0) return;
     const needed = Math.ceil(Math.max(signals.length, upcoming.length, 1) / 8) + 1;
-    setBarPicks((prev) => {
-      if (prev.length >= needed) return prev;
-      const extra = Array.from({ length: needed - prev.length }, () => affiliates[Math.floor(Math.random() * affiliates.length)]);
-      return [...prev, ...extra];
-    });
+    setBarPicks((prev) => (prev.length >= needed ? prev : extendNoAdjacentDupes(prev, affiliates, needed)));
   }, [affiliates, signals.length, upcoming.length]);
+
+  // Same idea, but for the All Fixtures tab: one real strip banner per
+  // every-8-cards slot, picked once client-side and grown (never reshuffled)
+  // as more fixtures load — shuffle-bag order, so no repeats until every
+  // other banner has had a turn.
+  const [stripPicks, setStripPicks] = useState<(typeof STRIP_BANNERS)[number][]>([]);
+  useEffect(() => {
+    const needed = Math.ceil(Math.max(upcoming.length, 1) / 8) + 1;
+    setStripPicks((prev) => (prev.length >= needed ? prev : extendNoAdjacentDupes(prev, STRIP_BANNERS, needed)));
+  }, [upcoming.length]);
 
   // Deep link: /insights#match-<id> lands on the All Fixtures tab.
   useEffect(() => {
@@ -375,20 +441,27 @@ export default function InsightsFixtures({
                 {lg === "ALL" ? "All" : lg}
               </button>
             ))}
-            <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
-            <span className="font-data text-[10px] uppercase tracking-widest text-muted self-center">Sort</span>
-            {SORTS.map((s) => (
-              <button key={s.key} onClick={() => setSort(s.key)} className={pillClass(sort === s.key)}>
-                {s.label}
-              </button>
-            ))}
-            <span className="ml-auto font-data text-xs text-ink self-center">{visible.length} fixtures</span>
+
+            <div className="ml-auto flex items-center gap-2">
+              <span className="font-data text-[11px] uppercase tracking-widest text-muted">Sort</span>
+              <div className="inline-flex rounded-lg bg-chip p-0.5">
+                {SORTS.map((s) => (
+                  <button key={s.key} onClick={() => setSort(s.key)}
+                    className={`rounded-md px-3 py-1.5 font-body text-xs font-semibold transition-colors ${
+                      sort === s.key ? "bg-panel text-ink shadow-sm" : "text-muted hover:text-ink"
+                    }`}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <span className="font-data text-xs text-ink self-center">{visible.length} fixtures</span>
           </div>
 
           {loading && !loaded ? (
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-40 animate-pulse border border-line bg-panel" />
+                <div key={i} className="h-40 animate-pulse rounded-[14px] border border-line bg-panel" />
               ))}
             </div>
           ) : visible.length === 0 ? (
@@ -400,14 +473,14 @@ export default function InsightsFixtures({
           ) : (
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {visible.map((u, i) => {
-                const bar = (i + 1) % 8 === 0 ? barPicks[Math.floor(i / 8)] : undefined;
+                const StripBanner = (i + 1) % 8 === 0 ? stripPicks[Math.floor(i / 8)] : undefined;
                 return (
                   <Fragment key={u.fixture.match_id}>
                     <FixtureCard
                       item={u}
                       highlighted={highlightId === `match-${u.fixture.match_id}`}
                     />
-                    {bar && <AffiliateBar affiliate={bar} />}
+                    {StripBanner && <div className="sm:col-span-2"><StripBanner /></div>}
                   </Fragment>
                 );
               })}
