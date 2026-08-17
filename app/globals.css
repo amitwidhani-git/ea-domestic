@@ -15,6 +15,7 @@
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-fg: var(--accent-fg);
   --color-loss: var(--danger);
   --color-chip: var(--chip);
   --color-warn: var(--warn);
@@ -32,7 +33,11 @@
 :root {
   --bg:#F4F5F7; --surface:#FFFFFF; --surface-2:#FBFBFC;
   --ink:#0E1521; --muted:#626C79; --line:#E7EAEE;
-  --accent:#0E9F6E; --accent-ink:#0A7E57;
+  --accent:#00A876; --accent-ink:#00875F;
+  /* Dedicated dark foreground for text sitting ON a solid accent fill — the
+     accent itself is now bright/mint in both themes, so white (or text-bg,
+     which flips light in light theme) no longer has enough contrast there. */
+  --accent-fg:#0A0E13;
   --danger:#D64545; --chip:#EEF1F4;
   /* Status badges (injury severity etc.) — darker "700" shades so they stay
      legible on a light/white background; dark theme below uses the paler
@@ -43,7 +48,8 @@
 :root[data-theme="dark"] {
   --bg:#0A0E13; --surface:#121820; --surface-2:#0E141B;
   --ink:#E8ECF1; --muted:#8A97A6; --line:#1F2833;
-  --accent:#12B886; --accent-ink:#3FD6A6;
+  --accent:#00FFA8; --accent-ink:#00FFA8;
+  --accent-fg:#0A0E13;
   --danger:#E5695B; --chip:#1A222C;
   --warn:#FB923C; --caution:#FACC15; --info:#60A5FA;
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);

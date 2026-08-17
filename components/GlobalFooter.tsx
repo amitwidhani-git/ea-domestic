@@ -24,8 +24,8 @@ export default function GlobalFooter() {
 
         {/* Col 1 — Brand */}
         <div className="gf-brand">
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <svg width="20" height="18" viewBox="1 -1 62 58" fill="none" aria-hidden="true">
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
+            <svg width="20" height="18" viewBox="1 -1 62 58" fill="none" aria-hidden="true" style={{ transform: "translateY(-1.7px)" }}>
               <path d="M4 22 L32 2 L60 22" stroke="rgba(247,245,240,0.7)" strokeWidth="6" strokeLinejoin="miter" fill="none"/>
               <path d="M4 38 L32 18 L60 38" stroke="rgba(247,245,240,0.7)" strokeWidth="6" strokeLinejoin="miter" fill="none"/>
               <path d="M4 54 L32 34 L60 54" stroke="rgba(247,245,240,0.7)" strokeWidth="6" strokeLinejoin="miter" fill="none"/>
@@ -42,7 +42,7 @@ export default function GlobalFooter() {
           <div style={{
             fontFamily: "'Bebas Neue', sans-serif",
             fontSize: 20, letterSpacing: "0.04em",
-            color: "#12B886", lineHeight: 1, marginBottom: 14,
+            color: "#00FFA8", lineHeight: 1, marginBottom: 14,
           }}>
             Beat the Game
           </div>

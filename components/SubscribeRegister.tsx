@@ -114,7 +114,7 @@ function SubscribeRegisterForm({ source = "unknown", compact = false }: Props) {
             type="button"
             disabled={loading}
             onClick={() => submit("subscribe")}
-            className="border border-accent bg-accent px-3 py-1.5 font-data text-[11px] uppercase tracking-widest text-bg transition-colors hover:bg-accent/80 disabled:cursor-not-allowed disabled:opacity-50"
+            className="border border-accent bg-accent px-3 py-1.5 font-data text-[11px] uppercase tracking-widest text-accent-fg transition-colors hover:bg-accent/80 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading && mode === "subscribe" ? "…" : "Subscribe"}
           </button>
@@ -180,7 +180,7 @@ function SubscribeRegisterForm({ source = "unknown", compact = false }: Props) {
           type="button"
           disabled={loading}
           onClick={() => submit("subscribe")}
-          className="border border-accent bg-accent px-5 py-2.5 font-display text-lg tracking-wider text-bg transition-colors hover:bg-accent/80 disabled:cursor-not-allowed disabled:opacity-50"
+          className="border border-accent bg-accent px-5 py-2.5 font-display text-lg tracking-wider text-accent-fg transition-colors hover:bg-accent/80 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading && mode === "subscribe" ? "Subscribing…" : "Subscribe Free"}
         </button>

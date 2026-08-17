@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="hidden sm:block">
                 <ThemeToggle />
               </div>
-              <SubscribeButton className="rounded-[9px] bg-accent px-4 py-2 font-body text-[13px] font-bold text-white transition-[filter] hover:brightness-105">
+              <SubscribeButton className="rounded-[9px] bg-accent px-4 py-2 font-body text-[13px] font-bold text-accent-fg transition-[filter] hover:brightness-105">
                 Subscribe
               </SubscribeButton>
             </div>

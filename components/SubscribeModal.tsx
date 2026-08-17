@@ -90,7 +90,7 @@ function SubscribeModalInner() {
                 placeholder="you@email.com" aria-label="Email"
                 className="min-w-0 flex-1 rounded-[9px] border border-line bg-panel2 px-3 py-2.5 font-body text-sm text-ink placeholder:text-muted" />
               <button type="submit" disabled={status === "loading"}
-                className="shrink-0 rounded-[9px] bg-accent px-4 py-2.5 font-body text-sm font-bold text-white transition-[filter] hover:brightness-105 disabled:opacity-60">
+                className="shrink-0 rounded-[9px] bg-accent px-4 py-2.5 font-body text-sm font-bold text-accent-fg transition-[filter] hover:brightness-105 disabled:opacity-60">
                 {status === "loading" ? "…" : "Subscribe"}
               </button>
             </form>

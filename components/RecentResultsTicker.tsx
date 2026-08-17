@@ -32,7 +32,7 @@ function Chip({ r }: { r: ResultRow }) {
       href={`/matches/${r.matchId}`}
       className={`flex h-[52px] w-[230px] shrink-0 items-center gap-2.5 rounded-[10px] border px-3 transition-colors hover:border-muted ${correct ? "border-accent/30 bg-accent/5" : "border-line"}`}
     >
-      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${correct ? "bg-accent text-white" : "bg-loss text-white"}`}>
+      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${correct ? "bg-accent text-accent-fg" : "bg-loss text-white"}`}>
         {correct ? <Check /> : <Cross />}
       </span>
       <div className="flex shrink-0 -space-x-1.5">

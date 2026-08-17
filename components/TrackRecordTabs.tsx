@@ -25,7 +25,7 @@ export default function TrackRecordTabs({
         <button
           onClick={() => setTab("current")}
           className={tab === "current"
-            ? "border border-accent bg-accent px-5 py-2.5 font-display text-lg tracking-wider text-bg transition-colors"
+            ? "border border-accent bg-accent px-5 py-2.5 font-display text-lg tracking-wider text-accent-fg transition-colors"
             : "border border-line px-5 py-2.5 font-display text-lg tracking-wider text-ink transition-colors hover:border-accent hover:text-accent"}
         >
           CURRENT
@@ -33,7 +33,7 @@ export default function TrackRecordTabs({
         <button
           onClick={() => setTab("history")}
           className={tab === "history"
-            ? "border border-accent bg-accent px-5 py-2.5 font-display text-lg tracking-wider text-bg transition-colors"
+            ? "border border-accent bg-accent px-5 py-2.5 font-display text-lg tracking-wider text-accent-fg transition-colors"
             : "border border-line px-5 py-2.5 font-display text-lg tracking-wider text-ink transition-colors hover:border-accent hover:text-accent"}
         >
           HISTORY

@@ -184,7 +184,7 @@ export default function ValueSignalCard({
       {signal.cta ? (
         <a
           href={`/go/${signal.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
-          className="mt-3.5 flex items-center gap-2.5 rounded-[10px] bg-accent px-3.5 py-2.5 font-data text-sm font-bold text-white transition-[filter] hover:brightness-105"
+          className="mt-3.5 flex items-center gap-2.5 rounded-[10px] bg-accent px-3.5 py-2.5 font-data text-sm font-bold text-accent-fg transition-[filter] hover:brightness-105"
         >
           <AffiliateLogo cta={signal.cta} />
           Back {pickName} <span className="ml-auto font-data text-[15px]">{showPrice(signal.best_price, oddsFmt)}</span>

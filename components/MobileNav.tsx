@@ -89,7 +89,7 @@ export default function MobileNav() {
         <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4">
           {SUBSCRIBE_ENABLED && (
             <button onClick={() => { setOpen(false); openSubscribe(); }}
-              className="w-full rounded-[9px] bg-accent px-4 py-2.5 font-body text-sm font-bold text-white transition-[filter] hover:brightness-105">
+              className="w-full rounded-[9px] bg-accent px-4 py-2.5 font-body text-sm font-bold text-accent-fg transition-[filter] hover:brightness-105">
               Subscribe — free
             </button>
           )}

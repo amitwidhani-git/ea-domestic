@@ -40,7 +40,7 @@ export default function PromoStrip({ affiliates }: { affiliates: Affiliate[] }) 
             >
               {/* Badge */}
               {a.badge && (
-                <span className="absolute -top-2 right-2 bg-accent px-1.5 py-0.5 font-data text-[8px] font-semibold uppercase tracking-widest text-bg">
+                <span className="absolute -top-2 right-2 bg-accent px-1.5 py-0.5 font-data text-[8px] font-semibold uppercase tracking-widest text-accent-fg">
                   {a.badge}
                 </span>
               )}

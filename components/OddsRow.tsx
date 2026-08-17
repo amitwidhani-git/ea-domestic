@@ -113,7 +113,7 @@ export default function OddsRow({ signal, oddsFmt, featured = false }: { signal:
           </div>
           {signal.cta ? (
             <a href={`/go/${signal.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
-              className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-3 py-2 font-body text-[13px] font-bold text-white transition-[filter] hover:brightness-105">
+              className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-3 py-2 font-body text-[13px] font-bold text-accent-fg transition-[filter] hover:brightness-105">
               <AffiliateLogo cta={signal.cta} />
               <span className="font-data text-sm">{showPrice(signal.best_price, oddsFmt)}</span>
               <Arrow />
@@ -146,7 +146,7 @@ export default function OddsRow({ signal, oddsFmt, featured = false }: { signal:
                     misleadingly imply we're partnered with all of them. */}
                 {r.cta && !r.cta.isFallback && (
                   <a href={`/go/${r.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
-                    className="inline-flex items-center gap-1.5 rounded-[7px] bg-accent px-3 py-1.5 font-body text-[11.5px] font-bold text-white hover:brightness-105">
+                    className="inline-flex items-center gap-1.5 rounded-[7px] bg-accent px-3 py-1.5 font-body text-[11.5px] font-bold text-accent-fg hover:brightness-105">
                     <AffiliateLogo cta={r.cta} /> Bet
                   </a>
                 )}

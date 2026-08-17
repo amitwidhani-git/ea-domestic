@@ -43,7 +43,7 @@ function Card({ m }: { m: LiveMatchCard }) {
 
       {m.cta && (
         <a href={`/go/${m.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
-          className="relative z-20 mt-2.5 flex items-center justify-center gap-1.5 rounded-[9px] bg-accent py-1.5 font-body text-[12px] font-bold text-white transition-[filter] hover:brightness-105">
+          className="relative z-20 mt-2.5 flex items-center justify-center gap-1.5 rounded-[9px] bg-accent py-1.5 font-body text-[12px] font-bold text-accent-fg transition-[filter] hover:brightness-105">
           Bet now
         </a>
       )}

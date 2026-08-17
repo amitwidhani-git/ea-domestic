@@ -20,7 +20,7 @@ export default function FruityKingBannerCard() {
         href="/go/fruity-king"
         target="_blank"
         rel="sponsored noopener"
-        className="mt-2 flex items-center justify-center whitespace-nowrap border border-accent bg-accent px-[17px] py-1 font-display text-[15.3px] tracking-wider text-bg transition-colors hover:bg-accent/80"
+        className="mt-2 flex items-center justify-center whitespace-nowrap border border-accent bg-accent px-[17px] py-1 font-display text-[15.3px] tracking-wider text-accent-fg transition-colors hover:bg-accent/80"
       >
         Claim Offer
       </a>
