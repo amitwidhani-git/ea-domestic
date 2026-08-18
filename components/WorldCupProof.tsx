@@ -16,7 +16,7 @@ export default function WorldCupProof({ intro }: { intro?: React.ReactNode }) {
       </div>
 
       {/* headline number */}
-      <div className="mb-4 flex flex-wrap items-center gap-6 border border-accent/30 bg-panel px-6 py-6">
+      <div className="mb-4 flex flex-wrap items-center gap-6 rounded-[14px] border border-accent/30 bg-panel px-6 py-6 shadow-[var(--shadow)]">
         <div className="relative shrink-0" style={{ width: 140, height: 140 }}>
           <AccuracyDonut pct={(WC_TOTAL.correct / WC_TOTAL.total) * 100} size={140} stroke={14} emphasize />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -32,7 +32,7 @@ export default function WorldCupProof({ intro }: { intro?: React.ReactNode }) {
           <p className="mt-1 font-data text-[11px] uppercase tracking-widest text-ink">
             Overall accuracy · all matches predicted pre-kick-off
           </p>
-          <p className="mt-3 max-w-md font-display text-lg leading-snug tracking-wide text-ink">
+          <p className="mt-3 max-w-md font-body text-sm text-ink">
             Called <span className="text-accent">Spain</span> to lift the trophy from day one.
             Backed by ELO ratings, recent form and head-to-head history. No hindsight required.
           </p>
@@ -46,7 +46,7 @@ export default function WorldCupProof({ intro }: { intro?: React.ReactNode }) {
           const perfect = s.correct === s.total;
           return (
             <div key={s.stage}
-              className={`flex flex-col items-center border p-3 text-center ${perfect ? "border-accent/60 bg-accent/5" : "border-line bg-panel"}`}>
+              className={`flex flex-col items-center rounded-[14px] border p-3 text-center shadow-[var(--shadow)] ${perfect ? "border-accent/60 bg-accent/5" : "border-line bg-panel"}`}>
               <div className="relative" style={{ width: 88, height: 88 }}>
                 <AccuracyDonut pct={pct} size={88} stroke={8} emphasize={perfect} />
                 <div className="absolute inset-0 flex items-center justify-center">
