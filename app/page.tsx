@@ -101,7 +101,7 @@ export default async function HomePage() {
                     </div>
                   ) : (
                     <p className="mt-3 font-data text-[10px] text-ink">
-                      Prediction pending · locks 48h before kick-off
+                      Prediction pending · locks before kick-off
                     </p>
                   )}
                 </article>
@@ -118,7 +118,7 @@ export default async function HomePage() {
             Predictions lock from 12 August
           </p>
           <p className="mt-2 text-sm text-ink">
-            Model runs daily at 07:00 and freezes predictions 48h before kick-off.
+            Model runs daily at 07:00 and freezes predictions up to 7 days before kick-off.
           </p>
           <Link href="/schedule" className="mt-4 inline-block font-data text-xs text-accent hover:underline">
             Browse the full 2026/27 schedule →

@@ -140,7 +140,7 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
           </div>
         </div>
       ) : (
-        <p className="mt-3 font-data text-[10px] text-muted">Locks 48h before KO</p>
+        <p className="mt-3 font-data text-[10px] text-muted">Locks before kick-off</p>
       )}
 
       <div className="-mx-4 -mb-4 mt-3">

@@ -16,7 +16,7 @@ declare global {
 }
 
 const DAYS_AHEAD = 30;
-const CACHE_TTL_MS = 60 * 60 * 1000; // 5 min — plenty fresh for a schedule page, avoids hammering Mongo
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min — plenty fresh for a schedule page, avoids hammering Mongo
 const CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=60";
 
 async function getDb() {

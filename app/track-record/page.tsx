@@ -17,8 +17,9 @@ export default async function TrackRecordPage() {
       <section>
         <h1 className="font-display text-4xl tracking-wide">Track Record</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink">
-          This is a permanent log, not a highlight reel. Every prediction goes live before
-          kick-off and is never altered, removed, or rewritten, whether it&apos;s a win, loss, or draw.
+          This is a permanent log, not a highlight reel. All predictions are frozen before
+          kick-off and cannot be altered — each one carries a SHA-256 hash for independent
+          verification, whether it&apos;s a win, loss, or draw.
         </p>
         <Link href="/results" className="mt-3 inline-block font-data text-xs text-accent hover:underline">
           View full results →

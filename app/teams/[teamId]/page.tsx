@@ -323,7 +323,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
                     <FrozenStamp frozenAt={prediction.frozenAt} hash={prediction.hash} />
                   </div>
                 ) : (
-                  <span className="font-data text-xs text-muted">Prediction locks 48h before kick-off</span>
+                  <span className="font-data text-xs text-muted">Prediction locks before kick-off</span>
                 )}
               </div>
             ))}
