@@ -8,6 +8,7 @@
  * pagination, so the header strip stays correct as you "Load more".
  */
 import { MongoClient, type Db } from "mongodb";
+import { VISIBLE_LEAGUES } from "./leagues";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -108,11 +109,17 @@ export async function getResults(q: ResultsQuery = {}): Promise<ResultsResponse>
   const from = q.from ? startOfDay(q.from) : new Date(Date.now() - 30 * 86_400_000).toISOString();
   const to = q.to ? endOfDay(q.to) : new Date().toISOString();
 
+  // Requested leagues, narrowed to the visible allow-list — so a caller can
+  // only ever ask for a subset of what's shown (never Scottish, even via a
+  // hand-crafted ?league= param). No explicit request = every visible league.
+  const requestedLeagues = q.leagues && q.leagues.length > 0 ? q.leagues : VISIBLE_LEAGUES;
+  const leagues = requestedLeagues.filter((l) => (VISIBLE_LEAGUES as string[]).includes(l));
+
   const matchStage: Doc = {
     status: FINISHED_STATUS,
     kickoffUtc: { $gte: from, $lte: to },
+    league: { $in: leagues },
   };
-  if (q.leagues && q.leagues.length > 0) matchStage.league = { $in: q.leagues };
 
   // per-signal P&L expression (WIN → price-1, LOSE → -1, VOID → 0)
   const signalPnl = {

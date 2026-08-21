@@ -11,6 +11,7 @@
 
 import { MongoClient, type Db } from "mongodb";
 import type { Article, ArticleDetail, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow, UpcomingFixtureWithSignal } from "./types";
+import { VISIBLE_LEAGUES, VISIBLE_LEAGUE_FILTER } from "./leagues";
 
 // ---------------------------------------------------------------- connection
 
@@ -61,6 +62,7 @@ export async function getFixtures(): Promise<FixtureWithPrediction[]> {
     .find({
       status: { $in: ["SCHEDULED", "LIVE"] },
       kickoffUtc: { $gte: now, $lte: horizon },
+      ...VISIBLE_LEAGUE_FILTER,
     })
     .sort({ kickoffUtc: 1 })
     .toArray();
@@ -123,7 +125,7 @@ export async function getTrackRecord(): Promise<TrackRecordRow[]> {
   if (preds.length === 0) return [];
 
   const matchIds = preds.map((p) => String(p.matchId));
-  const matches = await d.collection("matches").find({ _id: { $in: matchIds as any[] } }).toArray();
+  const matches = await d.collection("matches").find({ _id: { $in: matchIds as any[] }, ...VISIBLE_LEAGUE_FILTER }).toArray();
   const matchById = new Map(matches.map((m) => [String(m._id), m]));
 
   const teamIds = [...new Set(matches.flatMap((m) => [m.homeTeamId, m.awayTeamId]))];
@@ -184,6 +186,7 @@ export async function getStats(): Promise<LeagueStats[]> {
       },
     },
     { $unwind: "$match" },
+    { $match: { "match.league": { $in: VISIBLE_LEAGUES } } },
     {
       $group: {
         _id: "$match.league",
@@ -230,7 +233,7 @@ export async function getPredictionCoverage(): Promise<{ predicting: number; tot
 
   const finished = await d
     .collection("matches")
-    .find({ status: "FINISHED", season: latest }, { projection: { _id: 1 } })
+    .find({ status: "FINISHED", season: latest, ...VISIBLE_LEAGUE_FILTER }, { projection: { _id: 1 } })
     .toArray();
   const ids = finished.map((m) => m._id);
   const predicting = ids.length
@@ -288,7 +291,7 @@ export async function getEvSignals(): Promise<EvSignal[]> {
   const d = await db();
   const signals = await d
     .collection("ev_signals")
-    .find({ settledResult: null, ev: { $gte: MIN_EV } })
+    .find({ settledResult: null, ev: { $gte: MIN_EV }, ...VISIBLE_LEAGUE_FILTER })
     .sort({ ev: -1 })
     .limit(20)
     .toArray();
@@ -330,7 +333,7 @@ export async function getSettledEvSignals(): Promise<SettledEvSignal[]> {
   const d = await db();
   const signals = await d
     .collection("ev_signals")
-    .find({ settledResult: { $ne: null } })
+    .find({ settledResult: { $ne: null }, ...VISIBLE_LEAGUE_FILTER })
     .sort({ createdAt: -1 })
     .limit(10)
     .toArray();
@@ -369,7 +372,7 @@ export async function getUpcomingWithSignals(): Promise<UpcomingFixtureWithSigna
 
   const matches = await d
     .collection("matches")
-    .find({ status: "SCHEDULED", kickoffUtc: { $gte: now, $lte: horizon } })
+    .find({ status: "SCHEDULED", kickoffUtc: { $gte: now, $lte: horizon }, ...VISIBLE_LEAGUE_FILTER })
     .sort({ kickoffUtc: 1 })
     .toArray();
 

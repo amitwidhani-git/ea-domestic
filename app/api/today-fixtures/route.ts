@@ -5,6 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { MongoClient, type Db } from "mongodb";
+import { VISIBLE_LEAGUE_FILTER } from "@/lib/leagues";
 
 declare global {
   // Persist the client promise across Next.js hot reloads in dev
@@ -39,7 +40,7 @@ export async function GET() {
 
     const matches = await db
       .collection("matches")
-      .find({ kickoffUtc: { $gte: start.toISOString(), $lte: end.toISOString() } })
+      .find({ kickoffUtc: { $gte: start.toISOString(), $lte: end.toISOString() }, ...VISIBLE_LEAGUE_FILTER })
       .project({ kickoffUtc: 1, "sourceRefs.apiFootballFixtureId": 1 })
       .toArray();
 

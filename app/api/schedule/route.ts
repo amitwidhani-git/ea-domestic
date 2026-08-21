@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+import { VISIBLE_LEAGUE_FILTER } from "@/lib/leagues";
 
 declare global {
   var _eaMongoClientSched: Promise<import("mongodb").MongoClient> | undefined;
@@ -53,7 +54,7 @@ export async function GET() {
     const db = await getDb();
     if (db) {
       const matches = await db.collection("matches")
-        .find({ season: "2026-27", kickoffUtc: { $gte: startIso, $lt: endIso } })
+        .find({ season: "2026-27", kickoffUtc: { $gte: startIso, $lt: endIso }, ...VISIBLE_LEAGUE_FILTER })
         .sort({ kickoffUtc: 1 })
         .toArray();
 

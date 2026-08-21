@@ -5,8 +5,9 @@ import LeagueBadge from "@/components/LeagueBadge";
 import ClubCrest from "@/components/ClubCrest";
 import type { League } from "@/lib/types";
 import type { ResultRow, ResultsResponse, ResultsOutcome, ResultPrediction, ResultEvSignal } from "@/lib/results";
+import { VISIBLE_LEAGUES } from "@/lib/leagues";
 
-const LEAGUES: League[] = ["PL", "CH", "L1", "L2", "LC", "FAC", "CS"];
+const LEAGUES = VISIBLE_LEAGUES as League[];
 const OUTCOMES: { key: ResultsOutcome; label: string }[] = [
   { key: "all", label: "All results" },
   { key: "correct", label: "✓ Correct" },

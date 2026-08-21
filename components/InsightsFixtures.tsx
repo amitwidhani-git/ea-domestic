@@ -9,6 +9,7 @@ import OddsPanel from "@/components/OddsPanel";
 import MatchWidget from "@/components/MatchWidget";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 import type { Affiliate } from "@/lib/affiliates";
+import { VISIBLE_LEAGUES } from "@/lib/leagues";
 
 // ---------------------------------------------------------------- helpers
 
@@ -177,7 +178,7 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
 
 // ---------------------------------------------------------------- main
 
-const LEAGUE_FILTERS: ("ALL" | League)[] = ["ALL", "PL", "CH", "L1", "L2", "LC", "FAC"];
+const LEAGUE_FILTERS: ("ALL" | League)[] = ["ALL", ...(VISIBLE_LEAGUES as League[])];
 type SortKey = "date" | "ev" | "confidence";
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "date", label: "Date" },

@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { LEAGUE_LOGO_URL } from "@/components/LeagueBadge";
 import type { League } from "@/lib/types";
+import { VISIBLE_LEAGUES } from "@/lib/leagues";
 
 // Carabao Cup is the current sponsor name for the League Cup — deliberately
 // overridden here rather than reusing LEAGUE_NAMES, which keeps the generic
 // competition name for other UI (filters, badges).
-const LEAGUES: { code: League; label: string }[] = [
+const ALL_RAIL_LEAGUES: { code: League; label: string }[] = [
   { code: "PL", label: "Premier League" },
   { code: "CH", label: "Championship" },
   { code: "L1", label: "League One" },
@@ -15,6 +16,7 @@ const LEAGUES: { code: League; label: string }[] = [
   { code: "LC", label: "Carabao Cup" },
   { code: "CS", label: "Community Shield" },
 ];
+const LEAGUES = ALL_RAIL_LEAGUES.filter((l) => (VISIBLE_LEAGUES as string[]).includes(l.code));
 
 function Badge({
   active, onClick, label, children,
