@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
 import SpinzwinBannerCard from "@/components/SpinzwinBannerCard";
@@ -25,7 +26,12 @@ export default async function TrackRecordPage() {
         </Link>
       </section>
 
-      <TrackRecordTabs rows={rows} stats={stats} coverage={coverage} />
+      {/* TrackRecordTabs reads ?from= (via useSearchParams) to contextualise its
+          match links' back button — that requires a Suspense boundary for
+          static generation to succeed. */}
+      <Suspense fallback={null}>
+        <TrackRecordTabs rows={rows} stats={stats} coverage={coverage} />
+      </Suspense>
 
       {/* ── OUR PARTNERS ──────────────────────────────────────────────── */}
       <section>

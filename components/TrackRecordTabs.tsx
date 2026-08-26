@@ -1,10 +1,12 @@
 "use client";
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AccuracyDonut from "@/components/AccuracyDonut";
 import LeagueBadge from "@/components/LeagueBadge";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
 import WorldCupProof from "@/components/WorldCupProof";
+import { useBackFrom } from "@/lib/useBackFrom";
 import type { League, LeagueStats, TrackRecordRow } from "@/lib/types";
 import { IS_CUP, LEAGUE_NAMES } from "@/lib/types";
 
@@ -22,6 +24,8 @@ export default function TrackRecordTabs({
   stats: LeagueStats[];
   coverage?: { predicting: number; totalFinished: number };
 }) {
+  const router = useRouter();
+  const backFrom = useBackFrom();
   const [tab, setTab] = useState<"current" | "history">("current");
   // Selecting a ring filters the results table to that competition — null
   // means "All competitions" (the dominant ring's own selection state).
@@ -186,14 +190,17 @@ export default function TrackRecordTabs({
                     <th className="py-2 pr-4">Match</th>
                     <th className="py-2 pr-4">Pick</th>
                     <th className="py-2 pr-4">FT</th>
-                    <th className="py-2 pr-4">Frozen</th>
                     <th className="py-2 pr-4">Hash</th>
                     <th className="py-2">✓</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRows.map(({ fixture, prediction, result }) => (
-                    <tr key={fixture.match_id} className="border-b border-line/60 hover:bg-panel">
+                    <tr
+                      key={fixture.match_id}
+                      onClick={() => router.push(`/matches/${fixture.match_id}?from=${backFrom}`)}
+                      className="cursor-pointer border-b border-line/60 hover:bg-panel"
+                    >
                       <td className="py-2 pr-4 text-ink">{fixture.kickoff_utc.slice(0, 10)}</td>
                       <td className="py-2 pr-4">
                         <div className="flex items-center gap-1">
@@ -206,7 +213,7 @@ export default function TrackRecordTabs({
                         </div>
                       </td>
                       <td className="py-2 pr-4">
-                        <Link href={`/teams/${fixture.home_team_id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.home_team}</Link> v <Link href={`/teams/${fixture.away_team_id}`} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
+                        <Link href={`/teams/${fixture.home_team_id}`} onClick={(e) => e.stopPropagation()} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.home_team}</Link> v <Link href={`/teams/${fixture.away_team_id}`} onClick={(e) => e.stopPropagation()} className="underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{fixture.away_team}</Link>
                       </td>
                       <td className="py-2 pr-4">{PICK_SHORT[prediction.pick]} ({(prediction.probs[prediction.pick] * 100).toFixed(0)}%)</td>
                       <td className="py-2 pr-4">
@@ -214,7 +221,6 @@ export default function TrackRecordTabs({
                           ? `${result.fthg}–${result.ftag} (p: ${result.penalty_score.home}–${result.penalty_score.away})`
                           : `${result.fthg}–${result.ftag}`}
                       </td>
-                      <td className="py-2 pr-4 text-ink">{prediction.frozen_at.slice(0, 16).replace("T", " ")}Z</td>
                       <td className="py-2 pr-4 text-ink">{prediction.hash.slice(0, 8)}</td>
                       <td className={`py-2 font-bold ${prediction.model_correct ? "text-accent" : "text-loss"}`}>
                         {prediction.model_correct ? "✓" : "✗"}

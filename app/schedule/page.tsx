@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { Suspense, useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import LeagueBadge from "@/components/LeagueBadge";
 import LeagueBadgeRail from "@/components/LeagueBadgeRail";
@@ -17,6 +17,7 @@ import FruityKingPromo from "@/components/FruityKingPromo";
 import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
 import SubscribeRegister from "@/components/SubscribeRegister";
+import { useBackFrom } from "@/lib/useBackFrom";
 import { IS_CUP, type League } from "@/lib/types";
 
 // A single strip banner sits above each week's date line. The first match
@@ -127,7 +128,19 @@ function kickoffLabel(iso: string): string {
   }) + " UK";
 }
 
+// useBackFrom() (via useSearchParams) needs a Suspense boundary for static
+// generation — this thin wrapper is the boundary, SchedulePageInner holds
+// all the actual page logic.
 export default function SchedulePage() {
+  return (
+    <Suspense fallback={null}>
+      <SchedulePageInner />
+    </Suspense>
+  );
+}
+
+function SchedulePageInner() {
+  const backFrom = useBackFrom();
   const [rows, setRows] = useState<ScheduleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [league, setLeague] = useState<LeagueFilter>("ALL");
@@ -313,7 +326,7 @@ export default function SchedulePage() {
                       )}
                     </div>
                     <p className="relative font-display text-lg leading-tight tracking-wide truncate">
-                      <Link href={`/matches/${row.match_id}`} aria-label={`Match centre: ${row.home_team} v ${row.away_team}`} className="absolute inset-0 z-10" />
+                      <Link href={`/matches/${row.match_id}?from=${backFrom}`} aria-label={`Match centre: ${row.home_team} v ${row.away_team}`} className="absolute inset-0 z-10" />
                       {row.home_team_id ? (
                         <Link href={`/teams/${row.home_team_id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{row.home_team}</Link>
                       ) : row.home_team}{" "}

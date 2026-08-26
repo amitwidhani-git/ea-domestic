@@ -3,17 +3,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import LeagueBadge from "@/components/LeagueBadge";
 import ClubCrest from "@/components/ClubCrest";
+import { useBackFrom } from "@/lib/useBackFrom";
 import type { LiveMatchCard } from "@/lib/data";
 import type { League } from "@/lib/types";
 
 const PICK_LABEL: Record<"home" | "draw" | "away", string> = { home: "Home", draw: "Draw", away: "Away" };
 const POLL_MS = 60_000;
 
-function Card({ m }: { m: LiveMatchCard }) {
+function Card({ m, backFrom }: { m: LiveMatchCard; backFrom: string }) {
   const statusLabel = m.afStatus === "HT" ? "HT" : m.elapsed != null ? `${m.elapsed}'` : "LIVE";
   return (
     <article className="relative min-w-[220px] shrink-0 rounded-[14px] border border-line bg-panel p-3.5 shadow-[var(--shadow)] transition-colors hover:border-muted">
-      <Link href={`/matches/${m.matchId}`} aria-label={`Match centre: ${m.homeTeam} v ${m.awayTeam}`} className="absolute inset-0 z-10" />
+      <Link href={`/matches/${m.matchId}?from=${backFrom}`} aria-label={`Match centre: ${m.homeTeam} v ${m.awayTeam}`} className="absolute inset-0 z-10" />
 
       <div className="flex items-center gap-2">
         <LeagueBadge league={m.league as League} />
@@ -52,6 +53,7 @@ function Card({ m }: { m: LiveMatchCard }) {
 }
 
 export default function LiveMatchesBar({ initial }: { initial: LiveMatchCard[] }) {
+  const backFrom = useBackFrom();
   const [matches, setMatches] = useState<LiveMatchCard[]>(initial);
 
   // Keep polling even while empty — a match can go live without a page reload.
@@ -75,7 +77,7 @@ export default function LiveMatchesBar({ initial }: { initial: LiveMatchCard[] }
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-live" aria-hidden="true" /> Live now
       </h2>
       <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {matches.map((m) => <Card key={m.matchId} m={m} />)}
+        {matches.map((m) => <Card key={m.matchId} m={m} backFrom={backFrom} />)}
       </div>
     </section>
   );

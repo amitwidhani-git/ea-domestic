@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ClubCrest from "@/components/ClubCrest";
+import { useBackFrom } from "@/lib/useBackFrom";
 import type { ResultRow } from "@/lib/results";
 
 const POLL_MS = 60_000;
@@ -21,7 +22,7 @@ const Cross = () => (
 
 // Fixed-size chip — every card is identical dimensions regardless of team-name
 // length, so the ticker track lines up cleanly (truncate handles the overflow).
-function Chip({ r }: { r: ResultRow }) {
+function Chip({ r, backFrom }: { r: ResultRow; backFrom: string }) {
   const pick = r.prediction?.pick;
   const correct = r.prediction?.modelCorrect;
   if (!pick || correct == null || !r.score) return null;
@@ -29,7 +30,7 @@ function Chip({ r }: { r: ResultRow }) {
 
   return (
     <Link
-      href={`/matches/${r.matchId}`}
+      href={`/matches/${r.matchId}?from=${backFrom}`}
       className={`flex h-[52px] w-[230px] shrink-0 items-center gap-2.5 rounded-[10px] border px-3 transition-colors hover:border-muted ${correct ? "border-accent/30 bg-accent/5" : "border-line"}`}
     >
       <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${correct ? "bg-accent text-accent-fg" : "bg-loss text-white"}`}>
@@ -48,6 +49,7 @@ function Chip({ r }: { r: ResultRow }) {
 }
 
 export default function RecentResultsTicker({ initial }: { initial: ResultRow[] }) {
+  const backFrom = useBackFrom();
   const [rows, setRows] = useState<ResultRow[]>(initial);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export default function RecentResultsTicker({ initial }: { initial: ResultRow[] 
       <em className="mb-2.5 block font-body text-[10px] not-italic uppercase tracking-wider text-muted">Recent settled picks</em>
       <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_24px,black_calc(100%-24px),transparent)]">
         <div className="ea-ticker-track flex w-max gap-2.5">
-          {[...settled, ...settled].map((r, i) => <Chip key={`${r.matchId}-${i}`} r={r} />)}
+          {[...settled, ...settled].map((r, i) => <Chip key={`${r.matchId}-${i}`} r={r} backFrom={backFrom} />)}
         </div>
       </div>
     </div>

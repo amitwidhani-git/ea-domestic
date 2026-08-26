@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import ClubCrest from "@/components/ClubCrest";
+import { useBackFrom } from "@/lib/useBackFrom";
 import type { EvSignal } from "@/lib/types";
 import type { CtaAffiliate } from "@/lib/affiliates";
 
@@ -103,6 +104,7 @@ export default function ValueSignalCard({
   oddsFmt: OddsFormat;
   featured?: boolean;
 }) {
+  const backFrom = useBackFrom();
   const [drawer, setDrawer] = useState<null | "compare" | "audit">(null);
   const [odds, setOdds] = useState<OddsRow[] | null>(null);
   const [loadingOdds, setLoadingOdds] = useState(false);
@@ -154,7 +156,7 @@ export default function ValueSignalCard({
 
       {/* teams — the whole title area links to the match centre */}
       <div className="relative mb-3.5 flex items-center gap-2.5">
-        <Link href={`/matches/${signal.match_id}`} aria-label={`Match centre: ${signal.home_team} v ${signal.away_team}`} className="absolute inset-0 z-10" />
+        <Link href={`/matches/${signal.match_id}?from=${backFrom}`} aria-label={`Match centre: ${signal.home_team} v ${signal.away_team}`} className="absolute inset-0 z-10" />
         <div className="flex min-w-0 flex-1 items-center gap-2 text-[15.5px] font-semibold">
           <ClubCrest apiFootballId={signal.home_api_football_id} clubName={signal.home_team} size={26} />
           <Link href={`/teams/${signal.home_team_id}`} className="relative z-20 truncate hover:text-accent">{signal.home_team}</Link>

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import LeagueBadge from "@/components/LeagueBadge";
 import ClubCrest from "@/components/ClubCrest";
+import { useBackFrom } from "@/lib/useBackFrom";
 import type { League } from "@/lib/types";
 import type { ResultRow, ResultsResponse, ResultsOutcome, ResultPrediction, ResultEvSignal } from "@/lib/results";
 
@@ -115,7 +116,7 @@ function SignalsCell({ signals }: { signals: ResultEvSignal[]; }) {
   );
 }
 
-function ResultCard({ r }: { r: ResultRow }) {
+function ResultCard({ r, backFrom }: { r: ResultRow; backFrom: string }) {
   const correct = r.prediction?.modelCorrect === true;
   const wrong = r.prediction?.modelCorrect === false;
   const tint = correct ? "border-accent/20 bg-accent/5" : wrong ? "border-loss/20 bg-loss/5" : "border-line bg-panel";
@@ -153,7 +154,7 @@ function ResultCard({ r }: { r: ResultRow }) {
 
       {/* Far right: link */}
       <div className="sm:col-span-1 sm:text-right">
-        <Link href={`/matches/${r.matchId}`} className="font-data text-[10px] text-muted transition-colors hover:text-accent">
+        <Link href={`/matches/${r.matchId}?from=${backFrom}`} className="font-data text-[10px] text-muted transition-colors hover:text-accent">
           View stats →
         </Link>
       </div>
@@ -162,6 +163,7 @@ function ResultCard({ r }: { r: ResultRow }) {
 }
 
 export default function ResultsBrowser({ initial }: { initial: ResultsResponse }) {
+  const backFrom = useBackFrom();
   const [leagues, setLeagues] = useState<League[]>([]);
   const [outcome, setOutcome] = useState<ResultsOutcome>("all");
   const [range, setRange] = useState<"7" | "30" | "season">("30");
@@ -296,7 +298,7 @@ export default function ResultsBrowser({ initial }: { initial: ResultsResponse }
               <div key={g.key}>
                 <h2 className="mb-2 font-data text-[11px] uppercase tracking-widest text-muted">{g.label}</h2>
                 <div className="space-y-2">
-                  {g.rows.map((r) => <ResultCard key={r.matchId} r={r} />)}
+                  {g.rows.map((r) => <ResultCard key={r.matchId} r={r} backFrom={backFrom} />)}
                 </div>
               </div>
             ))}

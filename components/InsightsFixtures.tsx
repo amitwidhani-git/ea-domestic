@@ -18,6 +18,7 @@ import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
 import Bet247Promo from "@/components/Bet247Promo";
 import BetwayPromo from "@/components/BetwayPromo";
+import { useBackFrom } from "@/lib/useBackFrom";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 
 // The real partner strip banners — randomised into the All Fixtures list
@@ -81,7 +82,7 @@ function teamLink(id: string, name: string) {
 
 // ---------------------------------------------------------------- upcoming-fixture card
 
-function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; highlighted: boolean }) {
+function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWithSignal; highlighted: boolean; backFrom: string }) {
   const { fixture, prediction, bestSignal } = item;
   return (
     <article
@@ -102,7 +103,7 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
 
       {/* teams — the whole title area links to the match centre */}
       <div className="relative mb-3.5 flex items-center gap-2.5">
-        <Link href={`/matches/${fixture.match_id}`} aria-label={`Match centre: ${fixture.home_team} v ${fixture.away_team}`} className="absolute inset-0 z-10" />
+        <Link href={`/matches/${fixture.match_id}?from=${backFrom}`} aria-label={`Match centre: ${fixture.home_team} v ${fixture.away_team}`} className="absolute inset-0 z-10" />
         <div className="flex min-w-0 flex-1 items-center gap-2 text-[15.5px] font-semibold">
           <ClubCrest apiFootballId={fixture.home_api_football_id ?? null} clubName={fixture.home_team} size={26} />
           {teamLink(fixture.home_team_id, fixture.home_team)}
@@ -217,6 +218,7 @@ function tabClass(active: boolean): string {
 export default function InsightsFixtures({
   signals,
 }: { signals: EvSignal[] }) {
+  const backFrom = useBackFrom();
   const [tab, setTab] = useState<"signals" | "fixtures">("signals");
   const [oddsFmt, setOddsFmt] = useState<OddsFormat>("frac");
   const [when, setWhen] = useState<WhenKey>("week");
@@ -455,6 +457,7 @@ export default function InsightsFixtures({
                     <FixtureCard
                       item={u}
                       highlighted={highlightId === `match-${u.fixture.match_id}`}
+                      backFrom={backFrom}
                     />
                     {StripBanner && <div className="sm:col-span-2"><StripBanner /></div>}
                   </Fragment>

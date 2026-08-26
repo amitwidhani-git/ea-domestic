@@ -1,31 +1,24 @@
 "use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 /**
- * Contextual "back" — returns the visitor to wherever they actually came
- * from (Home, Odds, a team page, …) via browser history when that history
- * is same-site, falling back to `fallbackHref` for direct/deep-linked visits
- * (shared link, new tab, refresh) where there's nothing useful to go back to.
+ * Contextual "back" — returns to wherever the visitor actually clicked in
+ * from, via the `from=` query param every match-centre link sets to its own
+ * page (see lib/useBackFrom.ts). That's the only reliable signal:
+ * document.referrer doesn't update across client-side navigations, so it
+ * can't tell this page where a same-site Link click came from. Falls back to
+ * `fallbackHref` for direct/deep-linked visits (shared link, new tab) where
+ * there's no `from` to trust.
  */
 export default function BackLink({ fallbackHref, label = "Back" }: { fallbackHref: string; label?: string }) {
-  const router = useRouter();
-  const [canGoBack, setCanGoBack] = useState(false);
-
-  useEffect(() => {
-    try {
-      const sameSiteReferrer = document.referrer && new URL(document.referrer).origin === window.location.origin;
-      setCanGoBack(window.history.length > 1 && !!sameSiteReferrer);
-    } catch { setCanGoBack(false); }
-  }, []);
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from");
+  // Only ever trust a same-site relative path — never an absolute/external URL.
+  const safeFrom = from && from.startsWith("/") && !from.startsWith("//") ? from : null;
 
   return (
-    <Link
-      href={fallbackHref}
-      onClick={(e) => { if (canGoBack) { e.preventDefault(); router.back(); } }}
-      className="font-data text-xs text-muted hover:text-ink"
-    >
+    <Link href={safeFrom ?? fallbackHref} className="font-data text-xs text-muted hover:text-ink">
       ← {label}
     </Link>
   );
