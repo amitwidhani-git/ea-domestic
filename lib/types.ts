@@ -1,17 +1,19 @@
 import type { CtaAffiliate } from "@/lib/affiliates";
 
-export type League = "PL" | "CH" | "L1" | "L2" | "FAC" | "LC" | "CS" | "SPL";
+export type League = "PL" | "CH" | "L1" | "L2" | "FAC" | "LC" | "CS" | "SPL" | "SCH";
 export const LEAGUE_NAMES: Record<League, string> = {
   PL: "Premier League", CH: "Championship", L1: "League One", L2: "League Two",
   FAC: "FA Cup", LC: "League Cup", CS: "Community Shield", SPL: "Scottish Premiership",
+  SCH: "Scottish Championship",
 };
 export const LEAGUE_FULL: Record<League, string> = {
   PL: "Premier League", CH: "EFL Championship", L1: "EFL League One", L2: "EFL League Two",
   FAC: "FA Cup", LC: "EFL Cup", CS: "FA Community Shield", SPL: "Scottish Premiership",
+  SCH: "Scottish Championship",
 };
 export const IS_CUP: Record<League, boolean> = {
   PL: false, CH: false, L1: false, L2: false,
-  FAC: true, LC: true, CS: true, SPL: false,
+  FAC: true, LC: true, CS: true, SPL: false, SCH: false,
 };
 export interface Fixture {
   match_id: string; league: League; season: string; kickoff_utc: string;

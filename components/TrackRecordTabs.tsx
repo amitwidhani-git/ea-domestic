@@ -13,7 +13,7 @@ const PICK_SHORT = { home: "H", draw: "D", away: "A" } as const;
 // "All competitions" ring — mirrors the World Cup tab's dominant-ring +
 // stage-rings layout. FA Cup isn't included here; it has no settled picks
 // yet this early in the season, unlike the rest.
-const RING_LEAGUES: League[] = ["PL", "CH", "L1", "L2", "LC", "CS", "SPL"];
+const RING_LEAGUES: League[] = ["PL", "CH", "L1", "L2", "LC", "CS", "SPL", "SCH"];
 
 export default function TrackRecordTabs({
   rows, stats, coverage,

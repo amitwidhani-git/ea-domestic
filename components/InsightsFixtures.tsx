@@ -171,7 +171,7 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
 
 // ---------------------------------------------------------------- main
 
-const LEAGUE_FILTERS: ("ALL" | League)[] = ["ALL", "PL", "CH", "L1", "L2", "LC", "FAC", "SPL"];
+const LEAGUE_FILTERS: ("ALL" | League)[] = ["ALL", "PL", "CH", "L1", "L2", "LC", "FAC", "SPL", "SCH"];
 type SortKey = "date" | "ev" | "confidence";
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "date", label: "Date" },

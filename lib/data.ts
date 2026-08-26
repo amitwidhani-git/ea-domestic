@@ -209,7 +209,7 @@ export async function getStats(): Promise<LeagueStats[]> {
 
   const byLeague = new Map(rows.map((r) => [String(r._id), r]));
 
-  const order: (League | "ALL")[] = ["ALL", "PL", "CH", "L1", "L2", "FAC", "LC", "CS", "SPL"];
+  const order: (League | "ALL")[] = ["ALL", "PL", "CH", "L1", "L2", "FAC", "LC", "CS", "SPL", "SCH"];
 
   return order
     .filter((k) => k === "ALL" ? totals.settled > 0 : byLeague.has(k))
