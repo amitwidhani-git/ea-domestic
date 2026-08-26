@@ -307,33 +307,74 @@ export async function getEvSignals(): Promise<EvSignal[]> {
     .limit(20)
     .toArray();
 
-  const info = await attachFixtureInfo(d, signals.map((s) => String(s.matchId)));
-  // One affiliate-list fetch resolves every row's Back-CTA destination (falls
-  // back to Betano/LiveScoreBet when there's no direct deal for that bookmaker).
-  const ctaByBookmaker = await resolveCtaAffiliates(signals.map((s) => String(s.bestBookmaker)));
+  const matchIds = signals.map((s) => String(s.matchId));
+  const info = await attachFixtureInfo(d, matchIds);
+
+  // Live odds snapshots — the same source the Compare-books drawer reads —
+  // so the top "Back" CTA never shows a price/bookmaker that's gone stale
+  // relative to what's in the drawer underneath it.
+  const snaps = matchIds.length
+    ? await d.collection("odds_snapshots").find({ matchId: { $in: matchIds } }).toArray()
+    : [];
+  const snapsByMatch = new Map<string, typeof snaps>();
+  for (const snap of snaps) {
+    const mid = String(snap.matchId);
+    const bucket = snapsByMatch.get(mid);
+    if (bucket) bucket.push(snap); else snapsByMatch.set(mid, [snap]);
+  }
+
+  // One affiliate-list fetch resolves both the live snapshot rows and the
+  // stored bestBookmaker fallback in a single pass.
+  const bookmakerKeys = [...snaps.map((s) => String(s.bookmaker)), ...signals.map((s) => String(s.bestBookmaker))];
+  const ctaByBookmaker = await resolveCtaAffiliates(bookmakerKeys);
 
   const rows = signals.map((s) => {
-    const f = info.get(String(s.matchId));
+    const mid = String(s.matchId);
+    const f = info.get(mid);
+    const selection = s.selection as EvSignal["selection"];
+
+    // Default to the stored snapshot (may be stale) so there's always a value.
+    let bestPrice = s.bestPrice as number;
+    let bestBookmaker = s.bestBookmaker as string;
+    let cta = ctaByBookmaker.get(bestBookmaker) ?? null;
+
+    // Prefer the highest live price among bookmakers we actually have a real
+    // (non-fallback) affiliate deal with — that's the only price a "Back"
+    // click can honestly promise, and it's what Compare-books marks "Bet"-able.
+    const liveGenuineRows = (snapsByMatch.get(mid) ?? [])
+      .map((snap) => {
+        const price = snap.prices?.[selection];
+        return { bookmaker: String(snap.bookmaker), price: typeof price === "number" ? price : null, cta: ctaByBookmaker.get(String(snap.bookmaker)) ?? null };
+      })
+      .filter((r): r is { bookmaker: string; price: number; cta: CtaAffiliate } => r.price !== null && !!r.cta && !r.cta.isFallback);
+
+    if (liveGenuineRows.length > 0) {
+      const best = liveGenuineRows.reduce((a, b) => (b.price > a.price ? b : a));
+      bestPrice = best.price;
+      bestBookmaker = best.bookmaker;
+      cta = best.cta;
+    }
+
     return {
-      match_id: String(s.matchId),
+      match_id: mid,
       league: s.league as League,
-      selection: s.selection as EvSignal["selection"],
+      selection,
       model_prob: s.modelProb as number,
       market_prob: s.marketProb as number,
-      best_price: s.bestPrice as number,
-      best_bookmaker: s.bestBookmaker as string,
+      best_price: bestPrice,
+      best_bookmaker: bestBookmaker,
       ev: s.ev as number,
       kelly_fraction: s.kellyFraction as number,
       book_count: s.bookCount as number,
       created_at: s.createdAt as string,
-      home_team: f?.homeTeam ?? String(s.matchId),
+      home_team: f?.homeTeam ?? mid,
       away_team: f?.awayTeam ?? "",
       home_team_id: f?.homeTeamId ?? "",
       away_team_id: f?.awayTeamId ?? "",
       home_api_football_id: f?.homeApiFootballId ?? null,
       away_api_football_id: f?.awayApiFootballId ?? null,
       kickoff_utc: f?.kickoffUtc ?? "",
-      cta: ctaByBookmaker.get(String(s.bestBookmaker)) ?? null,
+      cta,
     };
   });
 
