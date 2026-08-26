@@ -9,11 +9,11 @@ import type { League, LeagueStats, TrackRecordRow } from "@/lib/types";
 import { IS_CUP, LEAGUE_NAMES } from "@/lib/types";
 
 const PICK_SHORT = { home: "H", draw: "D", away: "A" } as const;
-// The six competitions we show a mini-ring for, underneath the dominant
+// The competitions we show a mini-ring for, underneath the dominant
 // "All competitions" ring — mirrors the World Cup tab's dominant-ring +
 // stage-rings layout. FA Cup isn't included here; it has no settled picks
-// yet this early in the season, unlike the other five.
-const RING_LEAGUES: League[] = ["PL", "CH", "L1", "L2", "LC", "CS"];
+// yet this early in the season, unlike the rest.
+const RING_LEAGUES: League[] = ["PL", "CH", "L1", "L2", "LC", "CS", "SPL"];
 
 export default function TrackRecordTabs({
   rows, stats, coverage,
@@ -97,7 +97,7 @@ export default function TrackRecordTabs({
                 )}
 
                 {/* Six smaller rings underneath — one per competition, same size/style as the World Cup stage rings */}
-                <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
                   {RING_LEAGUES.map((lg) => {
                     const s = stats.find((x) => x.league === lg);
                     const pct = s ? Math.round(s.accuracy * 100) : null;

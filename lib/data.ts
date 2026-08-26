@@ -167,7 +167,13 @@ export async function getTrackRecord(): Promise<TrackRecordRow[]> {
           status: m.status as string,
         },
       };
-    });
+    })
+    // The query above is ordered by frozenAt (when the pick was locked in),
+    // which doesn't track kickoff order — predictions get frozen in batches
+    // that don't line up with match date. Re-sort by the actual kickoff time
+    // so "most recent" means the most recently played match, not the most
+    // recently frozen pick.
+    .sort((a, b) => (a.fixture.kickoff_utc < b.fixture.kickoff_utc ? 1 : a.fixture.kickoff_utc > b.fixture.kickoff_utc ? -1 : 0));
 }
 
 // ---------------------------------------------------------------- stats
@@ -203,7 +209,7 @@ export async function getStats(): Promise<LeagueStats[]> {
 
   const byLeague = new Map(rows.map((r) => [String(r._id), r]));
 
-  const order: (League | "ALL")[] = ["ALL", "PL", "CH", "L1", "L2", "FAC", "LC", "CS"];
+  const order: (League | "ALL")[] = ["ALL", "PL", "CH", "L1", "L2", "FAC", "LC", "CS", "SPL"];
 
   return order
     .filter((k) => k === "ALL" ? totals.settled > 0 : byLeague.has(k))

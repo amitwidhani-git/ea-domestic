@@ -11,6 +11,7 @@ const COLOURS: Record<League, string> = {
   FAC: "border-red-500/60 text-red-400",
   LC: "border-orange-500/60 text-orange-400",
   CS: "border-yellow-500/60 text-yellow-400",
+  SPL: "border-blue-500/60 text-blue-400",
 };
 
 // API-Football's static league-logo CDN — no API call needed for these.
@@ -24,6 +25,9 @@ export const LEAGUE_LOGO_URL: Record<League, string> = {
   FAC: "https://media.api-sports.io/football/leagues/45.png",
   LC: "https://media.api-sports.io/football/leagues/48.png",
   CS: "https://media.api-sports.io/football/leagues/528.png",
+  // API-Football league id for Scottish Premiership — falls back to text
+  // (see onError below) if this id turns out to be wrong.
+  SPL: "https://media.api-sports.io/football/leagues/179.png",
 };
 
 export default function LeagueBadge({ league }: { league: League }) {

@@ -15,6 +15,7 @@ const DIVISIONS: [string, string][] = [
   ["CH", "Championship"],
   ["L1", "League One"],
   ["L2", "League Two"],
+  ["SPL", "Scottish Premiership"],
 ];
 
 const BOTTOM = [

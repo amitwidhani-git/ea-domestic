@@ -6,7 +6,7 @@ import ClubCrest from "@/components/ClubCrest";
 import type { League } from "@/lib/types";
 import type { ResultRow, ResultsResponse, ResultsOutcome, ResultPrediction, ResultEvSignal } from "@/lib/results";
 
-const LEAGUES: League[] = ["PL", "CH", "L1", "L2", "LC", "FAC", "CS"];
+const LEAGUES: League[] = ["PL", "CH", "L1", "L2", "LC", "FAC", "CS", "SPL"];
 const OUTCOMES: { key: ResultsOutcome; label: string }[] = [
   { key: "all", label: "All results" },
   { key: "correct", label: "✓ Correct" },

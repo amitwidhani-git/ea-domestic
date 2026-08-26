@@ -16,15 +16,20 @@ import FruityKingPromo from "@/components/FruityKingPromo";
 import MogobetPromo from "@/components/MogobetPromo";
 import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
+import Bet247Promo from "@/components/Bet247Promo";
+import BetwayPromo from "@/components/BetwayPromo";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
-import type { Affiliate } from "@/lib/affiliates";
 
 // The real partner strip banners — randomised into the All Fixtures list
-// (replacing the generic placeholder AffiliateBar used on Value Signals).
+// (replacing the generic placeholder AffiliateBar previously used there).
 const STRIP_BANNERS = [
   BetanoPromo, LivescorebetPromo, BetMazePromo, BetrinoPromo, BetsunaPromo,
-  FruityKingPromo, MogobetPromo, MonsterCasinoPromo, SpinzwinPromo,
+  FruityKingPromo, MogobetPromo, MonsterCasinoPromo, SpinzwinPromo, Bet247Promo, BetwayPromo,
 ];
+
+// Value Signals gets its own, smaller rotation — just the two newest/priority
+// partners, per request — rather than the full All Fixtures pool.
+const VALUE_SIGNAL_STRIPS = [BetwayPromo, Bet247Promo];
 
 function shuffled<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -166,7 +171,7 @@ function FixtureCard({ item, highlighted }: { item: UpcomingFixtureWithSignal; h
 
 // ---------------------------------------------------------------- main
 
-const LEAGUE_FILTERS: ("ALL" | League)[] = ["ALL", "PL", "CH", "L1", "L2", "LC", "FAC"];
+const LEAGUE_FILTERS: ("ALL" | League)[] = ["ALL", "PL", "CH", "L1", "L2", "LC", "FAC", "SPL"];
 type SortKey = "date" | "ev" | "confidence";
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "date", label: "Date" },
@@ -178,34 +183,6 @@ function pillClass(active: boolean): string {
   return `shrink-0 rounded-full border px-3.5 py-1.5 font-body text-[13px] font-semibold transition-colors ${
     active ? "border-ink bg-ink text-panel" : "border-line text-muted hover:border-muted hover:text-ink"
   }`;
-}
-
-// Inserted every 8 cards in the value-signals and fixtures lists — one
-// randomly-chosen live partner per slot, picked once client-side (see
-// `barPicks` below) so it stays stable across re-renders and never causes a
-// server/client hydration mismatch.
-function AffiliateBar({ affiliate }: { affiliate: Affiliate }) {
-  const banner = affiliate.banners?.["120x60"];
-  const hasBanner = banner && /^https?:\/\//.test(banner.src);
-  return (
-    <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-dashed border-line bg-panel px-5 py-4 sm:col-span-2">
-      <span className="rounded border border-line px-1.5 py-0.5 font-body text-[9.5px] font-bold uppercase tracking-wide text-muted">Ad · Partner</span>
-      {hasBanner ? (
-        <img src={banner.src} width={banner.w} height={banner.h} alt={`${affiliate.name} offer`} className="rounded" />
-      ) : (
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded font-display text-base font-bold"
-          style={{ background: affiliate.brandColor ?? "var(--accent)", color: "#0E1521" }}>
-          {affiliate.logoInitials}
-        </span>
-      )}
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <b className="truncate font-body text-[14.5px]">{affiliate.name}</b>
-        <span className="font-body text-[12.5px] text-muted">{affiliate.tagline ?? "New-customer offer"} · 18+</span>
-      </div>
-      <a href={`/go/${affiliate.id}`} rel="sponsored nofollow" target="_blank"
-        className="ml-auto rounded-[9px] bg-ink px-4 py-2.5 font-body text-[13px] font-bold text-panel">Claim offer</a>
-    </div>
-  );
 }
 
 type WhenKey = "today" | "weekend" | "week";
@@ -238,8 +215,8 @@ function tabClass(active: boolean): string {
 }
 
 export default function InsightsFixtures({
-  signals, affiliates,
-}: { signals: EvSignal[]; affiliates: Affiliate[] }) {
+  signals,
+}: { signals: EvSignal[] }) {
   const [tab, setTab] = useState<"signals" | "fixtures">("signals");
   const [oddsFmt, setOddsFmt] = useState<OddsFormat>("frac");
   const [when, setWhen] = useState<WhenKey>("week");
@@ -254,15 +231,14 @@ export default function InsightsFixtures({
   const [pendingHash, setPendingHash] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
-  // One random live affiliate per every-8-cards slot, assigned client-side
-  // only (never during SSR) so the pick can't mismatch on hydration, and
-  // grown (never reshuffled) as longer lists need more slots.
-  const [barPicks, setBarPicks] = useState<Affiliate[]>([]);
+  // One real strip banner (Betway/247Bet) per every-8-cards slot in Value
+  // Signals, picked once client-side (never during SSR, so it can't mismatch
+  // on hydration) and grown — never reshuffled — as the list needs more slots.
+  const [valueStripPicks, setValueStripPicks] = useState<(typeof VALUE_SIGNAL_STRIPS)[number][]>([]);
   useEffect(() => {
-    if (affiliates.length === 0) return;
-    const needed = Math.ceil(Math.max(signals.length, upcoming.length, 1) / 8) + 1;
-    setBarPicks((prev) => (prev.length >= needed ? prev : extendNoAdjacentDupes(prev, affiliates, needed)));
-  }, [affiliates, signals.length, upcoming.length]);
+    const needed = Math.ceil(Math.max(signals.length, 1) / 8) + 1;
+    setValueStripPicks((prev) => (prev.length >= needed ? prev : extendNoAdjacentDupes(prev, VALUE_SIGNAL_STRIPS, needed)));
+  }, [signals.length]);
 
   // Same idea, but for the All Fixtures tab: one real strip banner per
   // every-8-cards slot, picked once client-side and grown (never reshuffled)
@@ -419,11 +395,11 @@ export default function InsightsFixtures({
                   <h2 className="mb-3 mt-8 font-data text-[13px] font-bold uppercase tracking-wider text-muted">All odds &amp; value</h2>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {list.map((s, i) => {
-                      const bar = (i + 1) % 8 === 0 ? barPicks[Math.floor(i / 8)] : undefined;
+                      const StripBanner = (i + 1) % 8 === 0 ? valueStripPicks[Math.floor(i / 8)] : undefined;
                       return (
                         <Fragment key={`${s.match_id}-${s.selection}`}>
                           <ValueSignalCard signal={s} oddsFmt={oddsFmt} />
-                          {bar && <AffiliateBar affiliate={bar} />}
+                          {StripBanner && <div className="sm:col-span-2"><StripBanner /></div>}
                         </Fragment>
                       );
                     })}

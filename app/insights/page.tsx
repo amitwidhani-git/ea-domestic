@@ -8,26 +8,24 @@ import MogobetPromo from "@/components/MogobetPromo";
 import FruityKingPromo from "@/components/FruityKingPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
 import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
+import Bet247Promo from "@/components/Bet247Promo";
+import BetwayPromo from "@/components/BetwayPromo";
 import InsightsFixtures from "@/components/InsightsFixtures";
 import SettledSignalsSection from "@/components/SettledSignalsSection";
-import { getAffiliateList, isLive } from "@/lib/affiliates";
 import { getArticles, getEvSignals, getSettledEvSignals } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function InsightsPage() {
-  const [signals, settled, articles, affiliateList] = await Promise.all([
-    getEvSignals(), getSettledEvSignals(), getArticles(), getAffiliateList(),
+  const [signals, settled, articles] = await Promise.all([
+    getEvSignals(), getSettledEvSignals(), getArticles(),
   ]);
-  // Full live partner list — InsightsFixtures randomly picks from it for the
-  // affiliate bars inserted every 8 cards in the value/fixtures lists.
-  const affiliates = affiliateList.filter(isLive);
 
   return (
     <div className="space-y-12">
       <BetanoPromo />
 
-      <InsightsFixtures signals={signals} affiliates={affiliates} />
+      <InsightsFixtures signals={signals} />
 
       <SettledSignalsSection settled={settled} />
 
@@ -48,6 +46,8 @@ export default async function InsightsPage() {
           <BetMazePromo />
           <SpinzwinPromo />
           <MonsterCasinoPromo />
+          <Bet247Promo />
+          <BetwayPromo />
         </div>
       </section>
       <section id="top-stories">

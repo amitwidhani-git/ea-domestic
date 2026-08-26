@@ -14,6 +14,7 @@ const LEAGUES: { code: League; label: string }[] = [
   { code: "FAC", label: "FA Cup" },
   { code: "LC", label: "Carabao Cup" },
   { code: "CS", label: "Community Shield" },
+  { code: "SPL", label: "Scottish Premiership" },
 ];
 
 function Badge({
