@@ -44,9 +44,9 @@ interface TeamDoc {
   elo?: number | null;
 }
 
-type DomesticLeague = "PL" | "CH" | "L1" | "L2";
-const LEAGUE_ORDER: DomesticLeague[] = ["PL", "CH", "L1", "L2"];
-const LEAGUE_LOGO_ID: Record<DomesticLeague, number> = { PL: 39, CH: 40, L1: 41, L2: 42 };
+type DomesticLeague = "PL" | "CH" | "L1" | "L2" | "SPL" | "SCH";
+const LEAGUE_ORDER: DomesticLeague[] = ["PL", "CH", "L1", "L2", "SPL", "SCH"];
+const LEAGUE_LOGO_ID: Record<DomesticLeague, number> = { PL: 39, CH: 40, L1: 41, L2: 42, SPL: 179, SCH: 180 };
 
 async function getTeams(): Promise<Map<DomesticLeague, TeamDoc[]>> {
   const teams = await (await db())
@@ -86,14 +86,15 @@ function ClubCard({ team }: { team: TeamDoc }) {
 
 export default async function TeamsPage() {
   const grouped = await getTeams();
+  const totalTeams = [...grouped.values()].reduce((n, teams) => n + teams.length, 0);
 
   return (
     <div className="space-y-10">
       <div>
         <h1 className="font-display text-4xl tracking-wide">Teams</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink">
-          104 teams across the English football pyramid. Click any team for squad news, model
-          ratings and upcoming fixtures.
+          {totalTeams} teams across the English and Scottish football pyramids. Click any team for
+          squad news, model ratings and upcoming fixtures.
         </p>
       </div>
 
@@ -101,7 +102,7 @@ export default async function TeamsPage() {
         const teams = grouped.get(league) ?? [];
         if (teams.length === 0) return null;
         return (
-          <section key={league}>
+          <section key={league} id={league} className="scroll-mt-20">
             <div className="mb-4 flex items-center gap-2 border-b border-line pb-2">
               <img
                 src={`https://media.api-sports.io/football/leagues/${LEAGUE_LOGO_ID[league]}.png`}

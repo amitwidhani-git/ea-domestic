@@ -7,7 +7,7 @@ import { openSubscribe, SUBSCRIBE_ENABLED } from "@/components/SubscribeModal";
 
 const LINKS = [
   { href: "/", label: "Home" },
-  { href: "/insights", label: "Odds & value" },
+  { href: "/insights", label: "Insights & Odds" },
   { href: "/track-record", label: "Track record" },
 ];
 const DIVISIONS: [string, string][] = [
@@ -83,7 +83,7 @@ export default function MobileNav() {
           ))}
           <span className="px-3 pb-1 pt-3 font-body text-[11px] uppercase tracking-wider text-muted">Teams by division</span>
           {DIVISIONS.map(([lg, name]) => (
-            <Link key={lg} href={`/insights?lg=${lg}`} className="rounded-[10px] px-3 py-2.5 font-body text-[15px] text-ink hover:bg-chip">{name}</Link>
+            <Link key={lg} href={`/teams#${lg}`} className="rounded-[10px] px-3 py-2.5 font-body text-[15px] text-ink hover:bg-chip">{name}</Link>
           ))}
           <Link href="/teams" className="rounded-[10px] px-3 py-2.5 font-body text-[15px] text-accent-ink hover:bg-chip">All teams →</Link>
         </nav>

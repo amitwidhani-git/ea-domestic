@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const TABS = [
-  { href: "/insights", label: "Odds" },
+  { href: "/insights", label: "Insights & Odds" },
   { href: "/track-record", label: "Track record" },
 ];
 const DIVISIONS: [string, string][] = [
@@ -55,7 +55,7 @@ export default function NavTabs() {
           <div className="absolute left-0 top-full z-50 mt-2 min-w-[200px] rounded-xl border border-line bg-panel p-2 shadow-[var(--shadow)]">
             <span className="block px-3 pb-1 pt-1.5 font-body text-[10px] uppercase tracking-wider text-muted">Browse by division</span>
             {DIVISIONS.map(([lg, name]) => (
-              <Link key={lg} href={`/insights?lg=${lg}`} className="block rounded-lg px-3 py-2 font-body text-[13.5px] text-ink hover:bg-chip">{name}</Link>
+              <Link key={lg} href={`/teams#${lg}`} className="block rounded-lg px-3 py-2 font-body text-[13.5px] text-ink hover:bg-chip">{name}</Link>
             ))}
             <Link href="/teams" className="block rounded-lg px-3 py-2 font-body text-[13.5px] text-accent-ink hover:bg-chip">All teams →</Link>
           </div>

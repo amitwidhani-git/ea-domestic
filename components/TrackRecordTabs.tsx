@@ -11,11 +11,27 @@ import type { League, LeagueStats, TrackRecordRow } from "@/lib/types";
 import { IS_CUP, LEAGUE_NAMES } from "@/lib/types";
 
 const PICK_SHORT = { home: "H", draw: "D", away: "A" } as const;
-// The competitions we show a mini-ring for, underneath the dominant
-// "All competitions" ring — mirrors the World Cup tab's dominant-ring +
-// stage-rings layout. FA Cup isn't included here; it has no settled picks
-// yet this early in the season, unlike the rest.
-const RING_LEAGUES: League[] = ["PL", "CH", "L1", "L2", "LC", "CS", "SPL", "SCH"];
+
+// Country groupings for the middle tier of the ring hierarchy (All
+// competitions → country → individual league/cup). Add a Scottish cup here
+// the day one gets a league code — everything else (country ring, section
+// grouping) picks it up automatically.
+const COUNTRIES = ["England", "Scotland"] as const;
+type Country = (typeof COUNTRIES)[number];
+const COUNTRY_LEAGUES: Record<Country, League[]> = {
+  England: ["PL", "CH", "L1", "L2", "FAC", "LC", "CS"],
+  Scotland: ["SPL", "SCH"],
+};
+
+type StatFilter = { kind: "league"; league: League } | { kind: "country"; country: Country };
+
+function filterLabel(f: StatFilter): string {
+  return f.kind === "league" ? LEAGUE_NAMES[f.league] : f.country;
+}
+function sameFilter(a: StatFilter | null, b: StatFilter): boolean {
+  if (!a || a.kind !== b.kind) return false;
+  return a.kind === "league" && b.kind === "league" ? a.league === b.league : a.kind === "country" && b.kind === "country" ? a.country === b.country : false;
+}
 
 export default function TrackRecordTabs({
   rows, stats, coverage,
@@ -27,18 +43,34 @@ export default function TrackRecordTabs({
   const router = useRouter();
   const backFrom = useBackFrom();
   const [tab, setTab] = useState<"current" | "history">("current");
-  // Selecting a ring filters the results table to that competition — null
-  // means "All competitions" (the dominant ring's own selection state).
-  const [leagueFilter, setLeagueFilter] = useState<League | null>(null);
+  // Selecting a ring filters the results table to that competition or
+  // country — null means "All competitions" (the dominant ring's own
+  // selection state).
+  const [filter, setFilter] = useState<StatFilter | null>(null);
   const withoutPrediction = coverage ? coverage.totalFinished - coverage.predicting : 0;
   const tableRef = useRef<HTMLElement>(null);
 
-  function selectLeague(lg: League | null) {
-    setLeagueFilter((cur) => (cur === lg ? null : lg));
+  function selectFilter(f: StatFilter | null) {
+    setFilter((cur) => (f && sameFilter(cur, f) ? null : f));
     tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const filteredRows = leagueFilter ? rows.filter((r) => r.fixture.league === leagueFilter) : rows;
+  const filteredRows = !filter
+    ? rows
+    : filter.kind === "league"
+      ? rows.filter((r) => r.fixture.league === filter.league)
+      : rows.filter((r) => COUNTRY_LEAGUES[filter.country].includes(r.fixture.league));
+
+  // Country-level rollups, summed client-side from the already-fetched
+  // per-league stats — no separate query needed.
+  function countryStat(country: Country) {
+    let settled = 0, correct = 0;
+    for (const lg of COUNTRY_LEAGUES[country]) {
+      const s = stats.find((x) => x.league === lg);
+      if (s) { settled += s.settled; correct += s.correct; }
+    }
+    return { settled, correct, accuracy: settled ? correct / settled : 0 };
+  }
 
   return (
     <div>
@@ -72,9 +104,9 @@ export default function TrackRecordTabs({
                 {all && (
                   <button
                     type="button"
-                    onClick={() => selectLeague(null)}
+                    onClick={() => selectFilter(null)}
                     className={`mb-4 flex w-full flex-wrap items-center gap-6 rounded-[14px] border bg-panel px-6 py-6 text-left shadow-[var(--shadow)] transition-colors ${
-                      leagueFilter === null ? "border-accent" : "border-accent/30 hover:border-accent/60"
+                      filter === null ? "border-accent" : "border-accent/30 hover:border-accent/60"
                     }`}
                   >
                     <div className="relative shrink-0" style={{ width: 140, height: 140 }}>
@@ -100,18 +132,18 @@ export default function TrackRecordTabs({
                   </button>
                 )}
 
-                {/* Six smaller rings underneath — one per competition, same size/style as the World Cup stage rings */}
-                <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
-                  {RING_LEAGUES.map((lg) => {
-                    const s = stats.find((x) => x.league === lg);
-                    const pct = s ? Math.round(s.accuracy * 100) : null;
-                    const perfect = !!s && s.settled > 0 && s.correct === s.settled;
-                    const selected = leagueFilter === lg;
+                {/* Country tier — England vs Scotland, summed across each country's leagues + cups */}
+                <section className="grid grid-cols-2 gap-3 sm:max-w-md">
+                  {COUNTRIES.map((country) => {
+                    const cs = countryStat(country);
+                    const pct = cs.settled > 0 ? Math.round(cs.accuracy * 100) : null;
+                    const perfect = cs.settled > 0 && cs.correct === cs.settled;
+                    const selected = !!filter && sameFilter(filter, { kind: "country", country });
                     return (
                       <button
                         type="button"
-                        key={lg}
-                        onClick={() => selectLeague(lg)}
+                        key={country}
+                        onClick={() => selectFilter({ kind: "country", country })}
                         aria-pressed={selected}
                         className={`flex flex-col items-center rounded-[14px] border p-3 text-center shadow-[var(--shadow)] transition-colors ${
                           selected
@@ -120,20 +152,60 @@ export default function TrackRecordTabs({
                               ? "border-accent/60 bg-accent/5 hover:border-accent"
                               : "border-line bg-panel hover:border-muted"
                         }`}>
-                        <div className="relative" style={{ width: 88, height: 88 }}>
-                          <AccuracyDonut pct={pct ?? 0} size={88} stroke={8} emphasize={perfect || selected} />
+                        <div className="relative" style={{ width: 100, height: 100 }}>
+                          <AccuracyDonut pct={pct ?? 0} size={100} stroke={10} emphasize={perfect || selected} />
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <span className={`font-display text-xl leading-none ${perfect || selected ? "text-accent" : "text-ink"}`}>
+                            <span className={`font-display text-2xl leading-none ${perfect || selected ? "text-accent" : "text-ink"}`}>
                               {pct != null ? `${pct}%` : "—"}
                             </span>
                           </div>
                         </div>
-                        <p className="mt-2 font-data text-[9px] uppercase tracking-widest text-ink">{LEAGUE_NAMES[lg]}</p>
-                        <p className="mt-1 font-data text-[10px] text-ink">{s ? `${s.correct}/${s.settled} correct` : "No settled picks yet"}</p>
+                        <p className="mt-2 font-data text-[10px] uppercase tracking-widest text-ink">{country}</p>
+                        <p className="mt-1 font-data text-[10px] text-ink">{cs.settled > 0 ? `${cs.correct}/${cs.settled} correct` : "No settled picks yet"}</p>
                       </button>
                     );
                   })}
                 </section>
+
+                {/* League/cup tier, grouped under each country */}
+                {COUNTRIES.map((country) => (
+                  <div key={country} className="mt-5">
+                    <p className="mb-2.5 font-data text-[10px] uppercase tracking-widest text-muted">{country}</p>
+                    <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
+                      {COUNTRY_LEAGUES[country].map((lg) => {
+                        const s = stats.find((x) => x.league === lg);
+                        const pct = s ? Math.round(s.accuracy * 100) : null;
+                        const perfect = !!s && s.settled > 0 && s.correct === s.settled;
+                        const selected = !!filter && sameFilter(filter, { kind: "league", league: lg });
+                        return (
+                          <button
+                            type="button"
+                            key={lg}
+                            onClick={() => selectFilter({ kind: "league", league: lg })}
+                            aria-pressed={selected}
+                            className={`flex flex-col items-center rounded-[14px] border p-3 text-center shadow-[var(--shadow)] transition-colors ${
+                              selected
+                                ? "border-accent bg-accent/10"
+                                : perfect
+                                  ? "border-accent/60 bg-accent/5 hover:border-accent"
+                                  : "border-line bg-panel hover:border-muted"
+                            }`}>
+                            <div className="relative" style={{ width: 88, height: 88 }}>
+                              <AccuracyDonut pct={pct ?? 0} size={88} stroke={8} emphasize={perfect || selected} />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className={`font-display text-xl leading-none ${perfect || selected ? "text-accent" : "text-ink"}`}>
+                                  {pct != null ? `${pct}%` : "—"}
+                                </span>
+                              </div>
+                            </div>
+                            <p className="mt-2 font-data text-[9px] uppercase tracking-widest text-ink">{LEAGUE_NAMES[lg]}</p>
+                            <p className="mt-1 font-data text-[10px] text-ink">{s ? `${s.correct}/${s.settled} correct` : "No settled picks yet"}</p>
+                          </button>
+                        );
+                      })}
+                    </section>
+                  </div>
+                ))}
               </div>
             );
           })()}
@@ -162,9 +234,9 @@ export default function TrackRecordTabs({
           <section ref={tableRef} className="scroll-mt-20 overflow-x-auto">
             <div className="mb-3 flex items-center gap-2 font-data text-xs">
               <span className="text-muted">Showing:</span>
-              <span className="font-semibold text-ink">{leagueFilter ? LEAGUE_NAMES[leagueFilter] : "All competitions"}</span>
-              {leagueFilter && (
-                <button type="button" onClick={() => selectLeague(null)} className="text-accent-ink hover:underline">
+              <span className="font-semibold text-ink">{filter ? filterLabel(filter) : "All competitions"}</span>
+              {filter && (
+                <button type="button" onClick={() => selectFilter(null)} className="text-accent-ink hover:underline">
                   Clear ✕
                 </button>
               )}
@@ -176,8 +248,8 @@ export default function TrackRecordTabs({
               </div>
             ) : filteredRows.length === 0 ? (
               <div className="rounded-[14px] border border-line bg-panel px-6 py-10 text-center">
-                <p className="font-display text-xl text-ink">No settled predictions for {LEAGUE_NAMES[leagueFilter!]} yet</p>
-                <button type="button" onClick={() => selectLeague(null)} className="mt-2 font-data text-xs text-accent-ink hover:underline">
+                <p className="font-display text-xl text-ink">No settled predictions for {filterLabel(filter!)} yet</p>
+                <button type="button" onClick={() => selectFilter(null)} className="mt-2 font-data text-xs text-accent-ink hover:underline">
                   Clear filter →
                 </button>
               </div>

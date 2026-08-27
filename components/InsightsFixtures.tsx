@@ -261,15 +261,6 @@ export default function InsightsFixtures({
     }
   }, []);
 
-  // Deep link from the Teams-by-division menu: /insights?lg=PL preselects a competition.
-  useEffect(() => {
-    const lg = new URLSearchParams(window.location.search).get("lg");
-    if (lg && (LEAGUE_FILTERS as string[]).includes(lg)) {
-      setLeague(lg as League);
-      setTab("signals");
-    }
-  }, []);
-
   // Lazy-load the large upcoming dataset only when the tab is first opened.
   useEffect(() => {
     if (tab !== "fixtures" || loaded) return;
