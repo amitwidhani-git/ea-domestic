@@ -35,16 +35,25 @@ export interface Result {
   penalty_score: { home: number; away: number } | null;
   status: string;
 }
-export interface EvSignal {
-  match_id: string; league: League; selection: "home" | "draw" | "away";
-  model_prob: number; market_prob: number; best_price: number;
-  best_bookmaker: string; ev: number; kelly_fraction: number; book_count: number;
-  created_at: string; home_team: string; away_team: string; kickoff_utc: string;
-  home_team_id: string; away_team_id: string;
-  home_api_football_id: number | null; away_api_football_id: number | null;
+export interface EvOutcome {
+  selection: "home" | "draw" | "away";
+  model_prob: number; market_prob: number;
+  ev: number; best_price: number; best_bookmaker: string;
   /** Resolved Back-CTA destination (falls back to Betano/LiveScoreBet when
    *  best_bookmaker has no direct affiliate deal); null if neither exists. */
   cta: CtaAffiliate | null;
+}
+export interface EvSignal {
+  match_id: string; league: League;
+  created_at: string; home_team: string; away_team: string; kickoff_utc: string;
+  home_team_id: string; away_team_id: string;
+  home_api_football_id: number | null; away_api_football_id: number | null;
+  /** The model's own single top pick — always present, whether or not it clears the value bar. */
+  model: EvOutcome;
+  /** Whichever of the 3 selections has the highest EV — guaranteed to clear the value bar. */
+  bestValue: EvOutcome;
+  /** true when model.selection === bestValue.selection, i.e. there's only one thing to recommend. */
+  sameAsModel: boolean;
 }
 export interface SettledEvSignal {
   match_id: string; league: League; selection: "home" | "draw" | "away";

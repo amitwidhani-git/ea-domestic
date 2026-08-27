@@ -373,7 +373,8 @@ export default function InsightsFixtures({
               if (list.length === 0) {
                 return <p className="mt-8 font-data text-sm text-muted">No value signals for this filter.</p>;
               }
-              const featured = [...list].sort((a, b) => (b.model_prob - b.market_prob) - (a.model_prob - a.market_prob))[0];
+              const edgeOf = (s: EvSignal) => s.bestValue.model_prob - s.bestValue.market_prob;
+              const featured = [...list].sort((a, b) => edgeOf(b) - edgeOf(a))[0];
               return (
                 <>
                   <h2 className="mb-3 mt-6 flex items-center gap-2 font-data text-[13px] font-bold uppercase tracking-wider text-muted">
@@ -390,7 +391,7 @@ export default function InsightsFixtures({
                     {list.map((s, i) => {
                       const StripBanner = (i + 1) % 8 === 0 ? valueStripPicks[Math.floor(i / 8)] : undefined;
                       return (
-                        <Fragment key={`${s.match_id}-${s.selection}`}>
+                        <Fragment key={s.match_id}>
                           <ValueSignalCard signal={s} oddsFmt={oddsFmt} />
                           {StripBanner && <div className="sm:col-span-2"><StripBanner /></div>}
                         </Fragment>

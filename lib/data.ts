@@ -10,7 +10,7 @@
  */
 
 import { MongoClient, type Db } from "mongodb";
-import type { Article, ArticleDetail, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow, UpcomingFixtureWithSignal } from "./types";
+import type { Article, ArticleDetail, EvOutcome, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow, UpcomingFixtureWithSignal } from "./types";
 import { resolveCtaAffiliates, getAffiliateList, pickRandomAffiliate, type CtaAffiliate } from "./affiliates";
 import { getLiveApiFixtures } from "./liveScores";
 
@@ -292,30 +292,52 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
 const MIN_EV = 0.05;
 
 /**
- * Live (unsettled, positive-value) EV signals, shown in kickoff order (soonest
- * match first) so the page reads as "what's coming up", not a leaderboard.
- * kickoff_utc only exists after the matches join below, so candidate
- * selection happens by EV in Mongo (highest value, capped at 20) and the
- * final display order is applied afterwards once kickoff is known.
+ * Live (unsettled) value signals, one card per MATCH — not per selection.
+ * A fixture often has more than one ev_signals doc clearing MIN_EV (e.g. both
+ * an underdog win and the draw), which used to render as separate,
+ * confusing cards for the same match. Now each match contributes its
+ * model's own top pick (always shown) plus whichever selection has the
+ * highest EV (`bestValue`, guaranteed to clear MIN_EV) — identical when the
+ * model's pick is itself the best value, distinct otherwise.
+ *
+ * Shown in kickoff order (soonest match first) so the page reads as "what's
+ * coming up", not a leaderboard. kickoff_utc only exists after the matches
+ * join below, so candidate selection happens by EV in Mongo (highest value,
+ * capped at 20 matches) and the final display order is applied afterwards.
  */
 export async function getEvSignals(): Promise<EvSignal[]> {
   const d = await db();
-  const signals = await d
+
+  const candidates = await d
     .collection("ev_signals")
     .find({ settledResult: null, ev: { $gte: MIN_EV } })
     .sort({ ev: -1 })
-    .limit(20)
     .toArray();
+  const matchIds: string[] = [];
+  for (const c of candidates) {
+    const mid = String(c.matchId);
+    if (!matchIds.includes(mid)) matchIds.push(mid);
+    if (matchIds.length >= 20) break;
+  }
+  if (matchIds.length === 0) return [];
 
-  const matchIds = signals.map((s) => String(s.matchId));
-  const info = await attachFixtureInfo(d, matchIds);
+  const [allSignals, preds, info, snaps] = await Promise.all([
+    d.collection("ev_signals").find({ matchId: { $in: matchIds as any[] } }).toArray(),
+    d.collection("predictions").find({ matchId: { $in: matchIds as any[] } }).toArray(),
+    attachFixtureInfo(d, matchIds),
+    // Live odds snapshots — the same source the Compare-books drawer reads —
+    // so the "Back" CTAs never show a price/bookmaker that's gone stale
+    // relative to what's in the drawer underneath them.
+    d.collection("odds_snapshots").find({ matchId: { $in: matchIds as any[] } }).toArray(),
+  ]);
 
-  // Live odds snapshots — the same source the Compare-books drawer reads —
-  // so the top "Back" CTA never shows a price/bookmaker that's gone stale
-  // relative to what's in the drawer underneath it.
-  const snaps = matchIds.length
-    ? await d.collection("odds_snapshots").find({ matchId: { $in: matchIds } }).toArray()
-    : [];
+  const predByMatch = new Map(preds.map((p) => [String(p.matchId), p]));
+  const signalsByMatch = new Map<string, typeof allSignals>();
+  for (const s of allSignals) {
+    const mid = String(s.matchId);
+    const bucket = signalsByMatch.get(mid);
+    if (bucket) bucket.push(s); else signalsByMatch.set(mid, [s]);
+  }
   const snapsByMatch = new Map<string, typeof snaps>();
   for (const snap of snaps) {
     const mid = String(snap.matchId);
@@ -323,19 +345,17 @@ export async function getEvSignals(): Promise<EvSignal[]> {
     if (bucket) bucket.push(snap); else snapsByMatch.set(mid, [snap]);
   }
 
-  // One affiliate-list fetch resolves both the live snapshot rows and the
+  // One affiliate-list fetch resolves both the live snapshot rows and every
   // stored bestBookmaker fallback in a single pass.
-  const bookmakerKeys = [...snaps.map((s) => String(s.bookmaker)), ...signals.map((s) => String(s.bestBookmaker))];
+  const bookmakerKeys = [...snaps.map((s) => String(s.bookmaker)), ...allSignals.map((s) => String(s.bestBookmaker))];
   const ctaByBookmaker = await resolveCtaAffiliates(bookmakerKeys);
 
-  const rows = signals.map((s) => {
-    const mid = String(s.matchId);
-    const f = info.get(mid);
-    const selection = s.selection as EvSignal["selection"];
+  function resolveOutcome(mid: string, doc: (typeof allSignals)[number]) {
+    const selection = doc.selection as EvOutcome["selection"];
 
     // Default to the stored snapshot (may be stale) so there's always a value.
-    let bestPrice = s.bestPrice as number;
-    let bestBookmaker = s.bestBookmaker as string;
+    let bestPrice = doc.bestPrice as number;
+    let bestBookmaker = doc.bestBookmaker as string;
     let cta = ctaByBookmaker.get(bestBookmaker) ?? null;
 
     // Prefer the highest live price among bookmakers we actually have a real
@@ -355,18 +375,28 @@ export async function getEvSignals(): Promise<EvSignal[]> {
       cta = best.cta;
     }
 
-    return {
+    const outcome: EvOutcome = {
+      selection, model_prob: doc.modelProb as number, market_prob: doc.marketProb as number,
+      ev: doc.ev as number, best_price: bestPrice, best_bookmaker: bestBookmaker, cta,
+    };
+    return outcome;
+  }
+
+  const rows: EvSignal[] = [];
+  for (const mid of matchIds) {
+    const docs = signalsByMatch.get(mid) ?? [];
+    const pred = predByMatch.get(mid);
+    if (!pred || docs.length === 0) continue; // can't show "model recommends" without a prediction
+
+    const pick = pred.pick as "home" | "draw" | "away";
+    const bestValueDoc = docs.reduce((a, b) => ((b.ev as number) > (a.ev as number) ? b : a));
+    const modelDoc = docs.find((s) => s.selection === pick) ?? bestValueDoc;
+
+    const f = info.get(mid);
+    rows.push({
       match_id: mid,
-      league: s.league as League,
-      selection,
-      model_prob: s.modelProb as number,
-      market_prob: s.marketProb as number,
-      best_price: bestPrice,
-      best_bookmaker: bestBookmaker,
-      ev: s.ev as number,
-      kelly_fraction: s.kellyFraction as number,
-      book_count: s.bookCount as number,
-      created_at: s.createdAt as string,
+      league: (bestValueDoc.league ?? modelDoc.league) as League,
+      created_at: bestValueDoc.createdAt as string,
       home_team: f?.homeTeam ?? mid,
       away_team: f?.awayTeam ?? "",
       home_team_id: f?.homeTeamId ?? "",
@@ -374,15 +404,17 @@ export async function getEvSignals(): Promise<EvSignal[]> {
       home_api_football_id: f?.homeApiFootballId ?? null,
       away_api_football_id: f?.awayApiFootballId ?? null,
       kickoff_utc: f?.kickoffUtc ?? "",
-      cta,
-    };
-  });
+      model: resolveOutcome(mid, modelDoc),
+      bestValue: resolveOutcome(mid, bestValueDoc),
+      sameAsModel: modelDoc.selection === bestValueDoc.selection,
+    });
+  }
 
   return rows.sort((a, b) => {
     if (!a.kickoff_utc) return 1; // unresolved fixtures sink to the bottom
     if (!b.kickoff_utc) return -1;
     if (a.kickoff_utc !== b.kickoff_utc) return a.kickoff_utc < b.kickoff_utc ? -1 : 1;
-    return b.ev - a.ev; // same kickoff — higher edge first
+    return b.bestValue.ev - a.bestValue.ev; // same kickoff — higher edge first
   });
 }
 

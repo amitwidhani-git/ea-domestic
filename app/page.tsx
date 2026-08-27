@@ -36,16 +36,11 @@ export default async function HomePage() {
     getEvSignals(), getStats(), getArticles(), getLiveMatches(), getResults({ limit: 12 }),
   ]);
 
-  // Best upcoming edge per match (a match can carry more than one signal),
-  // then the top two per league/cup, in standard competition order.
-  const edgeOf = (s: (typeof signals)[number]) => s.model_prob - s.market_prob;
-  const bestPerMatch = new Map<string, (typeof signals)[number]>();
-  for (const s of signals) {
-    const cur = bestPerMatch.get(s.match_id);
-    if (!cur || edgeOf(s) > edgeOf(cur)) bestPerMatch.set(s.match_id, s);
-  }
+  // getEvSignals() already returns one card per match — group by league/cup
+  // and take the top two edges per competition, in standard competition order.
+  const edgeOf = (s: (typeof signals)[number]) => s.bestValue.model_prob - s.bestValue.market_prob;
   const byLeague = new Map<string, (typeof signals)[number][]>();
-  for (const s of bestPerMatch.values()) {
+  for (const s of signals) {
     const arr = byLeague.get(s.league) ?? [];
     arr.push(s);
     byLeague.set(s.league, arr);
@@ -88,7 +83,7 @@ export default async function HomePage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {topEdges.map((s) => (
-                <ValueSignalCard key={`${s.match_id}-${s.selection}`} signal={s} oddsFmt="frac" featured />
+                <ValueSignalCard key={s.match_id} signal={s} oddsFmt="frac" featured />
               ))}
             </div>
           </section>

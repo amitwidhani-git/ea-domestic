@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import ClubCrest from "@/components/ClubCrest";
 import { useBackFrom } from "@/lib/useBackFrom";
-import type { EvSignal } from "@/lib/types";
+import type { EvOutcome, EvSignal } from "@/lib/types";
 import type { CtaAffiliate } from "@/lib/affiliates";
 
 export type OddsFormat = "frac" | "dec";
@@ -96,6 +96,67 @@ function kickoffLabel(iso: string): string {
   return `${g("weekday")} ${g("day")} ${g("month")} · ${g("hour")}:${g("minute")}`;
 }
 
+function outcomeName(signal: EvSignal, o: EvOutcome): string {
+  return o.selection === "draw" ? "Draw" : o.selection === "home" ? signal.home_team : signal.away_team;
+}
+
+// ---- outcome block (Model pick / Best value) ------------------------------
+function OutcomeBlock({
+  title, signal, outcome,
+}: { title: string; signal: EvSignal; outcome: EvOutcome }) {
+  const model = outcome.model_prob * 100;
+  const market = outcome.market_prob * 100;
+  const edge = model - market;
+  const name = outcomeName(signal, outcome);
+  return (
+    <div className="mb-3.5">
+      <div className="mb-1.5 flex items-center gap-2.5 rounded-[10px] border border-line bg-panel2 px-3 py-2.5">
+        <span className="font-data text-[10px] font-bold uppercase tracking-wider text-muted">{title}</span>
+        <span className="font-data text-sm font-bold">{name}{outcome.selection !== "draw" ? " win" : ""}</span>
+        <span className="ml-auto font-data text-lg font-semibold">{model.toFixed(0)}%</span>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <BarRow label="Model" pct={model} color="var(--accent)" />
+        <BarRow label="Market" pct={market} color="var(--muted)" />
+        <span
+          className={`mt-1 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 font-data text-xs font-semibold ${
+            edge > 0 ? "bg-accent/10 text-accent-ink" : "bg-chip text-muted"
+          }`}
+        >
+          {edge > 0 ? <><TrendUp /> +{edge.toFixed(1)}% value on {name}</> : "No value · market fair"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ---- back CTA --------------------------------------------------------------
+function BackCta({
+  signal, outcome, oddsFmt, tag, primary,
+}: { signal: EvSignal; outcome: EvOutcome; oddsFmt: OddsFormat; tag?: string; primary: boolean }) {
+  const name = outcomeName(signal, outcome);
+  if (!outcome.cta) {
+    return (
+      <div className="mt-2 flex items-center gap-2.5 rounded-[10px] border border-line px-3.5 py-2.5 font-data text-sm text-muted">
+        Best price for {name} <span className="ml-auto font-data text-[15px]">{showPrice(outcome.best_price, oddsFmt)}</span>
+      </div>
+    );
+  }
+  return (
+    <a
+      href={`/go/${outcome.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
+      className={`mt-2 flex items-center gap-2.5 rounded-[10px] px-3.5 py-2.5 font-data text-sm font-bold transition-[filter] hover:brightness-105 ${
+        primary ? "bg-accent text-accent-fg" : "border border-accent/40 text-accent-ink"
+      }`}
+    >
+      <AffiliateLogo cta={outcome.cta} />
+      <span>Back {name}{tag ? <span className="ml-1.5 font-data text-[10px] font-normal uppercase tracking-wide opacity-80">{tag}</span> : null}</span>
+      <span className="ml-auto font-data text-[15px]">{showPrice(outcome.best_price, oddsFmt)}</span>
+      <span className="flex"><Arrow /></span>
+    </a>
+  );
+}
+
 // ---- component -----------------------------------------------------------
 export default function ValueSignalCard({
   signal, oddsFmt, featured = false,
@@ -109,12 +170,6 @@ export default function ValueSignalCard({
   const [odds, setOdds] = useState<OddsRow[] | null>(null);
   const [loadingOdds, setLoadingOdds] = useState(false);
 
-  const model = signal.model_prob * 100;
-  const market = signal.market_prob * 100;
-  const edge = model - market;
-  const edgeCls = edge >= 4 ? "strong" : edge > 0 ? "slim" : "none";
-  const pickName = signal.selection === "draw" ? "Draw" : signal.selection === "home" ? signal.home_team : signal.away_team;
-
   function toggleCompare() {
     setDrawer((d) => (d === "compare" ? null : "compare"));
     if (odds === null && !loadingOdds) {
@@ -127,20 +182,12 @@ export default function ValueSignalCard({
     }
   }
 
+  // Rows sorted by the actionable outcome's price, so the top row is the one
+  // the "Best" tag on that column refers to.
   const cmpRows = (odds ?? [])
-    .map((o) => ({ book: o.bookmaker, name: o.displayName, price: o.prices?.[signal.selection] ?? null, cta: o.cta }))
-    .filter((r): r is { book: string; name: string; price: number; cta: CtaAffiliate | null } => typeof r.price === "number")
-    .sort((a, b) => b.price - a.price);
-
-  const edgePill = (
-    <span
-      className={`mt-1 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 font-data text-xs font-semibold ${
-        edgeCls === "none" ? "bg-chip text-muted" : "bg-accent/10 text-accent-ink"
-      }`}
-    >
-      {edge > 0 ? <><TrendUp /> +{edge.toFixed(1)}% value on {pickName}</> : "No value · market fair"}
-    </span>
-  );
+    .filter((o) => o.prices.home != null || o.prices.draw != null || o.prices.away != null)
+    .sort((a, b) => (b.prices[signal.bestValue.selection] ?? -Infinity) - (a.prices[signal.bestValue.selection] ?? -Infinity));
+  const bestValueBook = cmpRows[0]?.prices[signal.bestValue.selection] != null ? cmpRows[0] : null;
 
   return (
     <article
@@ -168,34 +215,19 @@ export default function ValueSignalCard({
         </div>
       </div>
 
-      {/* pick */}
-      <div className="mb-3.5 flex items-center gap-2.5 rounded-[10px] border border-line bg-panel2 px-3 py-2.5">
-        <span className="font-data text-[10px] font-bold uppercase tracking-wider text-muted">Pick</span>
-        <span className="font-data text-sm font-bold">{pickName} win</span>
-        <span className="ml-auto font-data text-lg font-semibold">{model.toFixed(0)}%</span>
-      </div>
+      {/* EdgeIQ's own pick, always shown */}
+      <OutcomeBlock title="Model pick" signal={signal} outcome={signal.model} />
+      {/* Best-value outcome, only broken out separately when it differs from the model's pick */}
+      {!signal.sameAsModel && <OutcomeBlock title="Best value" signal={signal} outcome={signal.bestValue} />}
 
-      {/* model vs market bars */}
-      <div className="flex flex-col gap-1.5">
-        <BarRow label="Model" pct={model} color="var(--accent)" />
-        <BarRow label="Market" pct={market} color="var(--muted)" />
-        {edgePill}
-      </div>
-
-      {/* best price CTA */}
-      {signal.cta ? (
-        <a
-          href={`/go/${signal.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
-          className="mt-3.5 flex items-center gap-2.5 rounded-[10px] bg-accent px-3.5 py-2.5 font-data text-sm font-bold text-accent-fg transition-[filter] hover:brightness-105"
-        >
-          <AffiliateLogo cta={signal.cta} />
-          Back {pickName} <span className="ml-auto font-data text-[15px]">{showPrice(signal.best_price, oddsFmt)}</span>
-          <span className="flex"><Arrow /></span>
-        </a>
+      {/* back CTA(s) */}
+      {signal.sameAsModel ? (
+        <BackCta signal={signal} outcome={signal.bestValue} oddsFmt={oddsFmt} primary />
       ) : (
-        <div className="mt-3.5 flex items-center gap-2.5 rounded-[10px] border border-line px-3.5 py-2.5 font-data text-sm text-muted">
-          Best price <span className="ml-auto font-data text-[15px]">{showPrice(signal.best_price, oddsFmt)}</span>
-        </div>
+        <>
+          <BackCta signal={signal} outcome={signal.model} oddsFmt={oddsFmt} tag="Model pick" primary={false} />
+          <BackCta signal={signal} outcome={signal.bestValue} oddsFmt={oddsFmt} tag="Best value" primary />
+        </>
       )}
 
       {/* tools */}
@@ -209,31 +241,56 @@ export default function ValueSignalCard({
         </button>
       </div>
 
-      {/* compare drawer */}
+      {/* compare drawer — full 1x2 table so every outcome's prices are visible at once */}
       {drawer === "compare" && (
-        <div className="mt-3 border-t border-line pt-3">
-          <p className="mb-2 font-data text-[10.5px] uppercase tracking-wide text-muted">Best price for {pickName} win</p>
+        <div className="mt-3 overflow-x-auto border-t border-line pt-3">
+          <p className="mb-2 font-data text-[10.5px] uppercase tracking-wide text-muted">All bookmaker prices</p>
           {loadingOdds ? (
             <p className="font-data text-xs text-muted">Loading prices…</p>
           ) : cmpRows.length === 0 ? (
             <p className="font-data text-xs text-muted">No bookmaker prices available yet.</p>
           ) : (
-            cmpRows.map((r, i) => (
-              <div key={r.book} className="flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 hover:bg-panel2">
-                <span className="font-data text-sm font-semibold">{r.name}</span>
-                {i === 0 && <span className="rounded bg-accent/10 px-1.5 py-0.5 font-data text-[9px] font-bold uppercase tracking-wide text-accent-ink">Best</span>}
-                <span className="ml-auto font-data text-sm font-semibold">{showPrice(r.price, oddsFmt)}</span>
-                {/* Only a genuine (non-fallback) affiliate match gets a Bet button here —
-                    with ~20 books listed, defaulting every row to the same partner would
-                    misleadingly imply we're partnered with all of them. */}
-                {r.cta && !r.cta.isFallback && (
-                  <a href={`/go/${r.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
-                    className="flex items-center gap-1.5 rounded-[7px] border border-accent/40 px-2.5 py-1 font-data text-[11.5px] font-bold text-accent-ink hover:bg-accent/10">
-                    <AffiliateLogo cta={r.cta} /> Bet
-                  </a>
-                )}
-              </div>
-            ))
+            <table className="w-full min-w-[420px] border-collapse font-data text-xs">
+              <thead>
+                <tr className="text-left text-[9.5px] uppercase tracking-widest text-muted">
+                  <th className="pb-1.5 pr-2 font-semibold">Bookmaker</th>
+                  <th className="pb-1.5 px-2 text-right font-semibold">{signal.home_team}</th>
+                  <th className="pb-1.5 px-2 text-right font-semibold">Draw</th>
+                  <th className="pb-1.5 pl-2 text-right font-semibold">{signal.away_team}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cmpRows.map((r) => {
+                  const isBestRow = bestValueBook?.bookmaker === r.bookmaker;
+                  return (
+                    <tr key={r.bookmaker} className="border-t border-line/60">
+                      <td className="py-1.5 pr-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold">{r.displayName}</span>
+                          {/* Only a genuine (non-fallback) affiliate match gets a Bet button
+                              here — with ~20 books listed, defaulting every row to the same
+                              partner would misleadingly imply we're partnered with all of them. */}
+                          {r.cta && !r.cta.isFallback && (
+                            <a href={`/go/${r.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
+                              className="flex items-center gap-1 rounded-[6px] border border-accent/40 px-1.5 py-0.5 font-data text-[10px] font-bold text-accent-ink hover:bg-accent/10">
+                              <AffiliateLogo cta={r.cta} /> Bet
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      {(["home", "draw", "away"] as const).map((sel) => (
+                        <td
+                          key={sel}
+                          className={`px-2 py-1.5 text-right ${sel === signal.bestValue.selection && isBestRow ? "font-bold text-accent-ink" : ""}`}
+                        >
+                          {showPrice(r.prices[sel], oddsFmt)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
           <p className="mt-2.5 font-data text-[10px] text-muted">Prices illustrative · 18+ · Gamble responsibly · BeGambleAware.org</p>
         </div>
@@ -241,11 +298,21 @@ export default function ValueSignalCard({
 
       {/* audit drawer */}
       {drawer === "audit" && (
-        <div className="mt-3 flex flex-col gap-2 border-t border-line pt-3 font-data text-xs">
-          <Row k="Model probability" v={`${model.toFixed(1)}%`} />
-          <Row k="Market probability" v={`${market.toFixed(1)}%`} />
-          <Row k="Edge" v={`${edge >= 0 ? "+" : ""}${edge.toFixed(1)}%`} />
-          <Row k="Best price" v={`${showPrice(signal.best_price, oddsFmt)} · ${fmtBook(signal.best_bookmaker)}`} />
+        <div className="mt-3 flex flex-col gap-3 border-t border-line pt-3 font-data text-xs">
+          <div className="flex flex-col gap-2">
+            <p className="font-data text-[10px] font-bold uppercase tracking-wider text-muted">Model pick</p>
+            <Row k="Model probability" v={`${(signal.model.model_prob * 100).toFixed(1)}%`} />
+            <Row k="Market probability" v={`${(signal.model.market_prob * 100).toFixed(1)}%`} />
+            <Row k="Best price" v={`${showPrice(signal.model.best_price, oddsFmt)} · ${fmtBook(signal.model.best_bookmaker)}`} />
+          </div>
+          {!signal.sameAsModel && (
+            <div className="flex flex-col gap-2 border-t border-line/60 pt-2">
+              <p className="font-data text-[10px] font-bold uppercase tracking-wider text-muted">Best value</p>
+              <Row k="Model probability" v={`${(signal.bestValue.model_prob * 100).toFixed(1)}%`} />
+              <Row k="Market probability" v={`${(signal.bestValue.market_prob * 100).toFixed(1)}%`} />
+              <Row k="Best price" v={`${showPrice(signal.bestValue.best_price, oddsFmt)} · ${fmtBook(signal.bestValue.best_bookmaker)}`} />
+            </div>
+          )}
         </div>
       )}
 
