@@ -371,36 +371,49 @@ export async function getEvSignals(): Promise<EvSignal[]> {
   const bookmakerKeys = [...snaps.map((s) => String(s.bookmaker)), ...allSignals.map((s) => String(s.bestBookmaker))];
   const ctaByBookmaker = await resolveCtaAffiliates(bookmakerKeys);
 
-  function resolveOutcome(mid: string, doc: (typeof allSignals)[number]) {
-    const selection = doc.selection as EvOutcome["selection"];
-
-    // Default to the stored snapshot (may be stale) so there's always a value.
-    let bestPrice = doc.bestPrice as number;
-    let bestBookmaker = doc.bestBookmaker as string;
+  // `fallback` seeds model_prob/market_prob/ev/best_price from a stored
+  // ev_signals doc when one exists for this selection — but the model's own
+  // pick doesn't always have one (a match can carry ev_signals docs for only
+  // the selections that clear a value bar), so model_prob in particular must
+  // come from the prediction itself, never silently swapped for a different
+  // selection's doc the way an `?? otherDoc` fallback would.
+  function resolveOutcome(
+    mid: string,
+    selection: EvOutcome["selection"],
+    fallback: { modelProb: number; marketProb: number; ev: number; bestPrice: number; bestBookmaker: string },
+  ): EvOutcome {
+    let bestPrice = fallback.bestPrice;
+    let bestBookmaker = fallback.bestBookmaker;
     let cta = ctaByBookmaker.get(bestBookmaker) ?? null;
+    let marketProb = fallback.marketProb;
 
-    // Prefer the highest live price among bookmakers we actually have a real
-    // (non-fallback) affiliate deal with — that's the only price a "Back"
-    // click can honestly promise, and it's what Compare-books marks "Bet"-able.
-    const liveGenuineRows = (snapsByMatch.get(mid) ?? [])
+    const rows = (snapsByMatch.get(mid) ?? [])
       .map((snap) => {
         const price = snap.prices?.[selection];
         return { bookmaker: String(snap.bookmaker), price: typeof price === "number" ? price : null, cta: ctaByBookmaker.get(String(snap.bookmaker)) ?? null };
       })
-      .filter((r): r is { bookmaker: string; price: number; cta: CtaAffiliate } => r.price !== null && !!r.cta && !r.cta.isFallback);
+      .filter((r): r is { bookmaker: string; price: number; cta: CtaAffiliate | null } => r.price !== null);
 
-    if (liveGenuineRows.length > 0) {
-      const best = liveGenuineRows.reduce((a, b) => (b.price > a.price ? b : a));
-      bestPrice = best.price;
-      bestBookmaker = best.bookmaker;
-      cta = best.cta;
+    if (rows.length > 0) {
+      // Best live price across every book sets a fresh market-probability
+      // estimate even when there's no ev_signals doc for this selection.
+      const marketBest = rows.reduce((a, b) => (b.price > a.price ? b : a));
+      marketProb = 1 / marketBest.price;
+
+      // Prefer the highest live price among bookmakers we actually have a
+      // real (non-fallback) affiliate deal with — that's the only price a
+      // "Back" click can honestly promise, and what Compare-books marks
+      // "Bet"-able.
+      const genuineRows = rows.filter((r): r is { bookmaker: string; price: number; cta: CtaAffiliate } => !!r.cta && !r.cta.isFallback);
+      if (genuineRows.length > 0) {
+        const best = genuineRows.reduce((a, b) => (b.price > a.price ? b : a));
+        bestPrice = best.price;
+        bestBookmaker = best.bookmaker;
+        cta = best.cta;
+      }
     }
 
-    const outcome: EvOutcome = {
-      selection, model_prob: doc.modelProb as number, market_prob: doc.marketProb as number,
-      ev: doc.ev as number, best_price: bestPrice, best_bookmaker: bestBookmaker, cta,
-    };
-    return outcome;
+    return { selection, model_prob: fallback.modelProb, market_prob: marketProb, ev: fallback.ev, best_price: bestPrice, best_bookmaker: bestBookmaker, cta };
   }
 
   const rows: EvSignal[] = [];
@@ -411,12 +424,13 @@ export async function getEvSignals(): Promise<EvSignal[]> {
 
     const pick = pred.pick as "home" | "draw" | "away";
     const bestValueDoc = docs.reduce((a, b) => ((b.ev as number) > (a.ev as number) ? b : a));
-    const modelDoc = docs.find((s) => s.selection === pick) ?? bestValueDoc;
+    const modelDoc = docs.find((s) => s.selection === pick);
+    const modelProb = ((pred.probs as Record<string, number> | undefined)?.[pick]) ?? (modelDoc?.modelProb as number | undefined) ?? 0;
 
     const f = info.get(mid);
     rows.push({
       match_id: mid,
-      league: (bestValueDoc.league ?? modelDoc.league) as League,
+      league: bestValueDoc.league as League,
       created_at: bestValueDoc.createdAt as string,
       home_team: f?.homeTeam ?? mid,
       away_team: f?.awayTeam ?? "",
@@ -425,9 +439,21 @@ export async function getEvSignals(): Promise<EvSignal[]> {
       home_api_football_id: f?.homeApiFootballId ?? null,
       away_api_football_id: f?.awayApiFootballId ?? null,
       kickoff_utc: f?.kickoffUtc ?? "",
-      model: resolveOutcome(mid, modelDoc),
-      bestValue: resolveOutcome(mid, bestValueDoc),
-      sameAsModel: modelDoc.selection === bestValueDoc.selection,
+      model: resolveOutcome(mid, pick, {
+        modelProb,
+        marketProb: (modelDoc?.marketProb as number | undefined) ?? 0,
+        ev: (modelDoc?.ev as number | undefined) ?? 0,
+        bestPrice: (modelDoc?.bestPrice as number | undefined) ?? 0,
+        bestBookmaker: (modelDoc?.bestBookmaker as string | undefined) ?? "",
+      }),
+      bestValue: resolveOutcome(mid, bestValueDoc.selection as EvOutcome["selection"], {
+        modelProb: bestValueDoc.modelProb as number,
+        marketProb: bestValueDoc.marketProb as number,
+        ev: bestValueDoc.ev as number,
+        bestPrice: bestValueDoc.bestPrice as number,
+        bestBookmaker: bestValueDoc.bestBookmaker as string,
+      }),
+      sameAsModel: pick === bestValueDoc.selection,
     });
   }
 
