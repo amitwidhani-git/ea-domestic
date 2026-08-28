@@ -376,6 +376,10 @@ export default function InsightsFixtures({
               }
               const edgeOf = (s: EvSignal) => s.bestValue.model_prob - s.bestValue.market_prob;
               const featured = [...list].sort((a, b) => edgeOf(b) - edgeOf(a))[0];
+              // Everything else, in kickoff order (list is already sorted that
+              // way from getEvSignals()) — featured is pulled out so it isn't
+              // shown a second time below.
+              const rest = list.filter((s) => s.match_id !== featured.match_id);
               return (
                 <>
                   <h2 className="mb-3 mt-6 flex items-center gap-2 font-data text-[13px] font-bold uppercase tracking-wider text-muted">
@@ -387,9 +391,11 @@ export default function InsightsFixtures({
                     <ValueSignalCard signal={featured} oddsFmt={oddsFmt} featured />
                   </div>
 
+                  {rest.length > 0 && (
+                  <>
                   <h2 className="mb-3 mt-8 font-data text-[13px] font-bold uppercase tracking-wider text-muted">All odds &amp; value</h2>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {list.map((s, i) => {
+                    {rest.map((s, i) => {
                       const StripBanner = (i + 1) % 8 === 0 ? valueStripPicks[Math.floor(i / 8)] : undefined;
                       return (
                         <Fragment key={s.match_id}>
@@ -399,6 +405,8 @@ export default function InsightsFixtures({
                       );
                     })}
                   </div>
+                  </>
+                  )}
                 </>
               );
             })()}

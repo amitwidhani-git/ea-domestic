@@ -287,9 +287,8 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
 }
 
 // Every match gets one ev_signals doc per selection (home/draw/away), most of
-// which are negative EV — i.e. not actually value. Without this floor the
-// unsettled query includes that noise, which both crowds out other matches
-// under the limit and shows multiple contradictory cards for the same fixture.
+// which are negative EV — i.e. not actually value. Without this floor every
+// match would show, drowning genuine value signals in noise.
 const MIN_EV = 0.05;
 
 /**
@@ -303,8 +302,15 @@ const MIN_EV = 0.05;
  *
  * Shown in kickoff order (soonest match first) so the page reads as "what's
  * coming up", not a leaderboard. kickoff_utc only exists after the matches
- * join below, so candidate selection happens by EV in Mongo (highest value,
- * capped at 20 matches) and the final display order is applied afterwards.
+ * join below, so candidate matches are found by EV in Mongo first (every
+ * match with an outcome clearing MIN_EV — genuinely bounded by that
+ * threshold, not an arbitrary row count) and the final display order is
+ * applied afterwards. No further cap: the page's own league/timeframe
+ * filters are what narrow this down for the visitor, and a fixed top-N cut
+ * here would silently hide real value in whichever leagues/matches didn't
+ * happen to have the very biggest edges that day — which is exactly what
+ * was happening to Premier League signals once European leagues (with
+ * their own, sometimes larger, edges) were added.
  */
 export async function getEvSignals(): Promise<EvSignal[]> {
   const d = await db();
@@ -318,7 +324,6 @@ export async function getEvSignals(): Promise<EvSignal[]> {
   for (const c of candidates) {
     const mid = String(c.matchId);
     if (!matchIds.includes(mid)) matchIds.push(mid);
-    if (matchIds.length >= 20) break;
   }
   if (matchIds.length === 0) return [];
 
