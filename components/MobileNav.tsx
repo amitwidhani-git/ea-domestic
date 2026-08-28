@@ -4,20 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import { openSubscribe, SUBSCRIBE_ENABLED } from "@/components/SubscribeModal";
+import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES } from "@/lib/leagues";
 
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/insights", label: "Insights & Odds" },
   { href: "/track-record", label: "Track record" },
 ];
-const DIVISIONS: [string, string][] = [
-  ["PL", "Premier League"],
-  ["CH", "Championship"],
-  ["L1", "League One"],
-  ["L2", "League Two"],
-  ["SPL", "Scottish Premiership"],
-  ["SCH", "Scottish Championship"],
-];
+// Domestic leagues only (cups don't have a standalone "teams by division" home —
+// their clubs already appear under their own domestic league), grouped by country.
+const DIVISIONS_BY_COUNTRY = COUNTRIES.map((country) => ({
+  country,
+  leagues: COUNTRY_LEAGUES[country].filter((code) => !LEAGUES[code].isCup),
+})).filter((g) => g.leagues.length > 0);
 
 const BOTTOM = [
   { href: "/", label: "Home", icon: (<><path d="M3 11l9-8 9 8" /><path d="M5 10v10h14V10" /></>) },
@@ -82,8 +81,13 @@ export default function MobileNav() {
             </Link>
           ))}
           <span className="px-3 pb-1 pt-3 font-body text-[11px] uppercase tracking-wider text-muted">Teams by division</span>
-          {DIVISIONS.map(([lg, name]) => (
-            <Link key={lg} href={`/teams#${lg}`} className="rounded-[10px] px-3 py-2.5 font-body text-[15px] text-ink hover:bg-chip">{name}</Link>
+          {DIVISIONS_BY_COUNTRY.map(({ country, leagues }) => (
+            <div key={country}>
+              <span className="block px-3 pb-1 pt-2 font-body text-[10px] font-semibold uppercase tracking-wider text-muted/70">{country}</span>
+              {leagues.map((lg) => (
+                <Link key={lg} href={`/teams#${lg}`} className="block rounded-[10px] px-3 py-2.5 font-body text-[15px] text-ink hover:bg-chip">{LEAGUES[lg].name}</Link>
+              ))}
+            </div>
           ))}
           <Link href="/teams" className="rounded-[10px] px-3 py-2.5 font-body text-[15px] text-accent-ink hover:bg-chip">All teams →</Link>
         </nav>

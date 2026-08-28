@@ -9,28 +9,26 @@ import WorldCupProof from "@/components/WorldCupProof";
 import { useBackFrom } from "@/lib/useBackFrom";
 import type { League, LeagueStats, TrackRecordRow } from "@/lib/types";
 import { IS_CUP, LEAGUE_NAMES } from "@/lib/types";
+import { COUNTRIES, COUNTRY_LEAGUES, CONTINENTAL_LEAGUES } from "@/lib/leagues";
 
 const PICK_SHORT = { home: "H", draw: "D", away: "A" } as const;
 
-// Country groupings for the middle tier of the ring hierarchy (All
-// competitions → country → individual league/cup). Add a Scottish cup here
-// the day one gets a league code — everything else (country ring, section
-// grouping) picks it up automatically.
-const COUNTRIES = ["England", "Scotland"] as const;
-type Country = (typeof COUNTRIES)[number];
-const COUNTRY_LEAGUES: Record<Country, League[]> = {
-  England: ["PL", "CH", "L1", "L2", "FAC", "LC", "CS"],
-  Scotland: ["SPL", "SCH"],
-};
+// Middle tier of the ring hierarchy (All competitions → group → individual
+// league/cup) — one group per country, plus a catch-all for cross-country
+// competitions (Champions League) that don't belong to any single country.
+const GROUPS: { label: string; leagues: League[] }[] = [
+  ...COUNTRIES.map((country) => ({ label: country, leagues: COUNTRY_LEAGUES[country] })),
+  ...(CONTINENTAL_LEAGUES.length > 0 ? [{ label: "Europe", leagues: CONTINENTAL_LEAGUES }] : []),
+];
 
-type StatFilter = { kind: "league"; league: League } | { kind: "country"; country: Country };
+type StatFilter = { kind: "league"; league: League } | { kind: "group"; label: string; leagues: League[] };
 
 function filterLabel(f: StatFilter): string {
-  return f.kind === "league" ? LEAGUE_NAMES[f.league] : f.country;
+  return f.kind === "league" ? LEAGUE_NAMES[f.league] : f.label;
 }
 function sameFilter(a: StatFilter | null, b: StatFilter): boolean {
   if (!a || a.kind !== b.kind) return false;
-  return a.kind === "league" && b.kind === "league" ? a.league === b.league : a.kind === "country" && b.kind === "country" ? a.country === b.country : false;
+  return a.kind === "league" && b.kind === "league" ? a.league === b.league : a.kind === "group" && b.kind === "group" ? a.label === b.label : false;
 }
 
 export default function TrackRecordTabs({
@@ -59,13 +57,13 @@ export default function TrackRecordTabs({
     ? rows
     : filter.kind === "league"
       ? rows.filter((r) => r.fixture.league === filter.league)
-      : rows.filter((r) => COUNTRY_LEAGUES[filter.country].includes(r.fixture.league));
+      : rows.filter((r) => filter.leagues.includes(r.fixture.league));
 
-  // Country-level rollups, summed client-side from the already-fetched
+  // Group-level rollups, summed client-side from the already-fetched
   // per-league stats — no separate query needed.
-  function countryStat(country: Country) {
+  function groupStat(leagues: League[]) {
     let settled = 0, correct = 0;
-    for (const lg of COUNTRY_LEAGUES[country]) {
+    for (const lg of leagues) {
       const s = stats.find((x) => x.league === lg);
       if (s) { settled += s.settled; correct += s.correct; }
     }
@@ -132,18 +130,18 @@ export default function TrackRecordTabs({
                   </button>
                 )}
 
-                {/* Country tier — England vs Scotland, summed across each country's leagues + cups */}
-                <section className="grid grid-cols-2 gap-3 sm:max-w-md">
-                  {COUNTRIES.map((country) => {
-                    const cs = countryStat(country);
-                    const pct = cs.settled > 0 ? Math.round(cs.accuracy * 100) : null;
-                    const perfect = cs.settled > 0 && cs.correct === cs.settled;
-                    const selected = !!filter && sameFilter(filter, { kind: "country", country });
+                {/* Group tier — one ring per country plus Europe, summed across each group's leagues + cups */}
+                <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                  {GROUPS.map((group) => {
+                    const gs = groupStat(group.leagues);
+                    const pct = gs.settled > 0 ? Math.round(gs.accuracy * 100) : null;
+                    const perfect = gs.settled > 0 && gs.correct === gs.settled;
+                    const selected = !!filter && sameFilter(filter, { kind: "group", label: group.label, leagues: group.leagues });
                     return (
                       <button
                         type="button"
-                        key={country}
-                        onClick={() => selectFilter({ kind: "country", country })}
+                        key={group.label}
+                        onClick={() => selectFilter({ kind: "group", label: group.label, leagues: group.leagues })}
                         aria-pressed={selected}
                         className={`flex flex-col items-center rounded-[14px] border p-3 text-center shadow-[var(--shadow)] transition-colors ${
                           selected
@@ -160,19 +158,19 @@ export default function TrackRecordTabs({
                             </span>
                           </div>
                         </div>
-                        <p className="mt-2 font-data text-[10px] uppercase tracking-widest text-ink">{country}</p>
-                        <p className="mt-1 font-data text-[10px] text-ink">{cs.settled > 0 ? `${cs.correct}/${cs.settled} correct` : "No settled picks yet"}</p>
+                        <p className="mt-2 font-data text-[10px] uppercase tracking-widest text-ink">{group.label}</p>
+                        <p className="mt-1 font-data text-[10px] text-ink">{gs.settled > 0 ? `${gs.correct}/${gs.settled} correct` : "No settled picks yet"}</p>
                       </button>
                     );
                   })}
                 </section>
 
-                {/* League/cup tier, grouped under each country */}
-                {COUNTRIES.map((country) => (
-                  <div key={country} className="mt-5">
-                    <p className="mb-2.5 font-data text-[10px] uppercase tracking-widest text-muted">{country}</p>
+                {/* League/cup tier, grouped under each country (+ Europe) */}
+                {GROUPS.map((group) => (
+                  <div key={group.label} className="mt-5">
+                    <p className="mb-2.5 font-data text-[10px] uppercase tracking-widest text-muted">{group.label}</p>
                     <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
-                      {COUNTRY_LEAGUES[country].map((lg) => {
+                      {group.leagues.map((lg) => {
                         const s = stats.find((x) => x.league === lg);
                         const pct = s ? Math.round(s.accuracy * 100) : null;
                         const perfect = !!s && s.settled > 0 && s.correct === s.settled;

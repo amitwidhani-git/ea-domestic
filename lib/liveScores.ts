@@ -7,8 +7,10 @@
  * pipeline job that can lag behind actual kickoff by several minutes.
  */
 
-// PL, CH, L1, L2, FAC, LC, CS — matches lib/types.ts League codes.
-const TRACKED_LEAGUE_IDS = [39, 40, 41, 42, 45, 48, 528];
+import { LEAGUES } from "./leagues";
+
+// Every competition in the league registry, by its API-Football id.
+const TRACKED_LEAGUE_IDS: number[] = Object.values(LEAGUES).map((l) => l.apiFootballId);
 
 export interface LiveApiFixture {
   apiFixtureId: number;

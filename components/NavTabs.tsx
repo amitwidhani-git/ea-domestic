@@ -2,19 +2,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES } from "@/lib/leagues";
 
 const TABS = [
   { href: "/insights", label: "Insights & Odds" },
   { href: "/track-record", label: "Track record" },
 ];
-const DIVISIONS: [string, string][] = [
-  ["PL", "Premier League"],
-  ["CH", "Championship"],
-  ["L1", "League One"],
-  ["L2", "League Two"],
-  ["SPL", "Scottish Premiership"],
-  ["SCH", "Scottish Championship"],
-];
+// Domestic leagues only (cups don't have a standalone "teams by division" home —
+// their clubs already appear under their own domestic league), grouped by country.
+const DIVISIONS_BY_COUNTRY = COUNTRIES.map((country) => ({
+  country,
+  leagues: COUNTRY_LEAGUES[country].filter((code) => !LEAGUES[code].isCup),
+})).filter((g) => g.leagues.length > 0);
 
 export default function NavTabs() {
   const pathname = usePathname();
@@ -52,12 +51,17 @@ export default function NavTabs() {
           </svg>
         </button>
         {teamsOpen && (
-          <div className="absolute left-0 top-full z-50 mt-2 min-w-[200px] rounded-xl border border-line bg-panel p-2 shadow-[var(--shadow)]">
+          <div className="absolute left-0 top-full z-50 mt-2 max-h-[70vh] min-w-[220px] overflow-y-auto rounded-xl border border-line bg-panel p-2 shadow-[var(--shadow)]">
             <span className="block px-3 pb-1 pt-1.5 font-body text-[10px] uppercase tracking-wider text-muted">Browse by division</span>
-            {DIVISIONS.map(([lg, name]) => (
-              <Link key={lg} href={`/teams#${lg}`} className="block rounded-lg px-3 py-2 font-body text-[13.5px] text-ink hover:bg-chip">{name}</Link>
+            {DIVISIONS_BY_COUNTRY.map(({ country, leagues }) => (
+              <div key={country}>
+                <span className="mt-1.5 block px-3 pb-1 font-body text-[10px] font-semibold uppercase tracking-wider text-muted/70">{country}</span>
+                {leagues.map((lg) => (
+                  <Link key={lg} href={`/teams#${lg}`} className="block rounded-lg px-3 py-2 font-body text-[13.5px] text-ink hover:bg-chip">{LEAGUES[lg].name}</Link>
+                ))}
+              </div>
             ))}
-            <Link href="/teams" className="block rounded-lg px-3 py-2 font-body text-[13.5px] text-accent-ink hover:bg-chip">All teams →</Link>
+            <Link href="/teams" className="mt-1 block rounded-lg px-3 py-2 font-body text-[13.5px] text-accent-ink hover:bg-chip">All teams →</Link>
           </div>
         )}
       </div>

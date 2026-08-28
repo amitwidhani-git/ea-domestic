@@ -19,6 +19,7 @@ import SpinzwinPromo from "@/components/SpinzwinPromo";
 import Bet247Promo from "@/components/Bet247Promo";
 import BetwayPromo from "@/components/BetwayPromo";
 import { useBackFrom } from "@/lib/useBackFrom";
+import { LEAGUE_CODES } from "@/lib/leagues";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 
 // The real partner strip banners — randomised into the All Fixtures list
@@ -172,7 +173,7 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
 
 // ---------------------------------------------------------------- main
 
-const LEAGUE_FILTERS: ("ALL" | League)[] = ["ALL", "PL", "CH", "L1", "L2", "LC", "FAC", "SPL", "SCH"];
+const LEAGUE_FILTERS: ("ALL" | League)[] = ["ALL", ...LEAGUE_CODES];
 type SortKey = "date" | "ev" | "confidence";
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "date", label: "Date" },

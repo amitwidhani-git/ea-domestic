@@ -8,9 +8,10 @@ import BetMazePromo from "@/components/BetMazePromo";
 import RecentResultsTicker from "@/components/RecentResultsTicker";
 import { getEvSignals, getStats, getArticles, getLiveMatches } from "@/lib/data";
 import { getResults } from "@/lib/results";
+import { LEAGUE_CODES } from "@/lib/leagues";
 
 // Display order for grouping the best upcoming edges by competition.
-const LEAGUE_ORDER = ["PL", "CH", "L1", "L2", "FAC", "LC", "CS", "SPL", "SCH"];
+const LEAGUE_ORDER = LEAGUE_CODES;
 
 export const dynamic = "force-dynamic";
 

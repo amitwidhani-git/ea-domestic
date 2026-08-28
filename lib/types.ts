@@ -1,20 +1,13 @@
 import type { CtaAffiliate } from "@/lib/affiliates";
+import { LEAGUES, LEAGUE_CODES, type League } from "@/lib/leagues";
 
-export type League = "PL" | "CH" | "L1" | "L2" | "FAC" | "LC" | "CS" | "SPL" | "SCH";
-export const LEAGUE_NAMES: Record<League, string> = {
-  PL: "Premier League", CH: "Championship", L1: "League One", L2: "League Two",
-  FAC: "FA Cup", LC: "League Cup", CS: "Community Shield", SPL: "Scottish Premiership",
-  SCH: "Scottish Championship",
-};
-export const LEAGUE_FULL: Record<League, string> = {
-  PL: "Premier League", CH: "EFL Championship", L1: "EFL League One", L2: "EFL League Two",
-  FAC: "FA Cup", LC: "EFL Cup", CS: "FA Community Shield", SPL: "Scottish Premiership",
-  SCH: "Scottish Championship",
-};
-export const IS_CUP: Record<League, boolean> = {
-  PL: false, CH: false, L1: false, L2: false,
-  FAC: true, LC: true, CS: true, SPL: false, SCH: false,
-};
+// League identity/metadata (name, country, cup flag, badge color, crest id) lives
+// in lib/leagues.ts — this is a thin re-export so the many existing `@/lib/types`
+// imports across the app don't all need to change.
+export type { League } from "@/lib/leagues";
+export const LEAGUE_NAMES: Record<League, string> = Object.fromEntries(LEAGUE_CODES.map((c) => [c, LEAGUES[c].name])) as Record<League, string>;
+export const LEAGUE_FULL: Record<League, string> = Object.fromEntries(LEAGUE_CODES.map((c) => [c, LEAGUES[c].fullName])) as Record<League, string>;
+export const IS_CUP: Record<League, boolean> = Object.fromEntries(LEAGUE_CODES.map((c) => [c, LEAGUES[c].isCup])) as Record<League, boolean>;
 export interface Fixture {
   match_id: string; league: League; season: string; kickoff_utc: string;
   home_team: string; away_team: string;

@@ -1,22 +1,15 @@
 "use client";
 import { useState } from "react";
-import { LEAGUE_LOGO_URL } from "@/components/LeagueBadge";
 import type { League } from "@/lib/types";
+import { LEAGUE_CODES, LEAGUES as LEAGUE_REGISTRY, leagueLogoUrl } from "@/lib/leagues";
 
 // Carabao Cup is the current sponsor name for the League Cup — deliberately
-// overridden here rather than reusing LEAGUE_NAMES, which keeps the generic
-// competition name for other UI (filters, badges).
-const LEAGUES: { code: League; label: string }[] = [
-  { code: "PL", label: "Premier League" },
-  { code: "CH", label: "Championship" },
-  { code: "L1", label: "League One" },
-  { code: "L2", label: "League Two" },
-  { code: "FAC", label: "FA Cup" },
-  { code: "LC", label: "Carabao Cup" },
-  { code: "CS", label: "Community Shield" },
-  { code: "SPL", label: "Scottish Premiership" },
-  { code: "SCH", label: "Scottish Championship" },
-];
+// overridden here rather than reusing the registry's generic name, which
+// other UI (filters, badges) still shows as "League Cup".
+const LABEL_OVERRIDES: Partial<Record<League, string>> = { LC: "Carabao Cup" };
+const RAIL_LEAGUES: { code: League; label: string }[] = LEAGUE_CODES.map((code) => ({
+  code, label: LABEL_OVERRIDES[code] ?? LEAGUE_REGISTRY[code].name,
+}));
 
 function Badge({
   active, onClick, label, children,
@@ -52,7 +45,7 @@ function LeagueCrest({ code }: { code: League }) {
   }
   return (
     <img
-      src={LEAGUE_LOGO_URL[code]}
+      src={leagueLogoUrl(code)}
       alt=""
       width={36}
       height={36}
@@ -75,7 +68,7 @@ export default function LeagueBadgeRail({
             <path d="M4 54 L32 34 L60 54" stroke="#0A0A0A" strokeWidth="8" strokeLinejoin="miter" fill="none" />
           </svg>
         </Badge>
-        {LEAGUES.map((l) => (
+        {RAIL_LEAGUES.map((l) => (
           <Badge key={l.code} active={value === l.code} onClick={() => onChange(l.code)} label={l.label}>
             <LeagueCrest code={l.code} />
           </Badge>

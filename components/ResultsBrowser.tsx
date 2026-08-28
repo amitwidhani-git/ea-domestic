@@ -4,10 +4,11 @@ import Link from "next/link";
 import LeagueBadge from "@/components/LeagueBadge";
 import ClubCrest from "@/components/ClubCrest";
 import { useBackFrom } from "@/lib/useBackFrom";
+import { LEAGUE_CODES } from "@/lib/leagues";
 import type { League } from "@/lib/types";
 import type { ResultRow, ResultsResponse, ResultsOutcome, ResultPrediction, ResultEvSignal } from "@/lib/results";
 
-const LEAGUES: League[] = ["PL", "CH", "L1", "L2", "LC", "FAC", "CS", "SPL", "SCH"];
+const LEAGUES: League[] = LEAGUE_CODES;
 const OUTCOMES: { key: ResultsOutcome; label: string }[] = [
   { key: "all", label: "All results" },
   { key: "correct", label: "✓ Correct" },

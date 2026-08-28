@@ -12,6 +12,7 @@
 import { MongoClient, type Db } from "mongodb";
 import type { Article, ArticleDetail, EvOutcome, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow, UpcomingFixtureWithSignal } from "./types";
 import { resolveCtaAffiliates, getAffiliateList, pickRandomAffiliate, type CtaAffiliate } from "./affiliates";
+import { LEAGUE_CODES } from "./leagues";
 import { getLiveApiFixtures } from "./liveScores";
 
 // ---------------------------------------------------------------- connection
@@ -209,7 +210,7 @@ export async function getStats(): Promise<LeagueStats[]> {
 
   const byLeague = new Map(rows.map((r) => [String(r._id), r]));
 
-  const order: (League | "ALL")[] = ["ALL", "PL", "CH", "L1", "L2", "FAC", "LC", "CS", "SPL", "SCH"];
+  const order: (League | "ALL")[] = ["ALL", ...LEAGUE_CODES];
 
   return order
     .filter((k) => k === "ALL" ? totals.settled > 0 : byLeague.has(k))
