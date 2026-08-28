@@ -434,6 +434,7 @@ export interface LiveMatchCard {
   homeApiFootballId: number | null; awayApiFootballId: number | null;
   score: { home: number; away: number } | null;
   elapsed: number | null;
+  extra: number | null; // stoppage-time minute (e.g. 4 for "45+4"), when API-Football reports one
   afStatus: string | null; // raw API-Football code (1H/HT/2H/…) for display
   modelPick: "home" | "draw" | "away" | null;
   modelProb: number | null;  // our model's probability of modelPick
@@ -495,6 +496,7 @@ export async function getLiveMatches(): Promise<LiveMatchCard[]> {
       awayApiFootballId: awayTeam?.aliases?.apiFootball ?? null,
       score: live ? { home: live.homeScore ?? 0, away: live.awayScore ?? 0 } : null,
       elapsed: live?.elapsed ?? null,
+      extra: live?.extra ?? null,
       afStatus: live?.status ?? null,
       modelPick: pick ?? null,
       modelProb: pick && p?.probs ? (p.probs[pick] as number) : null,

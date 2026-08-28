@@ -40,6 +40,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ matchId
       status: stats.status,
       afStatus: stats.afStatus ?? null,
       elapsed: stats.elapsed ?? null,
+      extra: stats.extra ?? null,
       score: stats.score ?? null,
       events: stats.events ?? [],
       stats: stats.stats ?? null,

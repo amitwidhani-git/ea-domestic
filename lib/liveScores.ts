@@ -16,6 +16,8 @@ export interface LiveApiFixture {
   apiFixtureId: number;
   status: string; // API-Football short code: 1H | HT | 2H | ET | P | BT | …
   elapsed: number | null;
+  /** Stoppage-time minute (e.g. 4 for "45+4"), straight from API-Football. */
+  extra: number | null;
   homeScore: number | null;
   awayScore: number | null;
   homeTeam: string;
@@ -23,7 +25,7 @@ export interface LiveApiFixture {
 }
 
 interface ApiFootballFixture {
-  fixture?: { id?: number; status?: { short?: string; elapsed?: number | null } };
+  fixture?: { id?: number; status?: { short?: string; elapsed?: number | null; extra?: number | null } };
   league?: { id?: number };
   teams?: { home?: { name?: string }; away?: { name?: string } };
   goals?: { home?: number | null; away?: number | null };
@@ -52,6 +54,7 @@ export async function getLiveApiFixtures(): Promise<LiveApiFixture[]> {
         apiFixtureId: f.fixture!.id as number,
         status: f.fixture?.status?.short ?? "",
         elapsed: f.fixture?.status?.elapsed ?? null,
+        extra: f.fixture?.status?.extra ?? null,
         homeScore: f.goals?.home ?? null,
         awayScore: f.goals?.away ?? null,
         homeTeam: f.teams?.home?.name ?? "",

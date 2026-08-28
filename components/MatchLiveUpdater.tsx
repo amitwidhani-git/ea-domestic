@@ -7,6 +7,7 @@ import FrozenStamp from "@/components/FrozenStamp";
 import MatchWidget from "@/components/MatchWidget";
 import MatchSquadTab, { FormRow } from "@/components/MatchSquadTab";
 import type { MatchDetail, MatchEvent, MatchInjury, MatchNews, LineupPlayer, LineupTeam } from "@/lib/matchDetail";
+import { mapMatchEvent, formatMinute, type RawMatchEvent } from "@/lib/matchEvents";
 
 // Both the matches and match_stats collections use normalised status values:
 // SCHEDULED | LIVE | FINISHED. The raw API-Football code (FT/AET/PEN/HT/1H…)
@@ -116,9 +117,15 @@ export default function MatchLiveUpdater({
               status: live.status ?? prev.fixture.status,
               afStatus: live.afStatus ?? prev.fixture.afStatus,
               elapsed: live.elapsed ?? prev.fixture.elapsed,
+              extra: live.extra ?? prev.fixture.extra,
               score: live.score ?? prev.fixture.score,
             },
-            events: live.events ?? prev.events,
+            // /live forwards match_stats.events in its raw (pipeline) shape —
+            // same mapping the initial SSR load goes through, so a live goal's
+            // scorer/card name renders correctly too, not just on first load.
+            events: Array.isArray(live.events)
+              ? (live.events as RawMatchEvent[]).map((e) => mapMatchEvent(e, initialData.homeTeam.apiFootballId))
+              : prev.events,
             stats: live.stats ?? prev.stats,
           }));
           setLastUpdated(new Date());
@@ -128,7 +135,7 @@ export default function MatchLiveUpdater({
     poll();
     const id = setInterval(poll, 60000);
     return () => { cancelled = true; clearInterval(id); };
-  }, [liveActive, matchId]);
+  }, [liveActive, matchId, initialData.homeTeam.apiFootballId]);
 
   // 1s ticker so "updated Xs ago" counts up.
   useEffect(() => {
@@ -158,7 +165,7 @@ export default function MatchLiveUpdater({
     statusChip = (
       <span className="inline-flex items-center gap-1 font-data text-xs text-live">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-live" aria-hidden="true" />
-        {fixture.afStatus === "HT" ? "HT" : fixture.elapsed != null ? `${fixture.elapsed}'` : "LIVE"}
+        {fixture.afStatus === "HT" ? "HT" : fixture.elapsed != null ? formatMinute(fixture.elapsed, fixture.extra) : "LIVE"}
       </span>
     );
   } else if (phase === "POST") {
@@ -386,7 +393,7 @@ function StatsTab({ data, phase }: { data: MatchDetail; phase: "PRE" | "LIVE" | 
               const away = e.side === "away";
               return (
                 <div key={i} className={`flex items-center gap-2 ${away ? "flex-row-reverse text-right" : ""}`}>
-                  <span className="w-8 shrink-0 font-data text-[10px] text-muted">{e.minute != null ? `${e.minute}'` : ""}</span>
+                  <span className="w-10 shrink-0 font-data text-[10px] text-muted">{formatMinute(e.minute, e.extra)}</span>
                   <span>{eventIcon(e)}</span>
                   <span className="font-data text-xs" style={{ color: away ? AWAY_COLOR : HOME_COLOR }}>{e.player ?? ""}</span>
                   {e.detail && <span className="font-data text-[10px] text-muted">{e.detail}</span>}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import LeagueBadge from "@/components/LeagueBadge";
 import ClubCrest from "@/components/ClubCrest";
 import { useBackFrom } from "@/lib/useBackFrom";
+import { formatMinute } from "@/lib/matchEvents";
 import type { LiveMatchCard } from "@/lib/data";
 import type { League } from "@/lib/types";
 
@@ -11,7 +12,7 @@ const PICK_LABEL: Record<"home" | "draw" | "away", string> = { home: "Home", dra
 const POLL_MS = 60_000;
 
 function Card({ m, backFrom }: { m: LiveMatchCard; backFrom: string }) {
-  const statusLabel = m.afStatus === "HT" ? "HT" : m.elapsed != null ? `${m.elapsed}'` : "LIVE";
+  const statusLabel = m.afStatus === "HT" ? "HT" : m.elapsed != null ? formatMinute(m.elapsed, m.extra) : "LIVE";
   return (
     <article className="relative min-w-[220px] shrink-0 rounded-[14px] border border-line bg-panel p-3.5 shadow-[var(--shadow)] transition-colors hover:border-muted">
       <Link href={`/matches/${m.matchId}?from=${backFrom}`} aria-label={`Match centre: ${m.homeTeam} v ${m.awayTeam}`} className="absolute inset-0 z-10" />

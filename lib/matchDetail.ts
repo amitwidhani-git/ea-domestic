@@ -7,6 +7,9 @@
 import { MongoClient, type Db } from "mongodb";
 import { normalizeMeeting, computeH2H } from "./h2h";
 import { deriveInjurySeverity } from "./injuries";
+import { mapMatchEvent, type MatchEvent, type RawMatchEvent } from "./matchEvents";
+
+export type { MatchEvent } from "./matchEvents";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -89,15 +92,6 @@ export interface MatchEvSignal {
   created_at: string | null;
 }
 
-export interface MatchEvent {
-  minute: number | null;
-  side: Side | null;
-  type: string | null;    // goal | card | subst
-  detail: string | null;  // "Normal Goal" | "Yellow Card" | "Red Card" | "Penalty" | "Own Goal" ...
-  player: string | null;
-  assist: string | null;
-}
-
 export interface LineupPlayer { number: number | null; name: string | null; pos: string | null; rating: number | string | null }
 export interface LineupTeam { formation: string | null; coach: string | null; startXI: LineupPlayer[]; substitutes: LineupPlayer[] }
 
@@ -124,6 +118,8 @@ export interface MatchDetail {
     status: string | null;      // normalised: SCHEDULED | LIVE | FINISHED
     afStatus: string | null;    // raw API-Football code for display: FT | AET | PEN | HT | 1H …
     elapsed: number | null;
+    /** Stoppage-time minute (e.g. 4 for "45+4"), when the pipeline supplies one. */
+    extra: number | null;
     score: { home: number; away: number } | null;
     penaltyScore: { home: number; away: number } | null;
     venue: string | null;
@@ -306,6 +302,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
       status: matchStats?.status ?? match.status ?? null,
       afStatus: matchStats?.afStatus ?? null,
       elapsed: matchStats?.elapsed ?? null,
+      extra: matchStats?.extra ?? null,
       score: match.score ?? null,
       penaltyScore: match.penaltyScore ?? null,
       venue: match.venue ?? null,
@@ -327,7 +324,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
       : null,
     evSignals: evSignals.map(mapEvSignal),
     stats: matchStats?.stats ?? null,
-    events: (matchStats?.events ?? []) as MatchEvent[],
+    events: ((matchStats?.events ?? []) as RawMatchEvent[]).map((e) => mapMatchEvent(e, homeTeam.apiFootballId)),
     lineups: matchStats?.lineups ?? null,
     playerStats: matchStats?.playerStats ?? [],
     homeInjuries: homeInjuries.map(mapInjury),

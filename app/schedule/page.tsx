@@ -18,6 +18,7 @@ import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
 import SubscribeRegister from "@/components/SubscribeRegister";
 import { useBackFrom } from "@/lib/useBackFrom";
+import { formatMinute } from "@/lib/matchEvents";
 import { IS_CUP, type League } from "@/lib/types";
 
 // A single strip banner sits above each week's date line. The first match
@@ -88,6 +89,7 @@ interface LiveScore {
   apiFixtureId: number;
   status: string;
   elapsed: number | null;
+  extra: number | null;
   homeScore: number | null;
   awayScore: number | null;
   homeTeam: string;
@@ -321,7 +323,7 @@ function SchedulePageInner() {
                       {live && (
                         <span className="inline-flex items-center gap-1 border border-green-500/60 px-1.5 py-0.5 font-data text-[9px] text-green-400">
                           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" aria-hidden="true" />
-                          {live.status === "HT" ? "HT" : live.elapsed != null ? `${live.elapsed}'` : "LIVE"}
+                          {live.status === "HT" ? "HT" : live.elapsed != null ? formatMinute(live.elapsed, live.extra) : "LIVE"}
                         </span>
                       )}
                     </div>
