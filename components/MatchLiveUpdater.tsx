@@ -7,7 +7,7 @@ import FrozenStamp from "@/components/FrozenStamp";
 import MatchWidget from "@/components/MatchWidget";
 import MatchSquadTab, { FormRow } from "@/components/MatchSquadTab";
 import type { MatchDetail, MatchEvent, MatchInjury, MatchNews, LineupPlayer, LineupTeam } from "@/lib/matchDetail";
-import { mapMatchEvent, formatMinute, type RawMatchEvent } from "@/lib/matchEvents";
+import { mapMatchEvent, formatMinute, eventIcon, type RawMatchEvent } from "@/lib/matchEvents";
 
 // Both the matches and match_stats collections use normalised status values:
 // SCHEDULED | LIVE | FINISHED. The raw API-Football code (FT/AET/PEN/HT/1H…)
@@ -69,19 +69,6 @@ function num(v: number | string | null | undefined): number {
   if (typeof v === "string") { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
   return 0;
 }
-function eventIcon(e: MatchEvent): string {
-  const type = (e.type ?? "").toLowerCase();
-  const detail = (e.detail ?? "").toLowerCase();
-  if (type.includes("goal") || detail.includes("goal")) {
-    if (detail.includes("own")) return "🥅";
-    if (detail.includes("penalty")) return "⚽";
-    return "⚽";
-  }
-  if (type.includes("card") || detail.includes("card")) return detail.includes("red") ? "🟥" : "🟨";
-  if (type.includes("subst")) return "🔄";
-  return "•";
-}
-
 export default function MatchLiveUpdater({
   matchId, initialData, isLive,
 }: {

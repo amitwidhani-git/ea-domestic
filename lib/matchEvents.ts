@@ -51,3 +51,17 @@ export function formatMinute(minute: number | null | undefined, extra?: number |
   if (minute == null) return "";
   return extra ? `${minute}+${extra}'` : `${minute}'`;
 }
+
+/** Shared between the match-centre timeline and the compact live cards. */
+export function eventIcon(e: Pick<MatchEvent, "type" | "detail">): string {
+  const type = (e.type ?? "").toLowerCase();
+  const detail = (e.detail ?? "").toLowerCase();
+  if (type.includes("goal") || detail.includes("goal")) {
+    if (detail.includes("own")) return "🥅";
+    if (detail.includes("penalty")) return "⚽";
+    return "⚽";
+  }
+  if (type.includes("card") || detail.includes("card")) return detail.includes("red") ? "🟥" : "🟨";
+  if (type.includes("subst")) return "🔄";
+  return "•";
+}

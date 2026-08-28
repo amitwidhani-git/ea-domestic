@@ -8,6 +8,7 @@ import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
 import type { League } from "@/lib/types";
 import { deriveInjurySeverity, type InjurySeverity } from "@/lib/injuries";
+import { decodeParam } from "@/lib/decodeParam";
 
 export const dynamic = "force-dynamic";
 
@@ -228,7 +229,7 @@ const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const
 
 export async function generateMetadata({ params }: { params: Promise<{ teamId: string }> }): Promise<Metadata> {
   const { teamId } = await params;
-  const team = await getTeam(teamId);
+  const team = await getTeam(decodeParam(teamId));
   if (!team) return {};
   return { title: `${team.name} — EdgeAnalysts` };
 }
@@ -245,7 +246,8 @@ function RatingCard({ label, value }: { label: string; value: number | null }) {
 }
 
 export default async function TeamDetailPage({ params }: { params: Promise<{ teamId: string }> }) {
-  const { teamId } = await params;
+  const { teamId: rawTeamId } = await params;
+  const teamId = decodeParam(rawTeamId);
   const team = await getTeam(teamId);
   if (!team) notFound();
 

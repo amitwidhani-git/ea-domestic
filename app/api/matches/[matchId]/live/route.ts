@@ -9,7 +9,7 @@
  */
 import { NextResponse } from "next/server";
 import { MongoClient, type Db } from "mongodb";
-import { getLiveOverlayFor, getLiveFixtureEvents } from "@/lib/liveScores";
+import { getLiveOverlayFor, getLiveFixtureEvents, getLiveFixtureStats } from "@/lib/liveScores";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +48,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ matchId
     if (!liveOverlay && (!stats || !stats.isLive)) return noContent();
 
     if (liveOverlay) {
-      const events = apiFixtureId != null ? await getLiveFixtureEvents(apiFixtureId) : [];
+      const homeTeam = match?.homeTeamId
+        ? await db.collection("teams").findOne({ _id: match.homeTeamId })
+        : null;
+      const homeApiFootballId = (homeTeam?.aliases?.apiFootball as number | undefined) ?? null;
+      const [events, liveStats] = await Promise.all([
+        apiFixtureId != null ? getLiveFixtureEvents(apiFixtureId) : Promise.resolve([]),
+        apiFixtureId != null ? getLiveFixtureStats(apiFixtureId, homeApiFootballId) : Promise.resolve(null),
+      ]);
       return NextResponse.json({
         status: "LIVE",
         afStatus: liveOverlay.status,
@@ -56,7 +63,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ matchId
         extra: liveOverlay.extra,
         score: { home: liveOverlay.homeScore ?? 0, away: liveOverlay.awayScore ?? 0 },
         events,
-        stats: stats?.stats ?? null,
+        stats: liveStats ?? stats?.stats ?? null,
         updatedAt: new Date().toISOString(),
       });
     }

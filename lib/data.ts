@@ -13,7 +13,22 @@ import { MongoClient, type Db } from "mongodb";
 import type { Article, ArticleDetail, EvOutcome, EvSignal, Fixture, League, LeagueStats, Prediction, Result, SettledEvSignal, TrackRecordRow, UpcomingFixtureWithSignal } from "./types";
 import { resolveCtaAffiliates, getAffiliateList, pickRandomAffiliate, type CtaAffiliate } from "./affiliates";
 import { LEAGUE_CODES } from "./leagues";
-import { getLiveApiFixtures } from "./liveScores";
+import { getLiveApiFixtures, getLiveFixtureEvents } from "./liveScores";
+import { mapMatchEvent, type MatchEvent } from "./matchEvents";
+
+/** Runs `fn` over `items` with at most `limit` in flight at once, preserving order. */
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
 
 // ---------------------------------------------------------------- connection
 
@@ -440,6 +455,8 @@ export interface LiveMatchCard {
   modelProb: number | null;  // our model's probability of modelPick
   marketProb: number | null; // market-implied probability of that same outcome
   cta: CtaAffiliate | null;  // random Betano/LiveScoreBet split — no single "best bookmaker" for a live match
+  /** Most recent goal or card, for a one-line "⚽ 67' Kane" under the score. Null until the first one happens. */
+  latestEvent: MatchEvent | null;
 }
 
 /**
@@ -473,6 +490,19 @@ export async function getLiveMatches(): Promise<LiveMatchCard[]> {
 
   const fixtureByApiId = new Map(liveFixtures.map((f) => [f.apiFixtureId, f]));
 
+  // One goal/card lookup per live match — individually 30s-cached in
+  // getLiveFixtureEvents() (so this doesn't scale with visitor count, only
+  // with how many tracked matches are live right now), but capped at 5
+  // concurrent requests: firing all of them at once on a busy matchday (a
+  // dozen+ live fixtures) was tripping a rate limit on API-Football's side
+  // for whichever ones landed last in the burst.
+  const apiIdList = matches
+    .map((m) => m.sourceRefs?.apiFootballFixtureId as number | undefined)
+    .filter((id): id is number => id != null);
+  const eventsByApiId = new Map(
+    await mapWithConcurrency(apiIdList, 5, async (id) => [id, await getLiveFixtureEvents(id)] as const)
+  );
+
   return matches.map((m): LiveMatchCard => {
     const mid = String(m._id);
     const apiId = m.sourceRefs?.apiFootballFixtureId as number | undefined;
@@ -484,6 +514,14 @@ export async function getLiveMatches(): Promise<LiveMatchCard[]> {
     const awayId = String(m.awayTeamId);
     const homeTeam = teamById.get(homeId);
     const awayTeam = teamById.get(awayId);
+    const homeApiFootballId = homeTeam?.aliases?.apiFootball ?? null;
+
+    const rawEvents = (apiId != null ? eventsByApiId.get(apiId) : undefined) ?? [];
+    const latestRaw = [...rawEvents].reverse().find((e) => {
+      const k = (e.kind ?? "").toLowerCase();
+      return k.includes("goal") || k.includes("card");
+    });
+    const latestEvent = latestRaw ? mapMatchEvent(latestRaw, homeApiFootballId) : null;
 
     return {
       matchId: mid,
@@ -492,7 +530,7 @@ export async function getLiveMatches(): Promise<LiveMatchCard[]> {
       awayTeam: awayTeam ? String(awayTeam.name) : awayId,
       homeTeamId: homeId,
       awayTeamId: awayId,
-      homeApiFootballId: homeTeam?.aliases?.apiFootball ?? null,
+      homeApiFootballId,
       awayApiFootballId: awayTeam?.aliases?.apiFootball ?? null,
       score: live ? { home: live.homeScore ?? 0, away: live.awayScore ?? 0 } : null,
       elapsed: live?.elapsed ?? null,
@@ -502,6 +540,7 @@ export async function getLiveMatches(): Promise<LiveMatchCard[]> {
       modelProb: pick && p?.probs ? (p.probs[pick] as number) : null,
       marketProb: sig ? (sig.marketProb as number) : null,
       cta: pickRandomAffiliate(affiliateList),
+      latestEvent,
     };
   });
 }

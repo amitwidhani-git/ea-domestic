@@ -8,7 +8,7 @@ import { MongoClient, type Db } from "mongodb";
 import { normalizeMeeting, computeH2H } from "./h2h";
 import { deriveInjurySeverity } from "./injuries";
 import { mapMatchEvent, type MatchEvent, type RawMatchEvent } from "./matchEvents";
-import { getLiveOverlayFor, getLiveFixtureEvents } from "./liveScores";
+import { getLiveOverlayFor, getLiveFixtureEvents, getLiveFixtureStats } from "./liveScores";
 
 export type { MatchEvent } from "./matchEvents";
 
@@ -291,6 +291,11 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
   const homeTeam = mapTeam(homeId, teamById.get(homeId), att(homeId), deff(homeId));
   const awayTeam = mapTeam(awayId, teamById.get(awayId), att(awayId), deff(awayId));
 
+  // Needs homeTeam.apiFootballId (to tell which of the two stats blocks
+  // API-Football returns is "home"), so this can't join the earlier
+  // Promise.all — only fetched once we already know the match is live.
+  const liveStats = liveOverlay ? await getLiveFixtureStats(apiId as number, homeTeam.apiFootballId) : null;
+
   // Normalise meetings to the UI shape and recompute the win split from the
   // actual results, attributed to this fixture's two teams (the stored counts
   // dropped a side's away wins).
@@ -330,7 +335,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
         }
       : null,
     evSignals: evSignals.map(mapEvSignal),
-    stats: matchStats?.stats ?? null,
+    stats: liveStats ?? matchStats?.stats ?? null,
     events: (liveOverlay ? liveEvents : ((matchStats?.events ?? []) as RawMatchEvent[])).map((e) => mapMatchEvent(e, homeTeam.apiFootballId)),
     lineups: matchStats?.lineups ?? null,
     playerStats: matchStats?.playerStats ?? [],

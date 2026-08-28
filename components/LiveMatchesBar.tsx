@@ -4,7 +4,7 @@ import Link from "next/link";
 import LeagueBadge from "@/components/LeagueBadge";
 import ClubCrest from "@/components/ClubCrest";
 import { useBackFrom } from "@/lib/useBackFrom";
-import { formatMinute } from "@/lib/matchEvents";
+import { formatMinute, eventIcon } from "@/lib/matchEvents";
 import type { LiveMatchCard } from "@/lib/data";
 import type { League } from "@/lib/types";
 
@@ -35,6 +35,14 @@ function Card({ m, backFrom }: { m: LiveMatchCard; backFrom: string }) {
         <span className="min-w-0 flex-1 truncate font-body text-[13px] font-semibold">{m.awayTeam}</span>
         <span className="shrink-0 font-data text-base font-bold">{m.score ? m.score.away : "–"}</span>
       </div>
+
+      {m.latestEvent && (
+        <div className="mt-2 flex items-center gap-1.5 font-data text-[10.5px] text-muted">
+          <span>{eventIcon(m.latestEvent)}</span>
+          <span>{formatMinute(m.latestEvent.minute, m.latestEvent.extra)}</span>
+          <span className="min-w-0 truncate text-ink">{m.latestEvent.player ?? m.latestEvent.detail}</span>
+        </div>
+      )}
 
       {(m.modelProb != null || m.marketProb != null) && (
         <div className="mt-2.5 flex items-center justify-between border-t border-line pt-2 font-data text-[10px] text-muted">
