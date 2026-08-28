@@ -8,6 +8,7 @@ import { MongoClient, type Db } from "mongodb";
 import { normalizeMeeting, computeH2H } from "./h2h";
 import { deriveInjurySeverity } from "./injuries";
 import { mapMatchEvent, type MatchEvent, type RawMatchEvent } from "./matchEvents";
+import { getLiveOverlayFor, getLiveFixtureEvents } from "./liveScores";
 
 export type { MatchEvent } from "./matchEvents";
 
@@ -243,7 +244,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
 
   const beforeDate = String(match.kickoffUtc ?? new Date().toISOString());
 
-  const [prediction, evSignals, matchStats, homeInjuries, awayInjuries, homeNews, awayNews, h2h, homeFormRaw, awayFormRaw, modelRun, homeSquadRaw, awaySquadRaw] =
+  const [prediction, evSignals, matchStats, homeInjuries, awayInjuries, homeNews, awayNews, h2h, homeFormRaw, awayFormRaw, modelRun, homeSquadRaw, awaySquadRaw, liveOverlay] =
     await Promise.all([
       d.collection("predictions").findOne({ matchId }),
       d.collection("ev_signals").find({ matchId }).toArray(),
@@ -258,7 +259,13 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
       d.collection("model_runs").findOne({}, { sort: { createdAt: -1 } }),
       d.collection("squads").findOne({ teamId: homeId }),
       d.collection("squads").findOne({ teamId: awayId }),
+      // Live status straight from API-Football, not the match_stats pipeline —
+      // that pipeline can lag kickoff by several minutes, or not have a doc
+      // for this match at all yet, which otherwise leaves the page showing
+      // "kicks off imminent" for a match that's actually well underway.
+      getLiveOverlayFor(apiId),
     ]);
+  const liveEvents = liveOverlay ? await getLiveFixtureEvents(apiId as number) : [];
 
   const homeFormMapped = mapForm(homeFormRaw, homeId);
   const awayFormMapped = mapForm(awayFormRaw, awayId);
@@ -299,11 +306,11 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
       matchId: String(match._id),
       league: match.league ?? null,
       kickoffUtc: match.kickoffUtc ?? null,
-      status: matchStats?.status ?? match.status ?? null,
-      afStatus: matchStats?.afStatus ?? null,
-      elapsed: matchStats?.elapsed ?? null,
-      extra: matchStats?.extra ?? null,
-      score: match.score ?? null,
+      status: liveOverlay ? "LIVE" : (matchStats?.status ?? match.status ?? null),
+      afStatus: liveOverlay ? liveOverlay.status : (matchStats?.afStatus ?? null),
+      elapsed: liveOverlay ? liveOverlay.elapsed : (matchStats?.elapsed ?? null),
+      extra: liveOverlay ? liveOverlay.extra : (matchStats?.extra ?? null),
+      score: liveOverlay ? { home: liveOverlay.homeScore ?? 0, away: liveOverlay.awayScore ?? 0 } : (match.score ?? null),
       penaltyScore: match.penaltyScore ?? null,
       venue: match.venue ?? null,
       referee: matchStats?.referee ?? match.referee ?? null,
@@ -324,7 +331,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
       : null,
     evSignals: evSignals.map(mapEvSignal),
     stats: matchStats?.stats ?? null,
-    events: ((matchStats?.events ?? []) as RawMatchEvent[]).map((e) => mapMatchEvent(e, homeTeam.apiFootballId)),
+    events: (liveOverlay ? liveEvents : ((matchStats?.events ?? []) as RawMatchEvent[])).map((e) => mapMatchEvent(e, homeTeam.apiFootballId)),
     lineups: matchStats?.lineups ?? null,
     playerStats: matchStats?.playerStats ?? [],
     homeInjuries: homeInjuries.map(mapInjury),

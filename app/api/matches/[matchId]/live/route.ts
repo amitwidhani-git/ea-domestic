@@ -1,9 +1,15 @@
 /**
  * GET /api/matches/[matchId]/live — time-sensitive fields only, polled ~every 60s
- * during a match. Reads match_stats only; 204 (No Content) when the match isn't live.
+ * during a match. Prefers live status/events straight from API-Football
+ * (getLiveOverlayFor / getLiveFixtureEvents) over match_stats — that Mongo
+ * collection is written by a separate pipeline job that can lag kickoff by
+ * several minutes, or have no doc at all yet, which otherwise leaves a match
+ * that's actually live showing 204/"kicks off imminent" on the match page.
+ * 204 (No Content) only when neither source has anything live for this match.
  */
 import { NextResponse } from "next/server";
 import { MongoClient, type Db } from "mongodb";
+import { getLiveOverlayFor, getLiveFixtureEvents } from "@/lib/liveScores";
 
 export const dynamic = "force-dynamic";
 
@@ -31,19 +37,41 @@ export async function GET(_req: Request, { params }: { params: Promise<{ matchId
     const db = await getDb();
     if (!db) return noContent();
 
-    const stats = await db.collection("match_stats").findOne({ matchId });
-    // match_stats carries a normalised isLive flag (status === "LIVE"); only
-    // in-play matches get a live payload, everything else is 204.
-    if (!stats || !stats.isLive) return noContent();
+    const [stats, match] = await Promise.all([
+      db.collection("match_stats").findOne({ matchId }),
+      db.collection("matches").findOne({ _id: matchId as never }),
+    ]);
 
+    const apiFixtureId = (match?.sourceRefs?.apiFootballFixtureId as number | undefined) ?? null;
+    const liveOverlay = await getLiveOverlayFor(apiFixtureId);
+
+    if (!liveOverlay && (!stats || !stats.isLive)) return noContent();
+
+    if (liveOverlay) {
+      const events = apiFixtureId != null ? await getLiveFixtureEvents(apiFixtureId) : [];
+      return NextResponse.json({
+        status: "LIVE",
+        afStatus: liveOverlay.status,
+        elapsed: liveOverlay.elapsed,
+        extra: liveOverlay.extra,
+        score: { home: liveOverlay.homeScore ?? 0, away: liveOverlay.awayScore ?? 0 },
+        events,
+        stats: stats?.stats ?? null,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    // API-Football no longer (or not yet) reports this fixture as live — fall
+    // back to whatever match_stats has (pre-match, finished, or the pipeline
+    // has since caught up).
     return NextResponse.json({
-      status: stats.status,
-      afStatus: stats.afStatus ?? null,
-      elapsed: stats.elapsed ?? null,
-      extra: stats.extra ?? null,
-      score: stats.score ?? null,
-      events: stats.events ?? [],
-      stats: stats.stats ?? null,
+      status: stats!.status,
+      afStatus: stats!.afStatus ?? null,
+      elapsed: stats!.elapsed ?? null,
+      extra: stats!.extra ?? null,
+      score: stats!.score ?? null,
+      events: stats!.events ?? [],
+      stats: stats!.stats ?? null,
       updatedAt: new Date().toISOString(),
     });
   } catch (err) {

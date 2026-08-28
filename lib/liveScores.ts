@@ -8,6 +8,7 @@
  */
 
 import { LEAGUES } from "./leagues";
+import type { RawMatchEvent } from "./matchEvents";
 
 // Every competition in the league registry, by its API-Football id.
 const TRACKED_LEAGUE_IDS: number[] = Object.values(LEAGUES).map((l) => l.apiFootballId);
@@ -62,6 +63,69 @@ export async function getLiveApiFixtures(): Promise<LiveApiFixture[]> {
       }));
   } catch (err) {
     console.error("API-Football live fixtures error:", err);
+    return [];
+  }
+}
+
+/**
+ * This one fixture's live status, straight from the same 60s-cached bulk
+ * call getLiveApiFixtures() already makes — no extra API cost. The match
+ * page uses this as its live-status source of truth instead of the
+ * match_stats collection, which is written by a separate pipeline job that
+ * can lag kickoff by several minutes (or not have a doc yet at all) — see
+ * the file-level comment above. Returns null when the fixture isn't
+ * currently live per API-Football (finished, not yet started, or untracked).
+ */
+export async function getLiveOverlayFor(apiFixtureId: number | null): Promise<LiveApiFixture | null> {
+  if (apiFixtureId == null) return null;
+  const fixtures = await getLiveApiFixtures();
+  return fixtures.find((f) => f.apiFixtureId === apiFixtureId) ?? null;
+}
+
+interface ApiFootballEvent {
+  time?: { elapsed?: number | null; extra?: number | null };
+  team?: { id?: number | null };
+  player?: { name?: string | null };
+  assist?: { name?: string | null };
+  type?: string | null;    // "Goal" | "Card" | "subst" | "Var"
+  detail?: string | null;  // "Normal Goal" | "Yellow Card" | "Red Card" | …
+}
+
+/**
+ * Goal/card/substitution events for one fixture, fetched directly from
+ * API-Football (a separate endpoint from the bulk live-fixtures call, so
+ * this one genuinely costs an extra API call per poll — only call it for a
+ * fixture already confirmed live via getLiveOverlayFor). Returned in the
+ * same RawMatchEvent shape the match_stats pipeline uses, so it goes
+ * through the same mapMatchEvent() mapping either way.
+ */
+export async function getLiveFixtureEvents(apiFixtureId: number): Promise<RawMatchEvent[]> {
+  const apiKey = process.env.API_FOOTBALL_KEY;
+  if (!apiKey) return [];
+
+  try {
+    const res = await fetch(`https://v3.football.api-sports.io/fixtures/events?fixture=${apiFixtureId}`, {
+      headers: { "x-apisports-key": apiKey },
+      next: { revalidate: 30 },
+    });
+    if (!res.ok) {
+      console.error("API-Football live events request failed:", res.status, await res.text().catch(() => ""));
+      return [];
+    }
+
+    const data = await res.json();
+    const raw: ApiFootballEvent[] = Array.isArray(data?.response) ? data.response : [];
+    return raw.map((e) => ({
+      elapsed: e.time?.elapsed ?? null,
+      extra: e.time?.extra ?? null,
+      kind: e.type ?? null,
+      detail: e.detail ?? null,
+      teamId: e.team?.id ?? null,
+      playerName: e.player?.name ?? null,
+      assistName: e.assist?.name ?? null,
+    }));
+  } catch (err) {
+    console.error("API-Football live events error:", err);
     return [];
   }
 }
