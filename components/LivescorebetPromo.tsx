@@ -1,7 +1,7 @@
 export default function LivescorebetPromo() {
   return (
     <section>
-      <div className="flex flex-col items-center gap-3 rounded-[14px] border border-line bg-panel p-3 text-center shadow-[var(--shadow)] sm:flex-row sm:justify-between sm:p-4 sm:text-left">
+      <div className="flex flex-col items-center gap-3 promo-card rounded-[14px] border border-line bg-panel p-3 text-center shadow-[var(--shadow)] sm:flex-row sm:justify-between sm:p-4 sm:text-left">
         <img
           src="/livescorebet-logo.png"
           alt="LiveScoreBet"

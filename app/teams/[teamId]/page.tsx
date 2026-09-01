@@ -6,6 +6,8 @@ import ClubCrest from "@/components/ClubCrest";
 import LeagueBadge from "@/components/LeagueBadge";
 import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
+import BetwayPromo from "@/components/BetwayPromo";
+import Bet247Promo from "@/components/Bet247Promo";
 import type { League } from "@/lib/types";
 import { deriveInjurySeverity, type InjurySeverity } from "@/lib/injuries";
 import { decodeParam } from "@/lib/decodeParam";
@@ -260,6 +262,10 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
 
   return (
     <div className="space-y-10">
+      {/* Fixed strip promos, same convention as the other pages — Betway leads
+          every team page, Bet247 closes it, for all leagues present and future. */}
+      <BetwayPromo />
+
       <Link href="/teams" className="font-data text-xs text-muted hover:text-ink">
         ← All Teams
       </Link>
@@ -324,7 +330,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
                     <FrozenStamp frozenAt={prediction.frozenAt} hash={prediction.hash} />
                   </div>
                 ) : (
-                  <span className="font-data text-xs text-muted">Prediction locks 48h before kick-off</span>
+                  <span className="font-data text-xs text-muted">Prediction locks before kick-off</span>
                 )}
               </div>
             ))}
@@ -404,6 +410,8 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ tea
           </>
         )}
       </section>
+
+      <Bet247Promo />
     </div>
   );
 }

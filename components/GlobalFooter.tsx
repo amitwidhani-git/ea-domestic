@@ -53,9 +53,9 @@ export default function GlobalFooter() {
             color: "rgba(247,245,240,0.6)",
             maxWidth: 200, lineHeight: 1.65, marginBottom: 14,
           }}>
-            Premier League and EFL football intelligence, powered by EdgeIQ, an AI assisted
-            data model. Transparent, auditable track record. Every prediction logged before
-            kick-off.
+            Edge Analysts is a Football Predictions &amp; Odds Intelligence Platform, powered
+            by proprietary EdgeIQ. Transparent, auditable track record. Every prediction
+            logged before kick-off.
           </p>
 
           <div style={{ display: "flex", gap: 10 }}>

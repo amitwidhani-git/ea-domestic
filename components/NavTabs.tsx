@@ -6,7 +6,7 @@ import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES } from "@/lib/leagues";
 
 const TABS = [
   { href: "/insights", label: "Insights & Odds" },
-  { href: "/track-record", label: "Track record" },
+  { href: "/track-record", label: "Track Record" },
 ];
 // Domestic leagues only (cups don't have a standalone "teams by division" home —
 // their clubs already appear under their own domestic league), grouped by country.
@@ -51,7 +51,7 @@ export default function NavTabs() {
           </svg>
         </button>
         {teamsOpen && (
-          <div className="absolute left-0 top-full z-50 mt-2 max-h-[70vh] min-w-[220px] overflow-y-auto rounded-xl border border-line bg-panel p-2 shadow-[var(--shadow)]">
+          <div className="absolute left-0 top-full z-50 mt-2 max-h-[70vh] min-w-[220px] overflow-y-auto rounded-xl border border-line bg-panel p-2 shadow-[var(--shadow)] [scrollbar-color:var(--muted)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-thumb]:hover:bg-muted [&::-webkit-scrollbar-track]:bg-transparent">
             <span className="block px-3 pb-1 pt-1.5 font-body text-[10px] uppercase tracking-wider text-muted">Browse by division</span>
             {DIVISIONS_BY_COUNTRY.map(({ country, leagues }) => (
               <div key={country}>

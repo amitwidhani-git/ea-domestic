@@ -1,8 +1,55 @@
 import Link from "next/link";
 import { MongoClient, type Db } from "mongodb";
 import ClubCrest from "@/components/ClubCrest";
+import BetanoPromo from "@/components/BetanoPromo";
+import BetMazePromo from "@/components/BetMazePromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
+import BetsunaPromo from "@/components/BetsunaPromo";
+import BetrinoPromo from "@/components/BetrinoPromo";
+import MogobetPromo from "@/components/MogobetPromo";
+import FruityKingPromo from "@/components/FruityKingPromo";
+import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
+import SpinzwinPromo from "@/components/SpinzwinPromo";
+import Bet247Promo from "@/components/Bet247Promo";
+import BetwayPromo from "@/components/BetwayPromo";
 import { LEAGUE_NAMES } from "@/lib/types";
 import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES, leagueLogoUrl, type League } from "@/lib/leagues";
+
+// Strip banner shown above every league section from the second one onward
+// (Premier League leads the page under the fixed BetanoPromo, so it gets none).
+// Full partner set (matches the /insights "Partner Offers" list); reshuffled
+// per request so the order varies on each visit without a partner repeating
+// back to back.
+const STRIP_PROMOS: React.ComponentType[] = [
+  BetanoPromo, LivescorebetPromo, BetsunaPromo, BetrinoPromo, MogobetPromo,
+  FruityKingPromo, MonsterCasinoPromo, SpinzwinPromo, BetMazePromo,
+  Bet247Promo, BetwayPromo,
+];
+
+function shuffled<T>(arr: readonly T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// `count` promo picks from `pool`: every pick differs from the one before it,
+// and a partner only recurs after the whole pool has been shown once. Built by
+// laying down reshuffled full permutations back to back, swapping the seam when
+// a block would open on the partner the previous block closed with.
+function promoSequence<T>(pool: readonly T[], count: number): T[] {
+  const out: T[] = [];
+  while (out.length < count) {
+    const block = shuffled(pool);
+    if (out.length > 0 && block.length > 1 && block[0] === out[out.length - 1]) {
+      [block[0], block[1]] = [block[1], block[0]];
+    }
+    out.push(...block);
+  }
+  return out.slice(0, count);
+}
 
 export const metadata = {
   title: "Teams — EdgeAnalysts",
@@ -90,8 +137,18 @@ export default async function TeamsPage() {
   const grouped = await getTeams();
   const totalTeams = [...grouped.values()].reduce((n, teams) => n + teams.length, 0);
 
+  // Flat render order of the league sections (countries in display order, then
+  // leagues within each). The first section (Premier League) is preceded by the
+  // fixed BetanoPromo; every section after it gets a randomised strip promo,
+  // none repeating until the whole pool has been shown and never back to back.
+  const leagueOrder: League[] = COUNTRIES.flatMap((country) =>
+    COUNTRY_LEAGUES[country].filter((code) => (grouped.get(code) ?? []).length > 0),
+  );
+  const promoRotation = promoSequence(STRIP_PROMOS, Math.max(0, leagueOrder.length - 1));
+
   return (
     <div className="space-y-10">
+      <BetanoPromo />
       <div>
         <h1 className="font-display text-4xl tracking-wide">Teams</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink">
@@ -108,8 +165,15 @@ export default async function TeamsPage() {
             <h2 className="font-data text-xs font-bold uppercase tracking-[0.15em] text-muted">{country}</h2>
             {leagues.map((league) => {
               const teams = grouped.get(league) ?? [];
+              const ordinal = leagueOrder.indexOf(league);
+              const StripPromo = ordinal >= 1 ? promoRotation[ordinal - 1] : null;
               return (
                 <section key={league} id={league} className="scroll-mt-20">
+                  {StripPromo && (
+                    <div className="mb-8">
+                      <StripPromo />
+                    </div>
+                  )}
                   <div className="mb-4 flex items-center gap-2 border-b border-line pb-2">
                     <img
                       src={leagueLogoUrl(league)}
@@ -131,6 +195,8 @@ export default async function TeamsPage() {
           </div>
         );
       })}
+
+      <BetMazePromo />
     </div>
   );
 }

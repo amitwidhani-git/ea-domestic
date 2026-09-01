@@ -9,7 +9,7 @@ import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES } from "@/lib/leagues";
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/insights", label: "Insights & Odds" },
-  { href: "/track-record", label: "Track record" },
+  { href: "/track-record", label: "Track Record" },
 ];
 // Domestic leagues only (cups don't have a standalone "teams by division" home —
 // their clubs already appear under their own domestic league), grouped by country.

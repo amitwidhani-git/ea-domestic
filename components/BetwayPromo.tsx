@@ -1,7 +1,7 @@
 export default function BetwayPromo() {
   return (
     <section>
-      <div className="flex flex-col items-center gap-3 rounded-[14px] border border-line bg-panel p-3 text-center shadow-[var(--shadow)] sm:flex-row sm:justify-between sm:p-4 sm:text-left">
+      <div className="flex flex-col items-center gap-3 promo-card rounded-[14px] border border-line bg-panel p-3 text-center shadow-[var(--shadow)] sm:flex-row sm:justify-between sm:p-4 sm:text-left">
         {/* Placeholder wordmark — swap for the real Betway logo once a clean asset is available */}
         <span className="shrink-0 font-display text-2xl font-black tracking-tight text-ink">
           Betway

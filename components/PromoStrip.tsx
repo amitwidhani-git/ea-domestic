@@ -35,7 +35,7 @@ export default function PromoStrip({ affiliates }: { affiliates: Affiliate[] }) 
               target="_blank"
               rel="sponsored noopener"
               aria-label={`${a.name} — ${a.tagline ?? "Sports Betting"}. ${a.termsLabel ?? "T&Cs apply"}`}
-              className="group relative flex shrink-0 flex-col justify-between border border-line bg-panel transition-colors hover:border-accent/60"
+              className="promo-card group relative flex shrink-0 flex-col justify-between border border-line bg-panel transition-colors hover:border-accent/60"
               style={{ width: 160, minHeight: 88, padding: "10px 12px" }}
             >
               {/* Badge */}
