@@ -148,8 +148,18 @@ export async function getTrackRecord(): Promise<TrackRecordRow[]> {
   const teamDocs = await d.collection("teams").find({ _id: { $in: teamIds as any[] } }).toArray();
   const teamName = new Map(teamDocs.map((t) => [String(t._id), String(t.name)]));
 
+  // Defensive: a prediction settled against a match whose kickoff hasn't
+  // happened yet is an impossible state (seen in practice from a duplicate
+  // fixture entry the results pipeline matched a finished match to instead
+  // of the real, still-scheduled one) — hide it rather than show a result
+  // for a game that hasn't been played.
+  const nowIso = new Date().toISOString();
+
   return preds
-    .filter((p) => matchById.has(String(p.matchId)))
+    .filter((p) => {
+      const m = matchById.get(String(p.matchId));
+      return !!m && (m.kickoffUtc as string) <= nowIso;
+    })
     .map((p) => {
       const m = matchById.get(String(p.matchId))!;
       return {
@@ -196,6 +206,7 @@ export async function getTrackRecord(): Promise<TrackRecordRow[]> {
 
 export async function getStats(): Promise<LeagueStats[]> {
   const d = await db();
+  const nowIso = new Date().toISOString();
 
   const pipeline = [
     { $match: { modelCorrect: { $in: [true, false] } } },
@@ -208,6 +219,10 @@ export async function getStats(): Promise<LeagueStats[]> {
       },
     },
     { $unwind: "$match" },
+    // Same guard as getTrackRecord() — a settled prediction against a match
+    // that hasn't kicked off yet is an impossible state (duplicate-fixture
+    // pipeline bug), and shouldn't count toward accuracy.
+    { $match: { "match.kickoffUtc": { $lte: nowIso } } },
     {
       $group: {
         _id: "$match.league",
@@ -248,13 +263,17 @@ export async function getStats(): Promise<LeagueStats[]> {
  */
 export async function getPredictionCoverage(): Promise<{ predicting: number; totalFinished: number }> {
   const d = await db();
-  const seasons = (await d.collection("matches").distinct("season", { status: "FINISHED" })).sort();
+  const nowIso = new Date().toISOString();
+  // Same guard as getTrackRecord()/getStats() — a match marked FINISHED with
+  // a kickoff that hasn't happened yet is an impossible state (duplicate-
+  // fixture pipeline bug) and shouldn't count as a played fixture.
+  const seasons = (await d.collection("matches").distinct("season", { status: "FINISHED", kickoffUtc: { $lte: nowIso } })).sort();
   const latest = seasons[seasons.length - 1];
   if (!latest) return { predicting: 0, totalFinished: 0 };
 
   const finished = await d
     .collection("matches")
-    .find({ status: "FINISHED", season: latest }, { projection: { _id: 1 } })
+    .find({ status: "FINISHED", season: latest, kickoffUtc: { $lte: nowIso } }, { projection: { _id: 1 } })
     .toArray();
   const ids = finished.map((m) => m._id);
   const predicting = ids.length
