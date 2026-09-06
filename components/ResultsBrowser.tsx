@@ -103,13 +103,11 @@ function SignalsCell({ signals }: { signals: ResultEvSignal[]; }) {
       {signals.map((s, i) => {
         const win = s.settledResult === "WIN";
         const lose = s.settledResult === "LOSE";
-        const pnl = win ? (s.bestPrice ?? 1) - 1 : lose ? -1 : 0;
         const color = win ? "text-accent" : lose ? "text-loss" : "text-muted";
         const label = s.selection === "draw" ? "Draw" : s.selection === "home" ? "Home" : s.selection === "away" ? "Away" : s.selection;
         return (
           <p key={i} className={color}>
-            <span className="capitalize">{label}</span> @ {s.bestPrice?.toFixed(2) ?? "—"} → {s.settledResult}{" "}
-            {s.settledResult !== "VOID" && <span>{pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}u</span>}
+            <span className="capitalize">{label}</span> @ {s.bestPrice?.toFixed(2) ?? "—"} → {s.settledResult}
           </p>
         );
       })}
@@ -211,7 +209,7 @@ export default function ResultsBrowser({ initial }: { initial: ResultsResponse }
   const clearFilters = () => { setLeagues([]); setOutcome("all"); setRange("30"); };
   const toggleLeague = (l: League) => setLeagues((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]));
 
-  const { results, total, stats } = data;
+  const { results, total } = data;
 
   // Accuracy counts predictions only — we list every settled fixture (some were
   // added after the freeze window and have no model pick), so dividing by the
@@ -245,11 +243,10 @@ export default function ResultsBrowser({ initial }: { initial: ResultsResponse }
       </div>
 
       {/* ── STATS STRIP ── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-3 gap-3">
         <StatCard label="Predictions made" value={String(withPrediction.length)} />
         <StatCard label="Correct" value={String(correctCount)} />
         <StatCard label="Accuracy" value={`${accuracyPct}%`} />
-        <StatCard label="EV P&L" value={`${stats.pnl >= 0 ? "+" : ""}${stats.pnl.toFixed(1)}u`} tone={stats.pnl >= 0 ? "accent" : "loss"} />
       </div>
       {withoutPrediction > 0 && (
         <p className="font-data text-xs text-muted text-center">

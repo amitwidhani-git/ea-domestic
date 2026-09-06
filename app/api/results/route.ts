@@ -1,5 +1,5 @@
 /**
- * GET /api/results — settled fixtures with prediction outcomes + EV P&L.
+ * GET /api/results — settled fixtures with prediction outcomes + value signal results.
  * Delegates to lib/results so the Results page and homepage reuse the loader.
  *
  * Query params:

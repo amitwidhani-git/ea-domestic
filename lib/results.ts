@@ -4,7 +4,7 @@
  *
  * Reads settled fixtures from the `matches` collection and joins predictions +
  * settled ev_signals in a single aggregation. Stats (predictions / correct /
- * accuracy / EV P&L) are computed over the WHOLE filtered set, independent of
+ * accuracy) are computed over the WHOLE filtered set, independent of
  * pagination, so the header strip stays correct as you "Load more".
  */
 import { MongoClient, type Db } from "mongodb";
@@ -67,7 +67,6 @@ export interface ResultsStats {
   predictions: number;
   correct: number;
   accuracy: number; // 0–100
-  pnl: number;      // units
 }
 export interface ResultsResponse {
   results: ResultRow[];
@@ -95,7 +94,7 @@ function deriveFtr(score: Doc | null | undefined, stored: unknown): "H" | "D" | 
   return h > a ? "H" : h < a ? "A" : "D";
 }
 
-const EMPTY: ResultsResponse = { results: [], total: 0, limit: 0, offset: 0, stats: { predictions: 0, correct: 0, accuracy: 0, pnl: 0 } };
+const EMPTY: ResultsResponse = { results: [], total: 0, limit: 0, offset: 0, stats: { predictions: 0, correct: 0, accuracy: 0 } };
 
 export async function getResults(q: ResultsQuery = {}): Promise<ResultsResponse> {
   const d = await db();
@@ -113,17 +112,6 @@ export async function getResults(q: ResultsQuery = {}): Promise<ResultsResponse>
     kickoffUtc: { $gte: from, $lte: to },
   };
   if (q.leagues && q.leagues.length > 0) matchStage.league = { $in: q.leagues };
-
-  // per-signal P&L expression (WIN → price-1, LOSE → -1, VOID → 0)
-  const signalPnl = {
-    $switch: {
-      branches: [
-        { case: { $eq: ["$$s.settledResult", "WIN"] }, then: { $subtract: [{ $ifNull: ["$$s.bestPrice", 1] }, 1] } },
-        { case: { $eq: ["$$s.settledResult", "LOSE"] }, then: -1 },
-      ],
-      default: 0,
-    },
-  };
 
   const pipeline: Doc[] = [
     { $match: matchStage },
@@ -154,10 +142,9 @@ export async function getResults(q: ResultsQuery = {}): Promise<ResultsResponse>
             $project: {
               hasPred: { $cond: [{ $ne: ["$pred", null] }, 1, 0] },
               correct: { $cond: [{ $eq: ["$pred.modelCorrect", true] }, 1, 0] },
-              pnl: { $reduce: { input: "$sigs", initialValue: 0, in: { $add: ["$$value", { $let: { vars: { s: "$$this" }, in: signalPnl } }] } } },
             },
           },
-          { $group: { _id: null, predictions: { $sum: "$hasPred" }, correct: { $sum: "$correct" }, pnl: { $sum: "$pnl" } } },
+          { $group: { _id: null, predictions: { $sum: "$hasPred" }, correct: { $sum: "$correct" } } },
         ],
       },
     },
@@ -167,12 +154,11 @@ export async function getResults(q: ResultsQuery = {}): Promise<ResultsResponse>
   const facet = agg[0] ?? { total: [], rows: [], stats: [] };
   const total: number = facet.total[0]?.n ?? 0;
   const rows: Doc[] = facet.rows ?? [];
-  const statsRaw = facet.stats[0] ?? { predictions: 0, correct: 0, pnl: 0 };
+  const statsRaw = facet.stats[0] ?? { predictions: 0, correct: 0 };
   const stats: ResultsStats = {
     predictions: statsRaw.predictions ?? 0,
     correct: statsRaw.correct ?? 0,
     accuracy: statsRaw.predictions ? (statsRaw.correct / statsRaw.predictions) * 100 : 0,
-    pnl: Math.round((statsRaw.pnl ?? 0) * 100) / 100,
   };
 
   // Resolve team display names + crests for the paged rows only.

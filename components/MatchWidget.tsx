@@ -297,12 +297,11 @@ function MatchWidgetInner({
             const sel = bestSignal.selection;
             const modelP = modelProbs[sel];
             const marketP = latest ? latest[sel] : 1 / bestSignal.bestPrice;
-            const kelly = Math.max(0, (bestSignal.bestPrice * modelP - 1) / (bestSignal.bestPrice - 1));
             const selName = sel === "draw" ? "Draw" : sel === "home" ? homeTeam : awayTeam;
             return (
               <div className="rounded-[10px] border border-accent/30 bg-accent/5 p-2 font-data text-xs text-ink">
                 ⚡ Value: {selName} @ {bestSignal.bestPrice.toFixed(2)} ({bestSignal.bestBookmaker})<br />
-                Model {(modelP * 100).toFixed(1)}% vs market {(marketP * 100).toFixed(1)}% · Edge: +{(bestSignal.ev * 100).toFixed(1)}% · Kelly: {(kelly * 100).toFixed(1)}%
+                Model {(modelP * 100).toFixed(1)}% vs market {(marketP * 100).toFixed(1)}% · Edge: +{(bestSignal.ev * 100).toFixed(1)}%
               </div>
             );
           })()}

@@ -310,11 +310,10 @@ function PredictionTab({ data, phase, bestSignal }: {
           <div className="divide-y divide-line/60 overflow-hidden rounded-[14px] border border-line">
             {evSignals.map((s, i) => {
               const sel = s.selection === "draw" ? "Draw" : s.selection === "home" ? homeTeam.name : awayTeam.name;
-              const kelly = s.kelly_fraction != null ? `${(s.kelly_fraction * 100).toFixed(1)}%` : "—";
               return (
                 <div key={i} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2 font-data text-xs">
                   <span className="text-ink">{sel} @ {s.best_price?.toFixed(2) ?? "—"} <span className="text-muted">({s.best_bookmaker})</span></span>
-                  <span className={s.ev > 0 ? "text-accent" : "text-muted"}>Edge {s.ev >= 0 ? "+" : ""}{(s.ev * 100).toFixed(1)}% · Kelly {kelly}</span>
+                  <span className={s.ev > 0 ? "text-accent" : "text-muted"}>Edge {s.ev >= 0 ? "+" : ""}{(s.ev * 100).toFixed(1)}%</span>
                 </div>
               );
             })}

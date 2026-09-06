@@ -87,7 +87,6 @@ export interface MatchEvSignal {
   market_prob: number | null;
   best_price: number | null;
   best_bookmaker: string | null;
-  kelly_fraction: number | null;
   book_count: number | null;
   settled_result: string | null;
   created_at: string | null;
@@ -218,7 +217,6 @@ const mapEvSignal = (s: Doc): MatchEvSignal => ({
   market_prob: s.marketProb ?? null,
   best_price: s.bestPrice ?? null,
   best_bookmaker: s.bestBookmaker ?? null,
-  kelly_fraction: s.kellyFraction ?? null,
   book_count: s.bookCount ?? null,
   settled_result: s.settledResult ?? null,
   created_at: toIso(s.createdAt),

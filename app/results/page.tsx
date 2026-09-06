@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Results — EdgeAnalysts",
-  description: "Settled football predictions with verified outcomes, scores and EV signal P&L.",
+  description: "Settled football predictions with verified outcomes, scores and value signal results.",
 };
 
 export default async function ResultsPage() {

@@ -8,12 +8,6 @@ function pickLabel(s: { selection: "home" | "draw" | "away"; home_team: string; 
   return `${s.selection === "home" ? s.home_team : s.away_team} to win`;
 }
 
-function settledPnl(s: SettledEvSignal): number {
-  if (s.settled_result === "WIN") return s.best_price - 1;
-  if (s.settled_result === "LOSE") return -1;
-  return 0; // VOID — stake returned
-}
-
 // Feature toggle — hidden from the page entirely until this is "true".
 // Set NEXT_PUBLIC_SETTLED_SIGNALS_ENABLED=true to show the section.
 const SETTLED_SIGNALS_ENABLED = process.env.NEXT_PUBLIC_SETTLED_SIGNALS_ENABLED === "true";
@@ -57,13 +51,11 @@ function SettledSignalsSectionInner({ settled }: { settled: SettledEvSignal[] })
                   <th className="py-2 pr-4">Match</th>
                   <th className="py-2 pr-4">Selection</th>
                   <th className="py-2 pr-4">Price</th>
-                  <th className="py-2 pr-4">Result</th>
-                  <th className="py-2">P&amp;L</th>
+                  <th className="py-2">Result</th>
                 </tr>
               </thead>
               <tbody>
                 {settled.map((s) => {
-                  const pnl = settledPnl(s);
                   return (
                     <tr key={`${s.match_id}-${s.selection}`} className="border-b border-line/60 hover:bg-panel">
                       <td className="py-2 pr-4 text-ink">{s.created_at.slice(0, 10)}</td>
@@ -72,11 +64,8 @@ function SettledSignalsSectionInner({ settled }: { settled: SettledEvSignal[] })
                       </td>
                       <td className="py-2 pr-4 text-ink">{pickLabel(s)}</td>
                       <td className="py-2 pr-4 text-ink">{s.best_price.toFixed(2)}</td>
-                      <td className={`py-2 pr-4 font-bold ${s.settled_result === "WIN" ? "text-accent" : s.settled_result === "LOSE" ? "text-loss" : "text-ink"}`}>
+                      <td className={`py-2 font-bold ${s.settled_result === "WIN" ? "text-accent" : s.settled_result === "LOSE" ? "text-loss" : "text-ink"}`}>
                         {s.settled_result}
-                      </td>
-                      <td className={`py-2 font-bold ${pnl > 0 ? "text-accent" : pnl < 0 ? "text-loss" : "text-ink"}`}>
-                        {pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}
                       </td>
                     </tr>
                   );
