@@ -9,6 +9,7 @@ import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES } from "@/lib/leagues";
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/insights", label: "Insights & Odds" },
+  { href: "/game", label: "Game" },
   { href: "/track-record", label: "Track Record" },
 ];
 // Domestic leagues only (cups don't have a standalone "teams by division" home —
@@ -30,7 +31,12 @@ function isActive(pathname: string, href: string) {
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [streak, setStreak] = useState(0);
   const pathname = usePathname();
+
+  useEffect(() => {
+    fetch("/api/game/me").then((r) => r.json()).then((me: { streak?: number } | null) => setStreak(me?.streak ?? 0)).catch(() => {});
+  }, []);
 
   useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
@@ -77,7 +83,7 @@ export default function MobileNav() {
               className={`rounded-[10px] px-3 py-3 font-body text-base font-semibold transition-colors ${
                 isActive(pathname, l.href) ? "bg-chip text-accent-ink" : "text-ink hover:bg-chip"
               }`}>
-              {l.label}
+              {l.label}{l.href === "/game" && streak >= 3 && " 🔥"}
             </Link>
           ))}
           <span className="px-3 pb-1 pt-3 font-body text-[11px] uppercase tracking-wider text-muted">Teams by division</span>

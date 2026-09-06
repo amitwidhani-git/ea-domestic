@@ -6,6 +6,7 @@ import LivescorebetPromo from "@/components/LivescorebetPromo";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
 import RecentResultsTicker from "@/components/RecentResultsTicker";
+import GameTeaser from "@/components/game/GameTeaser";
 import { getEvSignals, getStats, getArticles, getLiveMatches } from "@/lib/data";
 import { getResults } from "@/lib/results";
 import { LEAGUE_CODES } from "@/lib/leagues";
@@ -64,6 +65,8 @@ export default async function HomePage() {
 
       <div className="mt-5 space-y-12">
         <LiveMatchesBar initial={liveMatches} />
+
+        <GameTeaser />
 
         {/* ── HERO ── */}
         <section className="max-w-3xl pt-2">
