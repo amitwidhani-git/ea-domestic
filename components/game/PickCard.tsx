@@ -77,7 +77,7 @@ export default function PickCard({
               <span className="text-muted">Your pick:</span>
               <b className="uppercase">{PICK_LABEL[r.pick]}</b>
               <span>{r.correct ? "✓" : "✗"}</span>
-              <span>{r.correct ? `+${r.points}pts` : "0pts"}</span>
+              <span>{r.correct ? `+${r.points} pts` : "0 pts"}</span>
             </div>
           ) : (
             <p className="font-data text-[13px] text-muted">You didn&apos;t pick this one.</p>

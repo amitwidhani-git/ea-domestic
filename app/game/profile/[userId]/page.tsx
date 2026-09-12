@@ -78,7 +78,7 @@ export default async function GameProfilePage({ params }: { params: Promise<{ us
                     <td className="px-2 py-2.5 uppercase text-ink">{PICK_LABEL[h.pick]}</td>
                     <td className="px-2 py-2.5 uppercase text-muted">{h.edgeIQPick ? PICK_LABEL[h.edgeIQPick] : "—"}</td>
                     <td className={`py-2.5 pl-2 pr-4 text-right font-bold ${h.correct == null ? "text-muted" : h.correct ? "text-accent" : "text-loss"}`}>
-                      {h.correct == null ? "Pending" : h.correct ? `✓ +${h.points}pts` : "✗ 0pts"}
+                      {h.correct == null ? "Pending" : h.correct ? `✓ +${h.points} pts` : "✗ 0 pts"}
                     </td>
                   </tr>
                 ))}

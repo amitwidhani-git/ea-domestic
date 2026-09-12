@@ -287,7 +287,7 @@ export async function getPredictionCoverage(): Promise<{ predicting: number; tot
 
 interface FixtureInfo {
   homeTeam: string; awayTeam: string; homeTeamId: string; awayTeamId: string; kickoffUtc: string;
-  homeApiFootballId: number | null; awayApiFootballId: number | null;
+  homeApiFootballId: number | null; awayApiFootballId: number | null; status: string;
 }
 
 // Shared by getEvSignals/getSettledEvSignals — resolves matchId -> display
@@ -315,6 +315,7 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
       kickoffUtc: m ? (m.kickoffUtc as string) : "",
       homeApiFootballId: m ? teamApiFootballId.get(String(m.homeTeamId)) ?? null : null,
       awayApiFootballId: m ? teamApiFootballId.get(String(m.awayTeamId)) ?? null : null,
+      status: m ? (m.status as string) : "",
     });
   }
   return out;
@@ -447,6 +448,13 @@ export async function getEvSignals(): Promise<EvSignal[]> {
     const modelProb = ((pred.probs as Record<string, number> | undefined)?.[pick]) ?? (modelDoc?.modelProb as number | undefined) ?? 0;
 
     const f = info.get(mid);
+    // ev_signals docs only get settledResult filled in by the settlement
+    // pipeline — if that step is missed or lags, a match that's already
+    // kicked off (or finished) keeps matching `settledResult: null` above
+    // and would otherwise reappear here as a "Best upcoming edge" forever.
+    // Guard directly against the match's own status/kickoff instead of
+    // trusting settledResult alone.
+    if (!f || f.status !== "SCHEDULED" || !f.kickoffUtc || f.kickoffUtc <= new Date().toISOString()) continue;
     rows.push({
       match_id: mid,
       league: bestValueDoc.league as League,

@@ -123,10 +123,10 @@ export default function GameClient({
       {/* stats bar */}
       <div className="flex flex-wrap gap-2.5">
         <span className="rounded-[10px] border border-line bg-panel px-3.5 py-2 font-data text-xs text-ink">
-          Weekly: <b className="text-accent">{user.weeklyPts}pts</b>
+          Weekly: <b className="text-accent">{user.weeklyPts} pts</b>
         </span>
         <span className="rounded-[10px] border border-line bg-panel px-3.5 py-2 font-data text-xs text-ink">
-          Season: <b className="text-accent">{user.seasonPts}pts</b>{leaderboard.viewerRank != null && ` · #${leaderboard.viewerRank}`}
+          Season: <b className="text-accent">{user.seasonPts} pts</b>{leaderboard.viewerRank != null && ` · #${leaderboard.viewerRank}`}
         </span>
         {user.streak > 0 && (
           <span className="rounded-[10px] border border-line bg-panel px-3.5 py-2 font-data text-xs text-ink">
@@ -168,7 +168,7 @@ export default function GameClient({
             <div key={r.userId} className={`flex items-center gap-3 px-4 py-2.5 font-data text-sm ${r.userId === user.userId ? "bg-accent/10" : ""} ${i > 0 ? "border-t border-line/60" : ""}`}>
               <span className="w-5 shrink-0 text-muted">{i + 1}</span>
               <Link href={`/game/profile/${r.userId}`} className="min-w-0 flex-1 truncate text-ink hover:text-accent">{r.displayName}</Link>
-              <span className="shrink-0 font-semibold text-accent">{r.points}pts</span>
+              <span className="shrink-0 font-semibold text-accent">{r.points} pts</span>
             </div>
           ))}
         </div>
