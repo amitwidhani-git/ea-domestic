@@ -27,6 +27,10 @@ export interface Affiliate {
   banners?: Record<string, AffiliateBanner>;
   aliases?: string[];
   active?: boolean;
+  /** Lower = shown first (market leaders first) on the /offers page. Editable
+   *  live in Atlas — same workflow as the rest of this doc. Missing/equal
+   *  values sink to the bottom, alphabetically among themselves. */
+  priority?: number;
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -81,11 +85,18 @@ async function getAffiliatesFromFile(): Promise<Affiliate[]> {
 
 // ---------------------------------------------------------------- public API
 
+function byPriority(a: Affiliate, b: Affiliate): number {
+  const pa = a.priority ?? Infinity;
+  const pb = b.priority ?? Infinity;
+  if (pa !== pb) return pa - pb;
+  return a.name.localeCompare(b.name);
+}
+
 export async function getAffiliateList(): Promise<Affiliate[]> {
   // Try Mongo first; fall back to local file (useful in dev without MONGODB_URI)
   const fromMongo = await getAffiliatesFromMongo();
-  if (fromMongo.length > 0) return fromMongo;
-  return getAffiliatesFromFile();
+  const list = fromMongo.length > 0 ? fromMongo : await getAffiliatesFromFile();
+  return list.sort(byPriority);
 }
 
 export async function getAffiliateById(id: string): Promise<Affiliate | null> {

@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/insights", label: "Insights & Odds" },
   { href: "/game", label: "Game" },
   { href: "/track-record", label: "Track Record" },
+  { href: "/offers", label: "Offers" },
 ];
 // Domestic leagues only (cups don't have a standalone "teams by division" home —
 // their clubs already appear under their own domestic league), grouped by country.
