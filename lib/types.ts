@@ -37,7 +37,7 @@ export interface EvOutcome {
   cta: CtaAffiliate | null;
 }
 export interface EvSignal {
-  match_id: string; league: League;
+  match_id: string; league: League; season: string;
   created_at: string; home_team: string; away_team: string; kickoff_utc: string;
   home_team_id: string; away_team_id: string;
   home_api_football_id: number | null; away_api_football_id: number | null;

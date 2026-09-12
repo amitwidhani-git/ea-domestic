@@ -287,7 +287,7 @@ export async function getPredictionCoverage(): Promise<{ predicting: number; tot
 
 interface FixtureInfo {
   homeTeam: string; awayTeam: string; homeTeamId: string; awayTeamId: string; kickoffUtc: string;
-  homeApiFootballId: number | null; awayApiFootballId: number | null; status: string;
+  homeApiFootballId: number | null; awayApiFootballId: number | null; status: string; season: string;
 }
 
 // Shared by getEvSignals/getSettledEvSignals — resolves matchId -> display
@@ -316,6 +316,7 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
       homeApiFootballId: m ? teamApiFootballId.get(String(m.homeTeamId)) ?? null : null,
       awayApiFootballId: m ? teamApiFootballId.get(String(m.awayTeamId)) ?? null : null,
       status: m ? (m.status as string) : "",
+      season: m ? (m.season as string) : "",
     });
   }
   return out;
@@ -458,6 +459,7 @@ export async function getEvSignals(): Promise<EvSignal[]> {
     rows.push({
       match_id: mid,
       league: bestValueDoc.league as League,
+      season: f.season,
       created_at: bestValueDoc.createdAt as string,
       home_team: f?.homeTeam ?? mid,
       away_team: f?.awayTeam ?? "",

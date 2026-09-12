@@ -429,6 +429,8 @@ function SchedulePageInner() {
                     currentScore={live ? { home: live.homeScore ?? 0, away: live.awayScore ?? 0 } : null}
                     status={live?.status ?? row.status}
                     elapsed={live?.elapsed ?? null}
+                    league={row.league}
+                    season={row.season}
                   />
                 )}
                 </div>

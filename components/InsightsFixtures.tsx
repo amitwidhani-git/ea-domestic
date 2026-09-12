@@ -159,6 +159,8 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
             modelProbs={prediction.probs}
             modelPick={prediction.pick}
             status="SCHEDULED"
+            league={fixture.league}
+            season={fixture.season}
             bestSignal={
               bestSignal
                 ? { selection: bestSignal.selection, ev: bestSignal.ev, bestPrice: bestSignal.best_price, bestBookmaker: bestSignal.best_bookmaker }

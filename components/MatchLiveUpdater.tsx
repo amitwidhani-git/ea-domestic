@@ -292,6 +292,8 @@ function PredictionTab({ data, phase, bestSignal }: {
             status={fixture.status ?? "SCHEDULED"}
             elapsed={fixture.elapsed}
             bestSignal={bestSignal}
+            league={fixture.league}
+            season={fixture.season}
           />
         </>
       )}

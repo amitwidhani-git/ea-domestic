@@ -114,6 +114,7 @@ export interface MatchDetail {
   fixture: {
     matchId: string;
     league: string | null;
+    season: string | null;
     kickoffUtc: string | null;
     status: string | null;      // normalised: SCHEDULED | LIVE | FINISHED
     afStatus: string | null;    // raw API-Football code for display: FT | AET | PEN | HT | 1H …
@@ -308,6 +309,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
     fixture: {
       matchId: String(match._id),
       league: match.league ?? null,
+      season: match.season ?? null,
       kickoffUtc: match.kickoffUtc ?? null,
       status: liveOverlay ? "LIVE" : (matchStats?.status ?? match.status ?? null),
       afStatus: liveOverlay ? liveOverlay.status : (matchStats?.afStatus ?? null),

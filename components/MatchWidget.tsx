@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import StatsInsights from "@/components/StatsInsights";
 
 type Outcome = "home" | "draw" | "away";
 
@@ -92,6 +93,9 @@ interface MatchWidgetProps {
   elapsed?: number | null;
   bestSignal?: BestSignal;
   oddsData?: OddsSnapshot[];
+  /** Needed for the Stats Insights section — omitted (or missing on the fixture) just skips that section. */
+  league?: string | null;
+  season?: string | null;
 }
 
 // Feature toggle — off by default. Set NEXT_PUBLIC_MATCH_WIDGET_ENABLED=true
@@ -105,9 +109,9 @@ export default function MatchWidget(props: MatchWidgetProps) {
 }
 
 function MatchWidgetInner({
-  matchId, homeTeam, awayTeam, kickoffUtc,
+  matchId, homeTeam, awayTeam, homeTeamId, awayTeamId, kickoffUtc,
   modelProbs, currentScore, status = "SCHEDULED", elapsed,
-  bestSignal, oddsData,
+  bestSignal, oddsData, league, season,
 }: MatchWidgetProps) {
   const [snapshots, setSnapshots] = useState<OddsSnapshot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -305,6 +309,20 @@ function MatchWidgetInner({
               </div>
             );
           })()}
+
+          {/* ── STATS INSIGHTS ── */}
+          {homeTeamId && awayTeamId && league && season && (
+            <div className="border-t border-line pt-3">
+              <StatsInsights
+                homeTeamId={homeTeamId}
+                awayTeamId={awayTeamId}
+                league={league}
+                season={season}
+                homeTeam={homeTeam}
+                awayTeam={awayTeam}
+              />
+            </div>
+          )}
         </div>
       )}
 

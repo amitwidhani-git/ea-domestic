@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import ClubCrest from "@/components/ClubCrest";
+import StatsInsights from "@/components/StatsInsights";
 import { useBackFrom } from "@/lib/useBackFrom";
 import type { EvOutcome, EvSignal } from "@/lib/types";
 import type { CtaAffiliate } from "@/lib/affiliates";
@@ -166,7 +167,7 @@ export default function ValueSignalCard({
   featured?: boolean;
 }) {
   const backFrom = useBackFrom();
-  const [drawer, setDrawer] = useState<null | "compare" | "audit">(null);
+  const [drawer, setDrawer] = useState<null | "compare" | "audit" | "stats">(null);
   const [odds, setOdds] = useState<OddsRow[] | null>(null);
   const [loadingOdds, setLoadingOdds] = useState(false);
 
@@ -238,6 +239,10 @@ export default function ValueSignalCard({
         <span className="text-line">|</span>
         <button onClick={() => setDrawer((d) => (d === "audit" ? null : "audit"))} className="inline-flex items-center gap-1 font-semibold text-muted hover:text-ink">
           Audit <Chevron open={drawer === "audit"} />
+        </button>
+        <span className="text-line">|</span>
+        <button onClick={() => setDrawer((d) => (d === "stats" ? null : "stats"))} className="inline-flex items-center gap-1 font-semibold text-muted hover:text-ink">
+          Stats <Chevron open={drawer === "stats"} />
         </button>
       </div>
 
@@ -313,6 +318,20 @@ export default function ValueSignalCard({
               <Row k="Best price" v={`${showPrice(signal.bestValue.best_price, oddsFmt)} · ${fmtBook(signal.bestValue.best_bookmaker)}`} />
             </div>
           )}
+        </div>
+      )}
+
+      {/* stats drawer */}
+      {drawer === "stats" && (
+        <div className="border-t border-line">
+          <StatsInsights
+            homeTeamId={signal.home_team_id}
+            awayTeamId={signal.away_team_id}
+            league={signal.league}
+            season={signal.season}
+            homeTeam={signal.home_team}
+            awayTeam={signal.away_team}
+          />
         </div>
       )}
 
