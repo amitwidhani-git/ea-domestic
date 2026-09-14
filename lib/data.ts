@@ -723,12 +723,17 @@ export async function getArticles(): Promise<Article[]> {
     .limit(20)
     .toArray();
 
-  return docs.map((a) => ({
-    slug: (a.slug as string) ?? String(a._id),
-    title: a.title as string,
-    published_at: a.publishedAt as string,
-    summary: a.summary as string,
-  }));
+  // A pipeline-generated draft (e.g. a match-preview article queued ahead of
+  // kickoff) can land here before it's fully written — filter incomplete
+  // docs out rather than pass an undefined title/date/summary to the page.
+  return docs
+    .filter((a) => a.title && a.publishedAt && a.summary)
+    .map((a) => ({
+      slug: (a.slug as string) ?? String(a._id),
+      title: a.title as string,
+      published_at: a.publishedAt as string,
+      summary: a.summary as string,
+    }));
 }
 
 export async function getArticleBySlug(slug: string): Promise<ArticleDetail | null> {
