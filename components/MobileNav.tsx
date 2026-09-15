@@ -9,10 +9,9 @@ import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES } from "@/lib/leagues";
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/insights", label: "Insights & Odds" },
-  { href: "/game", label: "Game" },
   { href: "/track-record", label: "Track Record" },
-  { href: "/offers", label: "Offers" },
 ];
+const OFFERS_LINK = { href: "/offers", label: "Offers" };
 // Domestic leagues only (cups don't have a standalone "teams by division" home —
 // their clubs already appear under their own domestic league), grouped by country.
 const DIVISIONS_BY_COUNTRY = COUNTRIES.map((country) => ({
@@ -32,12 +31,7 @@ function isActive(pathname: string, href: string) {
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
-  const [streak, setStreak] = useState(0);
   const pathname = usePathname();
-
-  useEffect(() => {
-    fetch("/api/game/me").then((r) => r.json()).then((me: { streak?: number } | null) => setStreak(me?.streak ?? 0)).catch(() => {});
-  }, []);
 
   useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
@@ -84,7 +78,7 @@ export default function MobileNav() {
               className={`rounded-[10px] px-3 py-3 font-body text-base font-semibold transition-colors ${
                 isActive(pathname, l.href) ? "bg-chip text-accent-ink" : "text-ink hover:bg-chip"
               }`}>
-              {l.label}{l.href === "/game" && streak >= 3 && " 🔥"}
+              {l.label}
             </Link>
           ))}
           <span className="px-3 pb-1 pt-3 font-body text-[11px] uppercase tracking-wider text-muted">Teams by division</span>
@@ -97,6 +91,13 @@ export default function MobileNav() {
             </div>
           ))}
           <Link href="/teams" className="rounded-[10px] px-3 py-2.5 font-body text-[15px] text-accent-ink hover:bg-chip">All teams →</Link>
+          <Link href={OFFERS_LINK.href}
+            aria-current={isActive(pathname, OFFERS_LINK.href) ? "page" : undefined}
+            className={`mt-2 rounded-[10px] px-3 py-3 font-body text-base font-semibold transition-colors ${
+              isActive(pathname, OFFERS_LINK.href) ? "bg-chip text-accent-ink" : "text-ink hover:bg-chip"
+            }`}>
+            {OFFERS_LINK.label}
+          </Link>
         </nav>
 
         <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4">

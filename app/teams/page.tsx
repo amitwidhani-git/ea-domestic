@@ -17,7 +17,7 @@ import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES, leagueLogoUrl, type League } from 
 
 // Strip banner shown above every league section from the second one onward
 // (Premier League leads the page under the fixed BetanoPromo, so it gets none).
-// Full partner set (matches the /insights "Partner Offers" list); reshuffled
+// Full partner set (matches the /offers list); reshuffled
 // per request so the order varies on each visit without a partner repeating
 // back to back.
 const STRIP_PROMOS: React.ComponentType[] = [
@@ -196,7 +196,7 @@ export default async function TeamsPage() {
         );
       })}
 
-      <BetMazePromo />
+      <BetwayPromo />
     </div>
   );
 }

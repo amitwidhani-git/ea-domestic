@@ -16,8 +16,8 @@ import { getAffiliateList, isLive } from "@/lib/affiliates";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Betting Offers — EdgeAnalysts",
-  description: "Compare UK football betting sites and free bet offers from our betting partners, ranked from market leaders to newer names.",
+  title: "Free Bet & Betting Offers — EdgeAnalysts",
+  description: "Compare UK free bet and sign-up offers from trusted betting partners, ranked market leaders first and updated alongside our EdgeIQ predictions.",
 };
 
 // Each partner has its own bespoke promo card (real logo, live offer copy,
@@ -45,12 +45,13 @@ export default async function OffersPage() {
 
   return (
     <div className="space-y-8">
+      <BetanoPromo />
+
       <section>
-        <h1 className="font-display text-4xl tracking-wide">Betting Offers</h1>
+        <h1 className="font-display text-4xl tracking-wide">Partner Offers</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink">
-          Compare sign-up offers from our betting partners, ranked from market leaders to newer
-          names. We earn commission if you sign up via these links — that never affects our
-          predictions or analysis.
+          Free bet offers from our trusted partners, updated alongside our EdgeIQ football
+          predictions across the UK and Europe.
         </p>
       </section>
 
@@ -61,17 +62,7 @@ export default async function OffersPage() {
         })}
       </div>
 
-      <p className="font-data text-[9px] text-muted">
-        18+ | Begambleaware.org | Odds subject to change | T&amp;Cs apply on each offer.
-        {" "}
-        <a href="https://www.begambleaware.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-ink">
-          BeGambleAware.org
-        </a>
-        {" · "}
-        <a href="https://www.gamstop.co.uk" target="_blank" rel="noopener noreferrer" className="underline hover:text-ink">
-          GamStop.co.uk
-        </a>
-      </p>
+      <BetwayPromo />
     </div>
   );
 }

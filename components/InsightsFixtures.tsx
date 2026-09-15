@@ -224,14 +224,15 @@ export default function InsightsFixtures({
   const backFrom = useBackFrom();
   const [tab, setTab] = useState<"signals" | "fixtures">("signals");
   const [oddsFmt, setOddsFmt] = useState<OddsFormat>("frac");
-  const [when, setWhen] = useState<WhenKey>("week");
+  // Defaults to "Today" so the page opens on the most immediate edge — but
+  // falls back to "Full week" when there's nothing today (non-matchdays,
+  // international breaks) rather than opening on an empty state.
+  const [when, setWhen] = useState<WhenKey>(() => (signals.some((s) => inWhen(s.kickoff_utc, "today")) ? "today" : "week"));
 
   const [upcoming, setUpcoming] = useState<UpcomingFixtureWithSignal[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  // Defaults to the competition of the next (soonest-kickoff) value signal —
-  // signals are already sorted kickoff-ascending — rather than "All".
-  const [league, setLeague] = useState<"ALL" | League>(() => (signals[0]?.league as League | undefined) ?? "ALL");
+  const [league, setLeague] = useState<"ALL" | League>("ALL");
   const [sort, setSort] = useState<SortKey>("date");
   const [pendingHash, setPendingHash] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);

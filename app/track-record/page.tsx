@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import BetanoPromo from "@/components/BetanoPromo";
-import BetMazePromo from "@/components/BetMazePromo";
+import BetwayPromo from "@/components/BetwayPromo";
 import SpinzwinBannerCard from "@/components/SpinzwinBannerCard";
 import MonsterCasinoBannerCard from "@/components/MonsterCasinoBannerCard";
 import FruityKingBannerCard from "@/components/FruityKingBannerCard";
@@ -37,7 +37,7 @@ export default async function TrackRecordPage() {
       <section>
         <div className="mb-4 flex items-baseline justify-between">
           <h2 className="font-display text-2xl tracking-wide">Partner Offers</h2>
-          <Link href="/insights#our-partners" className="font-data text-xs text-accent hover:underline">
+          <Link href="/offers" className="font-data text-xs text-accent hover:underline">
             All Partner Offers →
           </Link>
         </div>
@@ -48,7 +48,7 @@ export default async function TrackRecordPage() {
         </div>
       </section>
 
-      <BetMazePromo />
+      <BetwayPromo />
     </div>
   );
 }

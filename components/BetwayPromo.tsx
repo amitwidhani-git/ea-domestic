@@ -2,10 +2,11 @@ export default function BetwayPromo() {
   return (
     <section>
       <div className="flex flex-col items-center gap-3 promo-card rounded-[14px] border border-line bg-panel p-3 text-center shadow-[var(--shadow)] sm:flex-row sm:justify-between sm:p-4 sm:text-left">
-        {/* Placeholder wordmark — swap for the real Betway logo once a clean asset is available */}
-        <span className="shrink-0 font-display text-2xl font-black tracking-tight text-ink">
-          Betway
-        </span>
+        <img
+          src="/betway-logo.png"
+          alt="Betway"
+          className="h-6 w-auto shrink-0 object-contain sm:h-8"
+        />
         <div className="min-w-0 text-center sm:flex-1 sm:px-4">
           <p className="font-display text-xl uppercase tracking-wide sm:text-2xl">
             <span className="text-[#009900]">£30 Matched Free Bet</span>{" "}

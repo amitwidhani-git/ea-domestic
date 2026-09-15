@@ -1,14 +1,5 @@
 import Link from "next/link";
 import BetanoPromo from "@/components/BetanoPromo";
-import LivescorebetPromo from "@/components/LivescorebetPromo";
-import BetMazePromo from "@/components/BetMazePromo";
-import BetrinoPromo from "@/components/BetrinoPromo";
-import BetsunaPromo from "@/components/BetsunaPromo";
-import MogobetPromo from "@/components/MogobetPromo";
-import FruityKingPromo from "@/components/FruityKingPromo";
-import SpinzwinPromo from "@/components/SpinzwinPromo";
-import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
-import Bet247Promo from "@/components/Bet247Promo";
 import BetwayPromo from "@/components/BetwayPromo";
 import InsightsFixtures from "@/components/InsightsFixtures";
 import SettledSignalsSection from "@/components/SettledSignalsSection";
@@ -29,27 +20,6 @@ export default async function InsightsPage() {
 
       <SettledSignalsSection settled={settled} />
 
-      <section id="our-partners">
-        <h2 className="font-display text-2xl tracking-wide">Partner Offers</h2>
-        <p className="mt-2 max-w-2xl text-sm text-ink">
-          Compare UK football betting sites and free bet offers from trusted bookmakers, updated
-          alongside our model-driven predictions for the Premier League, Championship, League One and
-          League Two.
-        </p>
-        <div className="mt-4 space-y-4">
-          <BetanoPromo />
-          <LivescorebetPromo />
-          <MogobetPromo />
-          <FruityKingPromo />
-          <BetrinoPromo />
-          <BetsunaPromo />
-          <BetMazePromo />
-          <SpinzwinPromo />
-          <MonsterCasinoPromo />
-          <Bet247Promo />
-          <BetwayPromo />
-        </div>
-      </section>
       <section id="top-stories">
         <h2 className="font-display text-2xl tracking-wide">Top Stories</h2>
         {articles.length === 0 ? (
@@ -70,7 +40,7 @@ export default async function InsightsPage() {
           </ul>
         )}
       </section>
-      <BetMazePromo />
+      <BetwayPromo />
     </div>
   );
 }

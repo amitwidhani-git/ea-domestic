@@ -4,7 +4,7 @@ import ValueSignalCard from "@/components/ValueSignalCard";
 import LiveMatchesBar from "@/components/LiveMatchesBar";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
 import BetanoPromo from "@/components/BetanoPromo";
-import BetMazePromo from "@/components/BetMazePromo";
+import BetwayPromo from "@/components/BetwayPromo";
 import RecentResultsTicker from "@/components/RecentResultsTicker";
 import GameTeaser from "@/components/game/GameTeaser";
 import { getEvSignals, getStats, getArticles, getLiveMatches } from "@/lib/data";
@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Edge Analysts: Football Predictions & Odds Intelligence Platform",
-  description: "Premier League & EFL Predictions, Frozen Pre-Kick-Off, Auditable Record",
+  description: "Edge Analysts: football predictions & odds intelligence powered by EdgeIQ. Transparent and auditable with every prediction logged before kick-off.",
 };
 
 function TrustCell({ title, body, icon }: { title: string; body: string; icon: React.ReactNode }) {
@@ -174,7 +174,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <BetMazePromo />
+        <BetwayPromo />
       </div>
     </div>
   );

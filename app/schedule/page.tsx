@@ -16,6 +16,7 @@ import MogobetPromo from "@/components/MogobetPromo";
 import FruityKingPromo from "@/components/FruityKingPromo";
 import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
+import BetwayPromo from "@/components/BetwayPromo";
 import SubscribeRegister from "@/components/SubscribeRegister";
 import { useBackFrom } from "@/lib/useBackFrom";
 import { formatMinute } from "@/lib/matchEvents";
@@ -440,7 +441,7 @@ function SchedulePageInner() {
         </section>
         );
       })}
-      <BetMazePromo />
+      <BetwayPromo />
 
       <SubscribeRegister source="schedule" compact={false} />
     </div>

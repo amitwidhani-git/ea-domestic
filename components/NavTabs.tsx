@@ -6,10 +6,9 @@ import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES } from "@/lib/leagues";
 
 const TABS = [
   { href: "/insights", label: "Insights & Odds" },
-  { href: "/game", label: "Game" },
   { href: "/track-record", label: "Track Record" },
-  { href: "/offers", label: "Offers" },
 ];
+const OFFERS_TAB = { href: "/offers", label: "Offers" };
 // Domestic leagues only (cups don't have a standalone "teams by division" home —
 // their clubs already appear under their own domestic league), grouped by country.
 const DIVISIONS_BY_COUNTRY = COUNTRIES.map((country) => ({
@@ -20,12 +19,7 @@ const DIVISIONS_BY_COUNTRY = COUNTRIES.map((country) => ({
 export default function NavTabs() {
   const pathname = usePathname();
   const [teamsOpen, setTeamsOpen] = useState(false);
-  const [streak, setStreak] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetch("/api/game/me").then((r) => r.json()).then((me: { streak?: number } | null) => setStreak(me?.streak ?? 0)).catch(() => {});
-  }, []);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -43,7 +37,7 @@ export default function NavTabs() {
     <nav aria-label="Primary" className="flex items-center gap-5">
       {TABS.map((t) => (
         <Link key={t.href} href={t.href} className={linkCls(pathname.startsWith(t.href))}>
-          {t.label}{t.href === "/game" && streak >= 3 && " 🔥"}
+          {t.label}
         </Link>
       ))}
 
@@ -74,6 +68,10 @@ export default function NavTabs() {
           </div>
         )}
       </div>
+
+      <Link href={OFFERS_TAB.href} className={linkCls(pathname.startsWith(OFFERS_TAB.href))}>
+        {OFFERS_TAB.label}
+      </Link>
     </nav>
   );
 }
