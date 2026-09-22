@@ -40,6 +40,8 @@ const DISPLAY_NAMES: Record<string, string> = {
   matchbook: "Matchbook",
   casumo: "Casumo",
   betano_uk: "Betano",
+  "10bet": "10Bet",
+  copybet: "CopyBet",
 };
 
 function displayName(key: string): string {

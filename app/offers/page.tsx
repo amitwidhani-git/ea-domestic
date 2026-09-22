@@ -11,6 +11,9 @@ import SpinzwinPromo from "@/components/SpinzwinPromo";
 import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
 import Bet247Promo from "@/components/Bet247Promo";
 import BetwayPromo from "@/components/BetwayPromo";
+import Bet10Promo from "@/components/Bet10Promo";
+import GrosvenorPromo from "@/components/GrosvenorPromo";
+import CopyBetPromo from "@/components/CopyBetPromo";
 import { getAffiliateList, isLive } from "@/lib/affiliates";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +39,9 @@ const PROMO_BY_ID: Record<string, ComponentType> = {
   "monster-sports": MonsterCasinoPromo,
   "247bet": Bet247Promo,
   betway: BetwayPromo,
+  "10bet": Bet10Promo,
+  grosvenor: GrosvenorPromo,
+  copybet: CopyBetPromo,
 };
 
 export default async function OffersPage() {

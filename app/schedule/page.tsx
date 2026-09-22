@@ -17,6 +17,7 @@ import FruityKingPromo from "@/components/FruityKingPromo";
 import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
 import BetwayPromo from "@/components/BetwayPromo";
+import Bet10Promo from "@/components/Bet10Promo";
 import SubscribeRegister from "@/components/SubscribeRegister";
 import { useBackFrom } from "@/lib/useBackFrom";
 import { formatMinute } from "@/lib/matchEvents";
@@ -35,6 +36,7 @@ const STRIP_PROMOS: { id: string; Promo: React.ComponentType }[] = [
   { id: "monster-sports", Promo: MonsterCasinoPromo },
   { id: "spinzwin", Promo: SpinzwinPromo },
   { id: "betmaze", Promo: BetMazePromo },
+  { id: "10bet", Promo: Bet10Promo },
 ];
 const FIRST_WEEK_ID = "livescorebet";
 

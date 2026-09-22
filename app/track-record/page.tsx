@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetwayPromo from "@/components/BetwayPromo";
-import SpinzwinBannerCard from "@/components/SpinzwinBannerCard";
-import MonsterCasinoBannerCard from "@/components/MonsterCasinoBannerCard";
-import FruityKingBannerCard from "@/components/FruityKingBannerCard";
+import GrosvenorBannerCard from "@/components/GrosvenorBannerCard";
+import CopyBetBannerCard from "@/components/CopyBetBannerCard";
+import Bet10BannerCard from "@/components/Bet10BannerCard";
 import TrackRecordTabs from "@/components/TrackRecordTabs";
 import { getStats, getTrackRecord, getPredictionCoverage } from "@/lib/data";
 // Revalidate every 5 min so new results (fetch_results.py runs 07:30 BST) appear
@@ -42,9 +42,9 @@ export default async function TrackRecordPage() {
           </Link>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <SpinzwinBannerCard />
-          <MonsterCasinoBannerCard />
-          <FruityKingBannerCard />
+          <Bet10BannerCard />
+          <CopyBetBannerCard />
+          <GrosvenorBannerCard />
         </div>
       </section>
 

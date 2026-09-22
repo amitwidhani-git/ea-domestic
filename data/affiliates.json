@@ -1,1 +1,35 @@
-[]
+[
+  {
+    "id": "10bet",
+    "name": "10Bet",
+    "tagline": "Sports Betting",
+    "badge": "New Offer",
+    "logoInitials": "10",
+    "href": "https://track.10bet.com/C.ashx?btag=a_63544b_6467c_&affid=1682306&siteid=63544&adid=6467&c=",
+    "termsLabel": "T&Cs apply",
+    "brandColor": "#1A1A1A",
+    "priority": 35
+  },
+  {
+    "id": "grosvenor",
+    "name": "Grosvenor Sports",
+    "tagline": "Sports Betting",
+    "badge": "New Offer",
+    "logoInitials": "GS",
+    "href": "https://ads.grosvenorcasinos.com/redirect.aspx?pid=3569468&bid=4934",
+    "termsLabel": "T&Cs apply",
+    "brandColor": "#E8B84B",
+    "priority": 38
+  },
+  {
+    "id": "copybet",
+    "name": "CopyBet",
+    "tagline": "Sports Betting",
+    "badge": "New Offer",
+    "logoInitials": "CB",
+    "href": "https://go.copybet.com/C.ashx?btag=a_1573b_3c_&affid=306&siteid=1573&adid=3&c=",
+    "termsLabel": "T&Cs apply",
+    "brandColor": "#CEE53F",
+    "priority": 32
+  }
+]
