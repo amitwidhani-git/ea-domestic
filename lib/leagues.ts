@@ -7,7 +7,7 @@
  * it's a new country), done.
  */
 
-export type Country = "England" | "England Women" | "Scotland" | "Germany" | "Netherlands" | "France" | "Spain" | "Portugal" | "Italy";
+export type Country = "England" | "England Women" | "Scotland" | "Germany" | "Netherlands" | "France" | "Spain" | "Portugal" | "Italy" | "International";
 
 export interface LeagueMeta {
   name: string;
@@ -53,15 +53,31 @@ export const LEAGUES = {
   UCL: { name: "Champions League", fullName: "UEFA Champions League", country: null, isCup: true, badgeColor: "border-zinc-400/60 text-zinc-300", apiFootballId: 2 },
   UEL: { name: "Europa League", fullName: "UEFA Europa League", country: null, isCup: true, badgeColor: "border-slate-400/60 text-slate-300", apiFootballId: 3 },
   UECL: { name: "Conference League", fullName: "UEFA Europa Conference League", country: null, isCup: true, badgeColor: "border-gray-400/60 text-gray-300", apiFootballId: 848 },
+  NL: { name: "Nations League", fullName: "UEFA Nations League", country: "International", isCup: false, badgeColor: "border-indigo-300/60 text-indigo-200", apiFootballId: 5 },
 } as const satisfies Record<string, LeagueMeta>;
+
+/** The four Nations League strength tiers, elite (A) to weakest (D), in display order. */
+export const NL_TIERS = ["A", "B", "C", "D"] as const;
+export type NLTier = (typeof NL_TIERS)[number];
+export const NL_TIER_LABEL: Record<NLTier, string> = { A: "League A", B: "League B", C: "League C", D: "League D" };
+
+/**
+ * A Nations League match's `round` is "League A - 3", or a knockout stage
+ * name ("Semi-finals", "Play-offs A/B", …) that carries no single tier —
+ * those return null rather than a guess.
+ */
+export function nlTierFromRound(round: string | null | undefined): NLTier | null {
+  const m = round?.match(/^League ([ABCD])\b/);
+  return (m?.[1] as NLTier | undefined) ?? null;
+}
 
 export type League = keyof typeof LEAGUES;
 
 /** All league codes, in registry (display) order. */
 export const LEAGUE_CODES = Object.keys(LEAGUES) as League[];
 
-/** Countries in display order — England/England Women/Scotland first (the site's original base), then continental Europe alphabetically. */
-export const COUNTRIES: Country[] = ["England", "England Women", "Scotland", "France", "Germany", "Italy", "Netherlands", "Portugal", "Spain"];
+/** Countries in display order — England/England Women/Scotland first (the site's original base), then continental Europe alphabetically, then International (national teams) last. */
+export const COUNTRIES: Country[] = ["England", "England Women", "Scotland", "France", "Germany", "Italy", "Netherlands", "Portugal", "Spain", "International"];
 
 /** Leagues grouped by country, in registry order within each group. */
 export const COUNTRY_LEAGUES: Record<Country, League[]> = COUNTRIES.reduce((acc, country) => {

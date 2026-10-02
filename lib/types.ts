@@ -16,6 +16,8 @@ export interface Fixture {
   // handy (e.g. getUpcomingWithSignals); ClubCrest treats a missing id the
   // same as null (initials fallback), so other Fixture producers are unaffected.
   home_api_football_id?: number | null; away_api_football_id?: number | null;
+  /** Raw pipeline round label (e.g. "League A - 3" for Nations League, or a knockout stage name). Null for leagues without rounds. */
+  round?: string | null;
 }
 export interface Prediction {
   match_id: string; model_version: string;
@@ -41,6 +43,8 @@ export interface EvSignal {
   created_at: string; home_team: string; away_team: string; kickoff_utc: string;
   home_team_id: string; away_team_id: string;
   home_api_football_id: number | null; away_api_football_id: number | null;
+  /** Raw pipeline round label (e.g. "League A - 3" for Nations League). Null for leagues without rounds. */
+  round?: string | null;
   /** The model's own single top pick — always present, whether or not it clears the value bar. */
   model: EvOutcome;
   /** Whichever of the 3 selections has the highest EV — guaranteed to clear the value bar. */

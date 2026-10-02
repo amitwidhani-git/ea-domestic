@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { COUNTRIES, COUNTRY_LEAGUES, CONTINENTAL_LEAGUES, LEAGUES } from "@/lib/leagues";
+import { COUNTRIES, COUNTRY_LEAGUES, CONTINENTAL_LEAGUES, LEAGUES, NL_TIERS, NL_TIER_LABEL } from "@/lib/leagues";
 
 const TABS = [
   { href: "/insights", label: "Insights & Odds" },
@@ -60,7 +60,12 @@ export default function NavTabs() {
               <div key={country}>
                 <span className="mt-1.5 block px-3 pb-1 font-body text-[10px] font-semibold uppercase tracking-wider text-muted/70">{country}</span>
                 {leagues.map((lg) => (
-                  <Link key={lg} href={`/teams#${lg}`} className="block rounded-lg px-3 py-2 font-body text-[13.5px] text-ink hover:bg-chip">{LEAGUES[lg].name}</Link>
+                  <div key={lg}>
+                    <Link href={`/teams#${lg}`} className="block rounded-lg px-3 py-2 font-body text-[13.5px] text-ink hover:bg-chip">{LEAGUES[lg].name}</Link>
+                    {lg === "NL" && NL_TIERS.map((tier) => (
+                      <Link key={tier} href={`/teams#NL-${tier}`} className="block rounded-lg px-3 py-1.5 pl-6 font-body text-[12.5px] text-muted hover:bg-chip hover:text-ink">{NL_TIER_LABEL[tier]}</Link>
+                    ))}
+                  </div>
                 ))}
               </div>
             ))}

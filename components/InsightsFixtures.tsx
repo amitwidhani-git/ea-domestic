@@ -19,7 +19,7 @@ import SpinzwinPromo from "@/components/SpinzwinPromo";
 import Bet247Promo from "@/components/Bet247Promo";
 import BetwayPromo from "@/components/BetwayPromo";
 import { useBackFrom } from "@/lib/useBackFrom";
-import { LEAGUE_CODES } from "@/lib/leagues";
+import { LEAGUE_CODES, NL_TIERS, NL_TIER_LABEL, nlTierFromRound, type NLTier } from "@/lib/leagues";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 
 // The real partner strip banners — randomised into the All Fixtures list
@@ -75,6 +75,14 @@ function kickoffLabel(iso: string): string {
 
 const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
 
+// "Nations League • League A" (tier derived from round), falling back to the
+// raw round string for knockout rounds ("Semi-finals", "Play-offs A/B", …)
+// that don't carry a single tier.
+function nlCompetitionLabel(round: string | null | undefined): string {
+  const tier = nlTierFromRound(round);
+  return tier ? `Nations League • ${NL_TIER_LABEL[tier]}` : round ? `Nations League • ${round}` : "Nations League";
+}
+
 function teamLink(id: string, name: string) {
   return (
     <Link href={`/teams/${id}`} className="relative z-20 underline decoration-accent underline-offset-2 sm:no-underline hover:text-accent transition-colors">{name}</Link>
@@ -94,6 +102,9 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
       {/* top row */}
       <div className="mb-3.5 flex items-center gap-2">
         <span className="rounded-md bg-chip px-1.5 py-1 font-data text-[10.5px] font-semibold tracking-wide text-muted">{fixture.league}</span>
+        {fixture.league === "NL" && (
+          <span className="font-data text-[10px] text-muted">{nlCompetitionLabel(fixture.round)}</span>
+        )}
         <span className="font-data text-xs text-muted">{kickoffLabel(fixture.kickoff_utc)}</span>
         {bestSignal && (
           <span className="ml-auto rounded-full bg-accent/10 px-2.5 py-1 font-data text-xs font-semibold text-accent-ink">
@@ -212,6 +223,21 @@ function inWhen(iso: string, when: WhenKey): boolean {
   return diffDays >= -1 && diffDays <= 14; // full week (generous)
 }
 
+// "International" group — Nations League tier chips. Picking a tier implies
+// league=NL (handled by the caller); picking "All tiers" clears the tier
+// without touching whatever league chip is already selected.
+function TierFilterBar({ tier, onChange }: { tier: NLTier | null; onChange: (t: NLTier | null) => void }) {
+  return (
+    <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <span className="shrink-0 font-data text-[10px] uppercase tracking-widest text-muted">International:</span>
+      <button onClick={() => onChange(null)} className={pillClass(tier === null)}>Nations League (all tiers)</button>
+      {NL_TIERS.map((t) => (
+        <button key={t} onClick={() => onChange(t)} className={pillClass(tier === t)}>Nations League - {NL_TIER_LABEL[t]}</button>
+      ))}
+    </div>
+  );
+}
+
 function tabClass(active: boolean): string {
   return `rounded-[10px] border px-4 py-2 font-data text-xs uppercase tracking-widest transition-colors ${
     active ? "border-accent bg-accent/10 text-accent" : "border-line text-ink hover:border-muted"
@@ -233,6 +259,10 @@ export default function InsightsFixtures({
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [league, setLeague] = useState<"ALL" | League>("ALL");
+  // Nations League tier — a second, narrower filter that only makes sense
+  // alongside the league chips (tiers aren't separate league codes in Mongo,
+  // just a `round` label on NL matches), so selecting a tier also selects NL.
+  const [tier, setTier] = useState<NLTier | null>(null);
   const [sort, setSort] = useState<SortKey>("date");
   const [pendingHash, setPendingHash] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -298,7 +328,10 @@ export default function InsightsFixtures({
   }, [highlightId]);
 
   const visible = useMemo(() => {
-    const list = league === "ALL" ? upcoming : upcoming.filter((u) => u.fixture.league === league);
+    const list = upcoming.filter((u) =>
+      (league === "ALL" || u.fixture.league === league) &&
+      (tier === null || nlTierFromRound(u.fixture.round) === tier),
+    );
     const confidence = (u: UpcomingFixtureWithSignal) =>
       u.prediction ? u.prediction.probs[u.prediction.pick] : -Infinity;
     const byDate = (a: UpcomingFixtureWithSignal, b: UpcomingFixtureWithSignal) =>
@@ -314,7 +347,7 @@ export default function InsightsFixtures({
       }
       return byDate(a, b);
     });
-  }, [upcoming, league, sort]);
+  }, [upcoming, league, tier, sort]);
 
   return (
     <section>
@@ -366,14 +399,21 @@ export default function InsightsFixtures({
             {/* competition chips */}
             <div className="mt-3 -mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {LEAGUE_FILTERS.map((lg) => (
-                <button key={lg} onClick={() => setLeague(lg)} className={pillClass(league === lg)}>
+                <button key={lg} onClick={() => { setLeague(lg); setTier(null); }} className={pillClass(league === lg)}>
                   {lg === "ALL" ? "All" : lg}
                 </button>
               ))}
             </div>
+            <div className="mt-2">
+              <TierFilterBar tier={tier} onChange={(t) => { setTier(t); setLeague("NL"); }} />
+            </div>
 
             {(() => {
-              const list = signals.filter((s) => (league === "ALL" || s.league === league) && inWhen(s.kickoff_utc, when));
+              const list = signals.filter((s) =>
+                (league === "ALL" || s.league === league) &&
+                (tier === null || nlTierFromRound(s.round) === tier) &&
+                inWhen(s.kickoff_utc, when),
+              );
               if (list.length === 0) {
                 return <p className="mt-8 font-data text-sm text-muted">No value signals for this filter.</p>;
               }
@@ -419,7 +459,7 @@ export default function InsightsFixtures({
         <div className="mt-6">
           <div className="flex flex-wrap items-center gap-2">
             {LEAGUE_FILTERS.map((lg) => (
-              <button key={lg} onClick={() => setLeague(lg)} className={pillClass(league === lg)}>
+              <button key={lg} onClick={() => { setLeague(lg); setTier(null); }} className={pillClass(league === lg)}>
                 {lg === "ALL" ? "All" : lg}
               </button>
             ))}
@@ -438,6 +478,9 @@ export default function InsightsFixtures({
               </div>
             </div>
             <span className="font-data text-xs text-ink self-center">{visible.length} fixtures</span>
+          </div>
+          <div className="mt-2">
+            <TierFilterBar tier={tier} onChange={(t) => { setTier(t); setLeague("NL"); }} />
           </div>
 
           {loading && !loaded ? (

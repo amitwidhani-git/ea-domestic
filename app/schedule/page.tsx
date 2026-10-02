@@ -22,6 +22,7 @@ import SubscribeRegister from "@/components/SubscribeRegister";
 import { useBackFrom } from "@/lib/useBackFrom";
 import { formatMinute } from "@/lib/matchEvents";
 import { IS_CUP, type League } from "@/lib/types";
+import { nlTierFromRound, NL_TIER_LABEL } from "@/lib/leagues";
 
 // A single strip banner sits above each week's date line. The first match
 // week always leads with LiveScoreBet; later weeks draw a randomised pick
@@ -79,6 +80,7 @@ interface ScheduleRow {
   score: { home: number | null; away: number | null };
   penalty_score: { home: number; away: number } | null;
   api_fixture_id: number | null;
+  round?: string | null;
   prediction: {
     probs: { home: number; draw: number; away: number };
     pick: "home" | "draw" | "away";
@@ -124,6 +126,14 @@ function weekKey(iso: string): string {
   // (Fri=0 ... Thu=6) so midweek holiday fixtures still fall in the right round.
   fri.setDate(d.getDate() - ((d.getDay() + 2) % 7));
   return fri.toISOString().slice(0, 10);
+}
+
+// "Nations League • League A" (tier derived from round), falling back to the
+// raw round string for knockout rounds ("Semi-finals", "Play-offs A/B", …)
+// that don't carry a single tier.
+function nlCompetitionLabel(round: string | null | undefined): string {
+  const tier = nlTierFromRound(round);
+  return tier ? `Nations League • ${NL_TIER_LABEL[tier]}` : round ? `Nations League • ${round}` : "Nations League";
 }
 
 function kickoffLabel(iso: string): string {
@@ -322,6 +332,9 @@ function SchedulePageInner() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <LeagueBadge league={row.league} />
+                      {row.league === "NL" && (
+                        <span className="font-data text-[9px] uppercase tracking-wide text-muted">{nlCompetitionLabel(row.round)}</span>
+                      )}
                       <span className="font-data text-[10px] text-ink">{kickoffLabel(row.kickoff_utc)}</span>
                       {live && (
                         <span className="inline-flex items-center gap-1 border border-green-500/60 px-1.5 py-0.5 font-data text-[9px] text-green-400">

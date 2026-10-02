@@ -4,6 +4,7 @@ import Link from "next/link";
 import ClubCrest from "@/components/ClubCrest";
 import StatsInsights from "@/components/StatsInsights";
 import { useBackFrom } from "@/lib/useBackFrom";
+import { NL_TIER_LABEL, nlTierFromRound } from "@/lib/leagues";
 import type { EvOutcome, EvSignal } from "@/lib/types";
 import type { CtaAffiliate } from "@/lib/affiliates";
 
@@ -95,6 +96,13 @@ function kickoffLabel(iso: string): string {
   }).formatToParts(new Date(iso));
   const g = (t: string) => p.find((x) => x.type === t)?.value ?? "";
   return `${g("weekday")} ${g("day")} ${g("month")} · ${g("hour")}:${g("minute")}`;
+}
+
+// "Nations League • League A" (tier derived from round), falling back to the
+// raw round string for knockout rounds that don't carry a single tier.
+function nlCompetitionLabel(round: string | null | undefined): string {
+  const tier = nlTierFromRound(round);
+  return tier ? `Nations League • ${NL_TIER_LABEL[tier]}` : round ? `Nations League • ${round}` : "Nations League";
 }
 
 function outcomeName(signal: EvSignal, o: EvOutcome): string {
@@ -198,6 +206,9 @@ export default function ValueSignalCard({
       {/* top row */}
       <div className="mb-3.5 flex items-center gap-2">
         <span className="rounded-md bg-chip px-1.5 py-1 font-data text-[10.5px] font-semibold tracking-wide text-muted">{signal.league}</span>
+        {signal.league === "NL" && (
+          <span className="font-data text-[10px] text-muted">{nlCompetitionLabel(signal.round)}</span>
+        )}
         {signal.kickoff_utc && <span className="font-data text-xs text-muted">{kickoffLabel(signal.kickoff_utc)}</span>}
         <span className="ml-auto text-muted" title="Frozen before kick-off"><Lock /></span>
       </div>

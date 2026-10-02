@@ -108,6 +108,7 @@ export async function getFixtures(): Promise<FixtureWithPrediction[]> {
       away_team: teamName.get(String(m.awayTeamId)) ?? (String(m.awayTeamId)),
       home_team_id: String(m.homeTeamId),
       away_team_id: String(m.awayTeamId),
+      round: (m.round as string | undefined) ?? null,
     };
     const prediction: Prediction | null = pred
       ? {
@@ -172,6 +173,7 @@ export async function getTrackRecord(): Promise<TrackRecordRow[]> {
           away_team: teamName.get(String(m.awayTeamId)) ?? (String(m.awayTeamId)),
           home_team_id: String(m.homeTeamId),
           away_team_id: String(m.awayTeamId),
+          round: (m.round as string | undefined) ?? null,
         },
         prediction: {
           match_id: String(p.matchId),
@@ -288,6 +290,7 @@ export async function getPredictionCoverage(): Promise<{ predicting: number; tot
 interface FixtureInfo {
   homeTeam: string; awayTeam: string; homeTeamId: string; awayTeamId: string; kickoffUtc: string;
   homeApiFootballId: number | null; awayApiFootballId: number | null; status: string; season: string;
+  round: string | null;
 }
 
 // Shared by getEvSignals/getSettledEvSignals — resolves matchId -> display
@@ -317,6 +320,7 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
       awayApiFootballId: m ? teamApiFootballId.get(String(m.awayTeamId)) ?? null : null,
       status: m ? (m.status as string) : "",
       season: m ? (m.season as string) : "",
+      round: m ? ((m.round as string | undefined) ?? null) : null,
     });
   }
   return out;
@@ -460,6 +464,7 @@ export async function getEvSignals(): Promise<EvSignal[]> {
       match_id: mid,
       league: bestValueDoc.league as League,
       season: f.season,
+      round: f.round,
       created_at: bestValueDoc.createdAt as string,
       home_team: f?.homeTeam ?? mid,
       away_team: f?.awayTeam ?? "",
@@ -686,6 +691,7 @@ export async function getUpcomingWithSignals(): Promise<UpcomingFixtureWithSigna
       away_team_id: String(m.awayTeamId),
       home_api_football_id: teamApiFootballId.get(String(m.homeTeamId)) ?? null,
       away_api_football_id: teamApiFootballId.get(String(m.awayTeamId)) ?? null,
+      round: (m.round as string | undefined) ?? null,
     };
     return {
       fixture,

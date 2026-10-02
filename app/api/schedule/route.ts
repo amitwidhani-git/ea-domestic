@@ -70,7 +70,7 @@ export async function GET() {
         const p = predMap.get(mid);
         return {
           match_id: mid, league: m.league, season: m.season,
-          kickoff_utc: m.kickoffUtc, status: m.status,
+          kickoff_utc: m.kickoffUtc, status: m.status, round: m.round ?? null,
           home_team: teamName.get(String(m.homeTeamId)) ?? String(m.homeTeamId),
           away_team: teamName.get(String(m.awayTeamId)) ?? String(m.awayTeamId),
           home_team_id: String(m.homeTeamId),
