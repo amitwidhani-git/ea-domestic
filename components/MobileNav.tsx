@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import { openSubscribe, SUBSCRIBE_ENABLED } from "@/components/SubscribeModal";
-import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES } from "@/lib/leagues";
+import { COUNTRIES, COUNTRY_LEAGUES, CONTINENTAL_LEAGUES, LEAGUES } from "@/lib/leagues";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -90,6 +90,14 @@ export default function MobileNav() {
               ))}
             </div>
           ))}
+          {CONTINENTAL_LEAGUES.length > 0 && (
+            <div>
+              <span className="block px-3 pb-1 pt-2 font-body text-[10px] font-semibold uppercase tracking-wider text-muted/70">European</span>
+              {CONTINENTAL_LEAGUES.map((lg) => (
+                <Link key={lg} href={`/teams?euro=${lg}`} className="block rounded-[10px] px-3 py-2.5 font-body text-[15px] text-ink hover:bg-chip">{LEAGUES[lg].name}</Link>
+              ))}
+            </div>
+          )}
           <Link href="/teams" className="rounded-[10px] px-3 py-2.5 font-body text-[15px] text-accent-ink hover:bg-chip">All teams →</Link>
           <Link href={OFFERS_LINK.href}
             aria-current={isActive(pathname, OFFERS_LINK.href) ? "page" : undefined}

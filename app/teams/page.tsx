@@ -1,6 +1,5 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { MongoClient, type Db } from "mongodb";
-import ClubCrest from "@/components/ClubCrest";
 import BetanoPromo from "@/components/BetanoPromo";
 import BetMazePromo from "@/components/BetMazePromo";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
@@ -12,8 +11,11 @@ import MonsterCasinoPromo from "@/components/MonsterCasinoPromo";
 import SpinzwinPromo from "@/components/SpinzwinPromo";
 import Bet247Promo from "@/components/Bet247Promo";
 import BetwayPromo from "@/components/BetwayPromo";
-import { LEAGUE_NAMES } from "@/lib/types";
-import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES, leagueLogoUrl, type League } from "@/lib/leagues";
+import LeagueSection, { type TeamDoc } from "@/components/teams/LeagueSection";
+import CountryBlock from "@/components/teams/CountryBlock";
+import EuroFilterBar from "@/components/teams/EuroFilterBar";
+import { EuroFilterProvider } from "@/components/teams/EuroFilterContext";
+import { COUNTRIES, COUNTRY_LEAGUES, CONTINENTAL_LEAGUES, LEAGUES, type League } from "@/lib/leagues";
 
 // Strip banner shown above every league section from the second one onward
 // (Premier League leads the page under the fixed BetanoPromo, so it gets none).
@@ -84,14 +86,6 @@ async function db(): Promise<Db> {
   return client.db(process.env.MONGODB_DB ?? "edgeanalysts");
 }
 
-interface TeamDoc {
-  _id: string;
-  league: League;
-  name: string;
-  aliases?: { apiFootball?: number | null };
-  elo?: number | null;
-}
-
 // Domestic leagues only — a cup competition (isCup: true, e.g. Champions
 // League) has no standalone squad list; its clubs already appear under
 // their own domestic league.
@@ -112,29 +106,45 @@ async function getTeams(): Promise<Map<League, TeamDoc[]>> {
   return grouped;
 }
 
-function ClubCard({ team }: { team: TeamDoc }) {
-  return (
-    <Link
-      href={`/teams/${team._id}`}
-      className="flex items-center gap-3 border border-line bg-panel p-4 transition-colors hover:border-accent hover:bg-panel2"
-    >
-      <ClubCrest apiFootballId={team.aliases?.apiFootball ?? null} clubName={team.name} size={40} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-display text-lg tracking-wide text-ink">{team.name}</p>
-        {team.elo != null ? (
-          <p className="mt-0.5 font-data text-xs text-muted">Elo {team.elo}</p>
-        ) : (
-          <span className="mt-0.5 inline-block border border-accent px-1.5 py-0.5 font-data text-[9px] uppercase tracking-widest text-accent">
-            New
-          </span>
-        )}
-      </div>
-    </Link>
+/**
+ * Which European competition (if any) each team is in this season. UCL/UEL/
+ * UECL teams play their day-to-day football in a domestic league — there's
+ * no standalone squad list for these (see DOMESTIC_LEAGUES above) — so this
+ * is read as an overlay badge on the team's existing domestic card instead,
+ * via the `matches` collection (the only place that reliably carries both
+ * `league` and both team ids for every fixture; `predictions` has neither).
+ * Scoped to each competition's own latest season so a team that played
+ * Champions League three years ago doesn't carry the badge forever.
+ */
+async function getEuroBadges(): Promise<Record<string, League[]>> {
+  const d = await db();
+  const badges = new Map<string, Set<League>>();
+
+  await Promise.all(
+    CONTINENTAL_LEAGUES.map(async (league) => {
+      const seasons = await d.collection("matches").distinct("season", { league });
+      const latest = (seasons as string[]).sort().pop();
+      if (!latest) return;
+      const matches = await d
+        .collection("matches")
+        .find({ league, season: latest }, { projection: { homeTeamId: 1, awayTeamId: 1 } })
+        .toArray();
+      for (const m of matches) {
+        for (const teamId of [String(m.homeTeamId), String(m.awayTeamId)]) {
+          if (!badges.has(teamId)) badges.set(teamId, new Set());
+          badges.get(teamId)!.add(league);
+        }
+      }
+    }),
   );
+
+  const out: Record<string, League[]> = {};
+  for (const [teamId, set] of badges) out[teamId] = [...set];
+  return out;
 }
 
 export default async function TeamsPage() {
-  const grouped = await getTeams();
+  const [grouped, euroBadges] = await Promise.all([getTeams(), getEuroBadges()]);
   const totalTeams = [...grouped.values()].reduce((n, teams) => n + teams.length, 0);
 
   // Flat render order of the league sections (countries in display order, then
@@ -147,56 +157,41 @@ export default async function TeamsPage() {
   const promoRotation = promoSequence(STRIP_PROMOS, Math.max(0, leagueOrder.length - 1));
 
   return (
-    <div className="space-y-10">
-      <BetanoPromo />
-      <div>
-        <h1 className="font-display text-4xl tracking-wide">Teams</h1>
-        <p className="mt-2 max-w-2xl text-sm text-ink">
-          {totalTeams} teams across every league we track. Click any team for squad news, model
-          ratings and upcoming fixtures.
-        </p>
-      </div>
-
-      {COUNTRIES.map((country) => {
-        const leagues = COUNTRY_LEAGUES[country].filter((code) => (grouped.get(code) ?? []).length > 0);
-        if (leagues.length === 0) return null;
-        return (
-          <div key={country} className="space-y-8">
-            <h2 className="font-data text-xs font-bold uppercase tracking-[0.15em] text-muted">{country}</h2>
-            {leagues.map((league) => {
-              const teams = grouped.get(league) ?? [];
-              const ordinal = leagueOrder.indexOf(league);
-              const StripPromo = ordinal >= 1 ? promoRotation[ordinal - 1] : null;
-              return (
-                <section key={league} id={league} className="scroll-mt-20">
-                  {StripPromo && (
-                    <div className="mb-8">
-                      <StripPromo />
-                    </div>
-                  )}
-                  <div className="mb-4 flex items-center gap-2 border-b border-line pb-2">
-                    <img
-                      src={leagueLogoUrl(league)}
-                      alt={`${LEAGUE_NAMES[league]} logo`}
-                      width={24}
-                      height={24}
-                      className="h-6 w-6 object-contain"
-                    />
-                    <h3 className="font-display text-2xl tracking-wide">{LEAGUE_NAMES[league]}</h3>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {teams.map((team) => (
-                      <ClubCard key={team._id} team={team} />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
+    <Suspense fallback={null}>
+      <EuroFilterProvider>
+        <div className="space-y-10">
+          <BetanoPromo />
+          <div>
+            <h1 className="font-display text-4xl tracking-wide">Teams</h1>
+            <p className="mt-2 max-w-2xl text-sm text-ink">
+              {totalTeams} teams across every league we track. Click any team for squad news, model
+              ratings and upcoming fixtures.
+            </p>
           </div>
-        );
-      })}
 
-      <BetwayPromo />
-    </div>
+          <EuroFilterBar />
+
+          {COUNTRIES.map((country) => {
+            const leagues = COUNTRY_LEAGUES[country].filter((code) => (grouped.get(code) ?? []).length > 0);
+            if (leagues.length === 0) return null;
+            const teamsByLeague = Object.fromEntries(leagues.map((lg) => [lg, grouped.get(lg) ?? []]));
+            return (
+              <CountryBlock key={country} country={country} teamsByLeague={teamsByLeague} euroBadges={euroBadges}>
+                {leagues.map((league) => {
+                  const teams = grouped.get(league) ?? [];
+                  const ordinal = leagueOrder.indexOf(league);
+                  const StripPromo = ordinal >= 1 ? promoRotation[ordinal - 1] : null;
+                  return (
+                    <LeagueSection key={league} league={league} teams={teams} euroBadges={euroBadges} stripPromo={StripPromo} />
+                  );
+                })}
+              </CountryBlock>
+            );
+          })}
+
+          <BetwayPromo />
+        </div>
+      </EuroFilterProvider>
+    </Suspense>
   );
 }

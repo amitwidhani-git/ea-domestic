@@ -7,7 +7,7 @@
  * it's a new country), done.
  */
 
-export type Country = "England" | "Scotland" | "Germany" | "Netherlands" | "France" | "Spain" | "Portugal" | "Italy";
+export type Country = "England" | "England Women" | "Scotland" | "Germany" | "Netherlands" | "France" | "Spain" | "Portugal" | "Italy";
 
 export interface LeagueMeta {
   name: string;
@@ -37,8 +37,10 @@ export const LEAGUES = {
   FAC: { name: "FA Cup", fullName: "FA Cup", country: "England", isCup: true, badgeColor: "border-red-500/60 text-red-400", apiFootballId: 45 },
   LC: { name: "League Cup", fullName: "EFL Cup", country: "England", isCup: true, badgeColor: "border-orange-500/60 text-orange-400", apiFootballId: 48 },
   CS: { name: "Community Shield", fullName: "FA Community Shield", country: "England", isCup: true, badgeColor: "border-yellow-500/60 text-yellow-400", apiFootballId: 528 },
+  WSL: { name: "Women's Super League", fullName: "FA Women's Super League", country: "England Women", isCup: false, badgeColor: "border-neutral-400/60 text-neutral-300", apiFootballId: 44 },
   SPL: { name: "Scottish Premiership", fullName: "Scottish Premiership", country: "Scotland", isCup: false, badgeColor: "border-blue-500/60 text-blue-400", apiFootballId: 179 },
   SCH: { name: "Scottish Championship", fullName: "Scottish Championship", country: "Scotland", isCup: false, badgeColor: "border-indigo-500/60 text-indigo-400", apiFootballId: 180 },
+  SLC: { name: "Scottish League Cup", fullName: "Scottish League Cup", country: "Scotland", isCup: true, badgeColor: "border-orange-300/60 text-orange-200", apiFootballId: 181 },
   BL1: { name: "Bundesliga", fullName: "Bundesliga", country: "Germany", isCup: false, badgeColor: "border-rose-500/60 text-rose-400", apiFootballId: 78 },
   SPD: { name: "2. Bundesliga", fullName: "2. Bundesliga", country: "Germany", isCup: false, badgeColor: "border-pink-500/60 text-pink-400", apiFootballId: 79 },
   DED: { name: "Eredivisie", fullName: "Eredivisie", country: "Netherlands", isCup: false, badgeColor: "border-teal-500/60 text-teal-400", apiFootballId: 88 },
@@ -49,6 +51,8 @@ export const LEAGUES = {
   SA: { name: "Serie A", fullName: "Serie A", country: "Italy", isCup: false, badgeColor: "border-green-500/60 text-green-400", apiFootballId: 135 },
   SA2: { name: "Serie B", fullName: "Serie B", country: "Italy", isCup: false, badgeColor: "border-stone-500/60 text-stone-400", apiFootballId: 136 },
   UCL: { name: "Champions League", fullName: "UEFA Champions League", country: null, isCup: true, badgeColor: "border-zinc-400/60 text-zinc-300", apiFootballId: 2 },
+  UEL: { name: "Europa League", fullName: "UEFA Europa League", country: null, isCup: true, badgeColor: "border-slate-400/60 text-slate-300", apiFootballId: 3 },
+  UECL: { name: "Conference League", fullName: "UEFA Europa Conference League", country: null, isCup: true, badgeColor: "border-gray-400/60 text-gray-300", apiFootballId: 848 },
 } as const satisfies Record<string, LeagueMeta>;
 
 export type League = keyof typeof LEAGUES;
@@ -56,8 +60,8 @@ export type League = keyof typeof LEAGUES;
 /** All league codes, in registry (display) order. */
 export const LEAGUE_CODES = Object.keys(LEAGUES) as League[];
 
-/** Countries in display order — England/Scotland first (the site's original base), then continental Europe alphabetically. */
-export const COUNTRIES: Country[] = ["England", "Scotland", "France", "Germany", "Italy", "Netherlands", "Portugal", "Spain"];
+/** Countries in display order — England/England Women/Scotland first (the site's original base), then continental Europe alphabetically. */
+export const COUNTRIES: Country[] = ["England", "England Women", "Scotland", "France", "Germany", "Italy", "Netherlands", "Portugal", "Spain"];
 
 /** Leagues grouped by country, in registry order within each group. */
 export const COUNTRY_LEAGUES: Record<Country, League[]> = COUNTRIES.reduce((acc, country) => {

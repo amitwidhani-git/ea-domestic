@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { COUNTRIES, COUNTRY_LEAGUES, LEAGUES } from "@/lib/leagues";
+import { COUNTRIES, COUNTRY_LEAGUES, CONTINENTAL_LEAGUES, LEAGUES } from "@/lib/leagues";
 
 const TABS = [
   { href: "/insights", label: "Insights & Odds" },
@@ -64,6 +64,14 @@ export default function NavTabs() {
                 ))}
               </div>
             ))}
+            {CONTINENTAL_LEAGUES.length > 0 && (
+              <div>
+                <span className="mt-1.5 block px-3 pb-1 font-body text-[10px] font-semibold uppercase tracking-wider text-muted/70">European</span>
+                {CONTINENTAL_LEAGUES.map((lg) => (
+                  <Link key={lg} href={`/teams?euro=${lg}`} className="block rounded-lg px-3 py-2 font-body text-[13.5px] text-ink hover:bg-chip">{LEAGUES[lg].name}</Link>
+                ))}
+              </div>
+            )}
             <Link href="/teams" className="mt-1 block rounded-lg px-3 py-2 font-body text-[13.5px] text-accent-ink hover:bg-chip">All teams →</Link>
           </div>
         )}
