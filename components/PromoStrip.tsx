@@ -4,8 +4,10 @@
  * Scrolls horizontally on mobile. Each card: logo, name, badge, single CTA.
  * Ad disclosure on each card — ASA requirement.
  */
+"use client";
 import type { Affiliate } from "@/lib/affiliates";
 import { isLive } from "@/lib/affiliates";
+import { trackAffiliateClick } from "@/lib/gtag";
 
 export default function PromoStrip({ affiliates }: { affiliates: Affiliate[] }) {
   const live = affiliates.filter(isLive);
@@ -34,6 +36,7 @@ export default function PromoStrip({ affiliates }: { affiliates: Affiliate[] }) 
               href={`/go/${a.id}`}
               target="_blank"
               rel="sponsored noopener"
+              onClick={() => trackAffiliateClick({ bookmaker: a.id })}
               aria-label={`${a.name} — ${a.tagline ?? "Sports Betting"}. ${a.termsLabel ?? "T&Cs apply"}`}
               className="promo-card group relative flex shrink-0 flex-col justify-between border border-line bg-panel transition-colors hover:border-accent/60"
               style={{ width: 160, minHeight: 88, padding: "10px 12px" }}

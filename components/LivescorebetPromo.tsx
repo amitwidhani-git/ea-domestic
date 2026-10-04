@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function LivescorebetPromo() {
   return (
     <section>
@@ -21,6 +24,7 @@ export default function LivescorebetPromo() {
           href="/go/livescorebet"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "livescorebet" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#FF5500] px-4 py-2.5 font-display text-base tracking-wider text-white transition-[filter] hover:brightness-105"
         >
           Claim Offer

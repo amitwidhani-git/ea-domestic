@@ -5,6 +5,7 @@ import LeagueBadge from "@/components/LeagueBadge";
 import ClubCrest from "@/components/ClubCrest";
 import { useBackFrom } from "@/lib/useBackFrom";
 import { formatMinute, eventIcon } from "@/lib/matchEvents";
+import { trackAffiliateClick } from "@/lib/gtag";
 import type { LiveMatchCard } from "@/lib/data";
 import type { League } from "@/lib/types";
 
@@ -53,6 +54,7 @@ function Card({ m, backFrom }: { m: LiveMatchCard; backFrom: string }) {
 
       {m.cta && (
         <a href={`/go/${m.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
+          onClick={() => trackAffiliateClick({ bookmaker: m.cta!.affiliateId, matchId: m.matchId, league: m.league })}
           className="relative z-20 mt-2.5 flex items-center justify-center gap-1.5 rounded-[9px] bg-accent py-1.5 font-body text-[12px] font-bold text-accent-fg transition-[filter] hover:brightness-105">
           Bet now
         </a>

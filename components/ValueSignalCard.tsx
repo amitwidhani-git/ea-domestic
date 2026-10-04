@@ -5,6 +5,7 @@ import ClubCrest from "@/components/ClubCrest";
 import StatsInsights from "@/components/StatsInsights";
 import { useBackFrom } from "@/lib/useBackFrom";
 import { NL_TIER_LABEL, nlTierFromRound } from "@/lib/leagues";
+import { trackAffiliateClick } from "@/lib/gtag";
 import type { EvOutcome, EvSignal } from "@/lib/types";
 import type { CtaAffiliate } from "@/lib/affiliates";
 
@@ -154,6 +155,7 @@ function BackCta({
   return (
     <a
       href={`/go/${outcome.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
+      onClick={() => trackAffiliateClick({ bookmaker: outcome.cta!.affiliateId, matchId: signal.match_id, league: signal.league, odds: outcome.best_price })}
       className={`mt-2 flex items-center gap-2.5 rounded-[10px] px-3.5 py-2.5 font-data text-sm font-bold transition-[filter] hover:brightness-105 ${
         primary ? "bg-accent text-accent-fg" : "border border-accent/40 text-accent-ink"
       }`}
@@ -288,6 +290,7 @@ export default function ValueSignalCard({
                               partner would misleadingly imply we're partnered with all of them. */}
                           {r.cta && !r.cta.isFallback && (
                             <a href={`/go/${r.cta.affiliateId}`} rel="sponsored nofollow" target="_blank"
+                              onClick={() => trackAffiliateClick({ bookmaker: r.cta!.affiliateId, matchId: signal.match_id, league: signal.league, odds: r.prices[signal.bestValue.selection] })}
                               className="flex items-center gap-1 rounded-[6px] border border-accent/40 px-1.5 py-0.5 font-data text-[10px] font-bold text-accent-ink hover:bg-accent/10">
                               <AffiliateLogo cta={r.cta} /> Bet
                             </a>

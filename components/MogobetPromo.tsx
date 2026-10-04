@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function MogobetPromo() {
   return (
     <section>
@@ -23,6 +26,7 @@ export default function MogobetPromo() {
           href="/go/mogobet"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "mogobet" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#FF0B00] px-4 py-2 font-display text-base tracking-wider text-white transition-[filter] hover:brightness-105"
         >
           Claim Offer

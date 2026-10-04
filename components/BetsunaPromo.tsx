@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function BetsunaPromo() {
   return (
     <section>
@@ -25,6 +28,7 @@ export default function BetsunaPromo() {
           href="/go/betsuna"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "betsuna" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#F42807] px-4 py-2 font-display text-base tracking-wider text-white transition-[filter] hover:brightness-105"
         >
           Claim Offer

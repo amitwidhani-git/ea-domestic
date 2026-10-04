@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function BetwayPromo() {
   return (
     <section>
@@ -35,6 +38,7 @@ export default function BetwayPromo() {
           href="/go/betway"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "betway" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#009900] px-4 py-2 font-display text-base tracking-wider text-white transition-[filter] hover:brightness-105"
         >
           Claim Offer

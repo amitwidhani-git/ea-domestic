@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function BetsunaBannerCard() {
   return (
     <div className="bg-panel p-4">
@@ -5,6 +8,7 @@ export default function BetsunaBannerCard() {
         href="/go/betsuna"
         target="_blank"
         rel="sponsored noopener"
+        onClick={() => trackAffiliateClick({ bookmaker: "betsuna" })}
         className="block overflow-hidden border border-[#F42807]/40"
       >
         <img
@@ -20,6 +24,7 @@ export default function BetsunaBannerCard() {
         href="/go/betsuna"
         target="_blank"
         rel="sponsored noopener"
+        onClick={() => trackAffiliateClick({ bookmaker: "betsuna" })}
         className="mt-2 flex items-center justify-center whitespace-nowrap border border-accent bg-accent px-[17px] py-1 font-display text-[15.3px] tracking-wider text-accent-fg transition-colors hover:bg-accent/80"
       >
         Claim Offer

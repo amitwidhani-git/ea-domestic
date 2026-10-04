@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function CopyBetPromo() {
   return (
     <section>
@@ -20,6 +23,7 @@ export default function CopyBetPromo() {
           href="/go/copybet"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "copybet" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#CEE53F] px-4 py-2 font-display text-base tracking-wider text-[#19283C] transition-[filter] hover:brightness-105"
         >
           Claim Offer

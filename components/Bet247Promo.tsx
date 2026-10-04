@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function Bet247Promo() {
   return (
     <section>
@@ -25,6 +28,7 @@ export default function Bet247Promo() {
           href="/go/247bet"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "247bet" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#26DE2E] px-4 py-2 font-display text-base tracking-wider text-[#0A0E1E] transition-[filter] hover:brightness-105"
         >
           Claim Offer

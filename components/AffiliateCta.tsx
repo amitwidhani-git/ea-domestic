@@ -1,10 +1,13 @@
+"use client";
 import type { Affiliate } from "@/lib/affiliates";
+import { trackAffiliateClick } from "@/lib/gtag";
 export default function AffiliateCta({ affiliate, price }: { affiliate: Affiliate; price?: number }) {
   return (
     <span className="inline-flex flex-col items-end gap-1">
       <span className="inline-flex items-center gap-2">
         <span className="font-data text-[9px] uppercase tracking-widest text-ink" aria-label="Advertisement">Ad·18+</span>
         <a href={`/go/${affiliate.id}`} target="_blank" rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: affiliate.id, odds: price })}
           className="border border-accent bg-accent/10 px-3 py-1.5 font-data text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-fg">
           {price ? `Back at ${price.toFixed(2)} · ${affiliate.name}` : affiliate.name} →
         </a>

@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function GrosvenorPromo() {
   return (
     <section>
@@ -21,6 +24,7 @@ export default function GrosvenorPromo() {
           href="/go/grosvenor"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "grosvenor" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#E8B84B] px-4 py-2 font-display text-base tracking-wider text-[#1C183D] transition-[filter] hover:brightness-105"
         >
           Claim Offer

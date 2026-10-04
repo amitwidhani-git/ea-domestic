@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function BetanoPromo() {
   return (
     <section>
@@ -24,6 +27,7 @@ export default function BetanoPromo() {
           href="/go/betano"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "betano" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#ff3c00] px-[17px] py-[8.5px] font-display text-[15.3px] tracking-wider text-white transition-[filter] hover:brightness-105"
         >
           Claim Offer

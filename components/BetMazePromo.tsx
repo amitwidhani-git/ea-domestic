@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function BetMazePromo() {
   return (
     <section>
@@ -24,6 +27,7 @@ export default function BetMazePromo() {
           href="/go/betmaze"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "betmaze" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#FFC21E] px-4 py-2 font-display text-base tracking-wider text-[#0A0E1E] transition-[filter] hover:brightness-105"
         >
           Claim Offer

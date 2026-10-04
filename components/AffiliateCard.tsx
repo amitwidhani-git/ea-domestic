@@ -1,4 +1,6 @@
+"use client";
 import type { Affiliate } from "@/lib/affiliates";
+import { trackAffiliateClick } from "@/lib/gtag";
 export default function AffiliateCard({ affiliate }: { affiliate: Affiliate }) {
   const banner = affiliate.banners?.["120x60"];
   const hasBanner = banner && /^https?:\/\//.test(banner.src);
@@ -15,7 +17,9 @@ export default function AffiliateCard({ affiliate }: { affiliate: Affiliate }) {
       </div>
       <div className="mt-3 flex items-center justify-between">
         <span className="font-data text-[9px] uppercase tracking-widest text-ink">Ad·18+</span>
-        <a href={`/go/${affiliate.id}`} target="_blank" rel="sponsored noopener" className="font-data text-xs font-semibold text-accent hover:underline">Visit →</a>
+        <a href={`/go/${affiliate.id}`} target="_blank" rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: affiliate.id })}
+          className="font-data text-xs font-semibold text-accent hover:underline">Visit →</a>
       </div>
       {affiliate.termsHref && <a href={affiliate.termsHref} target="_blank" rel="nofollow noopener" className="mt-1 inline-block font-data text-[9px] text-ink underline">{affiliate.termsLabel ?? "T&Cs apply"}</a>}
     </article>

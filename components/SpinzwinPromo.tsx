@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function SpinzwinPromo() {
   return (
     <section>
@@ -24,6 +27,7 @@ export default function SpinzwinPromo() {
           href="/go/spinzwin"
           target="_blank"
           rel="sponsored noopener"
+          onClick={() => trackAffiliateClick({ bookmaker: "spinzwin" })}
           className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#3CE619] px-4 py-2 font-display text-base tracking-wider text-[#0A0E1E] transition-[filter] hover:brightness-105"
         >
           Claim Offer

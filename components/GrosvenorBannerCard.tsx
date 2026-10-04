@@ -1,3 +1,6 @@
+"use client";
+import { trackAffiliateClick } from "@/lib/gtag";
+
 export default function GrosvenorBannerCard() {
   return (
     <div className="rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
@@ -5,6 +8,7 @@ export default function GrosvenorBannerCard() {
         href="/go/grosvenor"
         target="_blank"
         rel="sponsored noopener"
+        onClick={() => trackAffiliateClick({ bookmaker: "grosvenor" })}
         className="block overflow-hidden rounded-[10px]"
       >
         <img
@@ -20,6 +24,7 @@ export default function GrosvenorBannerCard() {
         href="/go/grosvenor"
         target="_blank"
         rel="sponsored noopener"
+        onClick={() => trackAffiliateClick({ bookmaker: "grosvenor" })}
         className="mt-2 flex items-center justify-center whitespace-nowrap rounded-[10px] bg-accent px-[17px] py-1 font-display text-[15.3px] tracking-wider text-accent-fg transition-[filter] hover:brightness-105"
       >
         Claim Offer
