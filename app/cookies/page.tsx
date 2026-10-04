@@ -13,6 +13,19 @@ const ESSENTIAL_COOKIES = [
   },
 ];
 
+const NON_ESSENTIAL_COOKIES = [
+  {
+    name: "_ga",
+    purpose: "Google Analytics (GA4) — distinguishes visitors to measure site usage.",
+    duration: "2 years",
+  },
+  {
+    name: "_ga_<container-id>",
+    purpose: "Google Analytics (GA4) — persists session state for the visit.",
+    duration: "2 years",
+  },
+];
+
 export default function CookiesPage() {
   return (
     <div className="space-y-10">
@@ -50,10 +63,18 @@ export default function CookiesPage() {
       <section className="border-t border-line pt-4">
         <h2 className="font-display text-2xl tracking-wide">Non-essential cookies</h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink">
-          We don&apos;t currently run analytics, advertising, or tracking cookies of our own. If
-          that changes — for example, to add site analytics — those scripts will only load if you
-          accept above, and this page will be updated to list them.
+          We use Google Analytics (GA4) to understand site traffic. These cookies only load if you
+          accept above — if you decline, none of them are set and no data is sent to Google.
         </p>
+        <div className="mt-4 divide-y divide-line border border-line">
+          {NON_ESSENTIAL_COOKIES.map((c) => (
+            <div key={c.name} className="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-3 sm:gap-4">
+              <span className="font-data text-xs text-accent">{c.name}</span>
+              <span className="text-sm text-ink sm:col-span-1">{c.purpose}</span>
+              <span className="font-data text-xs text-ink sm:text-right">{c.duration}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="border-t border-line pt-4">
