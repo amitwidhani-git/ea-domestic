@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import SubscribeModal, { SubscribeButton } from "@/components/SubscribeModal";
 import GlobalFooter from "@/components/GlobalFooter";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import Analytics from "@/components/Analytics";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <SubscribeModal />
         <CookieConsentBanner />
+        <Analytics />
 
       </body>
     </html>
