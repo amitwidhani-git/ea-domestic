@@ -58,6 +58,9 @@ async function db(): Promise<Db> {
   return client.db(process.env.MONGODB_DB ?? "edgeanalysts");
 }
 
+/** Shared cached connection for other data modules (e.g. lib/trackRecord.ts). */
+export const getDb = db;
+
 // ---------------------------------------------------------------- fixtures
 
 export interface FixtureWithPrediction {
