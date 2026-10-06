@@ -165,11 +165,11 @@ export default async function HomePage() {
         <section>
           <h2 className="mb-3.5 font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">What Makes Us Different</h2>
           <div className="grid gap-3.5 sm:grid-cols-3">
-            <TrustCell title="Pre Match Lock" body="We lock in every football prediction before kick-off and timestamp it, so we can never quietly change our pick after seeing the result."
+            <TrustCell title="Pre-match lock" body="We lock in every football prediction before kick-off and timestamp it, so we can never quietly change our pick after seeing the result."
               icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>} />
-            <TrustCell title="Four divisions, one model" body="EdgeIQ model uses cross-league data points covering the Premier League through League Two. Promoted clubs carry earned ratings, so no cold-start guessing."
+            <TrustCell title="Every competition, one model" body="Our EdgeIQ model uses cross-league data across England, Scotland and Europe's top leagues, plus the Women's Super League, European cups and the Nations League. Promoted clubs carry earned ratings, so no cold-start guessing."
               icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18" /><path d="M7 14l4-4 3 3 5-6" /></svg>} />
-            <TrustCell title="Odds Value Signals, Not Tips" body="We publish Value Signals wherever our model probability and the best available bookmaker price diverge. Information to weigh, not a tip to follow and not gut feel."
+            <TrustCell title="Odds value signals, not tips" body="We publish value signals wherever our model probability and the best available bookmaker price diverge. Information to weigh, not a tip to follow and not gut feel."
               icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>} />
           </div>
         </section>
