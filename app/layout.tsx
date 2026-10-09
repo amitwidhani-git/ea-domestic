@@ -10,9 +10,24 @@ import Analytics from "@/components/Analytics";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://edgeanalysts.com"),
-  title: "Edge Analysts | Football Predictions & Odds Comparison",
-  description: "Data-driven, AI-assisted football predictions for the Premier League and EFL. Compared against bookmaker odds, logged before kick-off, never revised.",
+  metadataBase: new URL("https://www.edgeanalysts.com"),
+  title: {
+    default: "Edge Analysts | Football Predictions & Odds Intelligence",
+    template: "%s | Edge Analysts",
+  },
+  description:
+    "Football predictions and odds intelligence powered by EdgeIQ, our proprietary model. Every prediction logged before kick-off. Transparent, auditable track record.",
+  openGraph: {
+    siteName: "Edge Analysts",
+    type: "website",
+    description:
+      "Football predictions and odds intelligence powered by EdgeIQ. Every prediction logged before kick-off.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    description:
+      "Football predictions and odds intelligence powered by EdgeIQ. Every prediction logged before kick-off.",
+  },
 };
 
 // Applies the saved theme before first paint to avoid a light/dark flash.

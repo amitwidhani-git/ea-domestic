@@ -7,7 +7,7 @@ import { getLeaderboard, GAME_COOKIE } from "@/lib/game";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "EdgeIQ Challenge Leaderboard — Edge Analysts",
+  title: "EdgeIQ Challenge Leaderboard",
   description: "This week and season-long rankings for the EdgeIQ Challenge prediction game.",
 };
 

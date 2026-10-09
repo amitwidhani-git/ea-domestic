@@ -1,7 +1,7 @@
 import CookiePreferenceControl from "@/components/CookiePreferenceControl";
 
 export const metadata = {
-  title: "Cookie Policy | Edge Analysts",
+  title: "Cookie Policy",
   description: "How Edge Analysts uses cookies, and how to manage your preference.",
 };
 

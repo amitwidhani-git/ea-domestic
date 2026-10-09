@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ userId: s
   const { userId } = await params;
   const profile = await getGameProfile(decodeParam(userId));
   if (!profile) return {};
-  return { title: `${profile.user.displayName} — EdgeIQ Challenge — Edge Analysts` };
+  return { title: `${profile.user.displayName} — EdgeIQ Challenge` };
 }
 
 export default async function GameProfilePage({ params }: { params: Promise<{ userId: string }> }) {

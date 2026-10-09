@@ -7,7 +7,7 @@ import { getUserById, getWeekPickCards, getLeaderboard, effectiveWeeklyPts, GAME
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "EdgeIQ Challenge — Edge Analysts",
+  title: "EdgeIQ Challenge",
   description: "Pick the result for every match. See how you compare to EdgeIQ and the crowd.",
 };
 
