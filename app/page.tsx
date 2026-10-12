@@ -59,9 +59,14 @@ export default async function HomePage() {
     arr.push(s);
     byLeague.set(s.league, arr);
   }
+  // Top 2 per league keeps competition diversity in the mix, but the final
+  // display order must still be nearest-day-first across leagues too —
+  // otherwise a league earlier in LEAGUE_ORDER with a later match would
+  // still render above a different league's match happening sooner.
   const topEdges = LEAGUE_ORDER
     .filter((lg) => byLeague.has(lg))
-    .flatMap((lg) => byLeague.get(lg)!.sort(byDayThenEdge).slice(0, 2));
+    .flatMap((lg) => byLeague.get(lg)!.sort(byDayThenEdge).slice(0, 2))
+    .sort(byDayThenEdge);
 
   const all = stats.find((s) => s.league === "ALL");
   const accuracy = all ? Math.round(all.accuracy * 100) : null;

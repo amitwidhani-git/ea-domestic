@@ -49,8 +49,10 @@ function TeamHeader({ name, matchCount, isEnriched, enrichedLeague, align }: {
   );
 }
 
-function StatRow({ label, homeValue, awayValue, format = (v: number) => v.toFixed(2) }: {
+function StatRow({ label, homeValue, awayValue, format = (v: number) => v.toFixed(2), homeInsufficient, awayInsufficient }: {
   label: string; homeValue: number | undefined; awayValue: number | undefined; format?: (v: number) => string;
+  /** Dims a side's value/bar when its sample size is too small to trust — keeps the number visible without presenting it as confident. */
+  homeInsufficient?: boolean; awayInsufficient?: boolean;
 }) {
   const hv = homeValue ?? 0;
   const av = awayValue ?? 0;
@@ -60,7 +62,7 @@ function StatRow({ label, homeValue, awayValue, format = (v: number) => v.toFixe
   const awayWins = bothKnown && av > hv;
   return (
     <div className="grid grid-cols-[1fr_78px_1fr] items-center gap-1.5">
-      <div className="flex items-center justify-end gap-1.5">
+      <div className={`flex items-center justify-end gap-1.5 ${homeInsufficient ? "opacity-50" : ""}`}>
         <span className={`font-data text-xs tabular-nums ${homeWins ? "font-bold text-ink" : "text-muted"}`}>
           {homeValue != null ? format(homeValue) : "—"}
         </span>
@@ -69,7 +71,7 @@ function StatRow({ label, homeValue, awayValue, format = (v: number) => v.toFixe
         </span>
       </div>
       <span className="text-center font-data text-[9px] uppercase tracking-wider text-muted">{label}</span>
-      <div className="flex items-center gap-1.5">
+      <div className={`flex items-center gap-1.5 ${awayInsufficient ? "opacity-50" : ""}`}>
         <span className="h-1.5 w-10 shrink-0 overflow-hidden rounded-full bg-line/30">
           <span className="block h-full rounded-full" style={{ width: `${(av / max) * 100}%`, background: AWAY_COLOR }} />
         </span>
@@ -83,7 +85,9 @@ function StatRow({ label, homeValue, awayValue, format = (v: number) => v.toFixe
 
 // Trend shape only — no axes, no hover; last-5 form at a glance.
 function Sparkline({ values, color }: { values: number[]; color: string }) {
-  if (values.length === 0) return <span className="font-data text-[9px] text-muted">—</span>;
+  // A single point can't show a trend — it just renders as a stray dot with
+  // no line, which reads as a rendering glitch rather than "not enough data."
+  if (values.length < 2) return <span className="font-data text-[9px] text-muted">Not enough matches</span>;
   const w = 60, h = 18, pad = 3;
   const min = Math.min(...values), max = Math.max(...values);
   const span = max - min || 1;
@@ -150,6 +154,12 @@ export default function StatsInsights({ homeTeamId, awayTeamId, league, season, 
     a != null && b != null ? (a + b) / 2 : null;
   const cornersCombined = combined(homeSplit?.avg_corners_total, awaySplit?.avg_corners_total);
   const cardsCombined = combined(homeSplit?.avg_cards_total, awaySplit?.avg_cards_total);
+  const homeInsufficient = home != null && home.matchCount < 3;
+  const awayInsufficient = away != null && away.matchCount < 3;
+  // Binds the insufficient-data flags once so every StatRow call below doesn't
+  // need to repeat them — they're per-team, not per-stat.
+  const Row = (p: Omit<Parameters<typeof StatRow>[0], "homeInsufficient" | "awayInsufficient">) =>
+    <StatRow {...p} homeInsufficient={homeInsufficient} awayInsufficient={awayInsufficient} />;
 
   return (
     <div className="space-y-4 py-2">
@@ -170,12 +180,11 @@ export default function StatsInsights({ homeTeamId, awayTeamId, league, season, 
       {/* ── CORNERS ── */}
       <section className="space-y-1.5">
         <h4 className="font-data text-[9px] uppercase tracking-widest text-muted">Corners · avg per match</h4>
-        <StatRow label="For" homeValue={homeSplit?.avg_corners_for} awayValue={awaySplit?.avg_corners_for} />
-        <StatRow label="Against" homeValue={homeSplit?.avg_corners_against} awayValue={awaySplit?.avg_corners_against} />
+        <Row label="For" homeValue={homeSplit?.avg_corners_for} awayValue={awaySplit?.avg_corners_for} />
+        <Row label="Against" homeValue={homeSplit?.avg_corners_against} awayValue={awaySplit?.avg_corners_against} />
         {cornersCombined != null && (
           <p className="text-center font-data text-[10px] text-muted">
-            Combined: {homeSplit!.avg_corners_total.toFixed(1)} + {awaySplit!.avg_corners_total.toFixed(1)} = avg{" "}
-            <span className="text-ink">{cornersCombined.toFixed(2)}</span> combined
+            Combined: <span className="text-ink">{cornersCombined.toFixed(2)}</span> corners per match on average
           </p>
         )}
         <div className="flex items-center justify-between pt-0.5">
@@ -193,8 +202,8 @@ export default function StatsInsights({ homeTeamId, awayTeamId, league, season, 
       {/* ── CARDS ── */}
       <section className="space-y-1.5 border-t border-line pt-3">
         <h4 className="font-data text-[9px] uppercase tracking-widest text-muted">Cards · avg per match</h4>
-        <StatRow label="Yellow" homeValue={homeSplit?.avg_yellow_cards} awayValue={awaySplit?.avg_yellow_cards} />
-        <StatRow label="Red" homeValue={homeSplit?.avg_red_cards} awayValue={awaySplit?.avg_red_cards} />
+        <Row label="Yellow" homeValue={homeSplit?.avg_yellow_cards} awayValue={awaySplit?.avg_yellow_cards} />
+        <Row label="Red" homeValue={homeSplit?.avg_red_cards} awayValue={awaySplit?.avg_red_cards} />
         {cardsCombined != null && (
           <p className="text-center font-data text-[10px] text-muted">
             Combined: <span className="text-ink">{cardsCombined.toFixed(2)}</span> cards per match on average
@@ -221,10 +230,10 @@ export default function StatsInsights({ homeTeamId, awayTeamId, league, season, 
         </button>
         {shotsOpen && (
           <div className="mt-2 space-y-1.5">
-            <StatRow label="Shots" homeValue={homeSplit?.avg_shots_for} awayValue={awaySplit?.avg_shots_for} format={(v) => v.toFixed(1)} />
-            <StatRow label="On Target" homeValue={homeSplit?.avg_shots_on_target} awayValue={awaySplit?.avg_shots_on_target} format={(v) => v.toFixed(1)} />
-            <StatRow label="xG For" homeValue={homeSplit?.avg_xg_for} awayValue={awaySplit?.avg_xg_for} />
-            <StatRow label="Possession" homeValue={homeSplit?.avg_possession} awayValue={awaySplit?.avg_possession} format={(v) => `${v.toFixed(1)}%`} />
+            <Row label="Shots" homeValue={homeSplit?.avg_shots_for} awayValue={awaySplit?.avg_shots_for} format={(v) => v.toFixed(1)} />
+            <Row label="On Target" homeValue={homeSplit?.avg_shots_on_target} awayValue={awaySplit?.avg_shots_on_target} format={(v) => v.toFixed(1)} />
+            <Row label="xG For" homeValue={homeSplit?.avg_xg_for} awayValue={awaySplit?.avg_xg_for} />
+            <Row label="Possession" homeValue={homeSplit?.avg_possession} awayValue={awaySplit?.avg_possession} format={(v) => `${v.toFixed(1)}%`} />
           </div>
         )}
       </section>
