@@ -39,8 +39,20 @@ export default async function HomePage() {
   ]);
 
   // getEvSignals() already returns one card per match — group by league/cup
-  // and take the top two edges per competition, in standard competition order.
+  // and take the top two edges per competition, nearest day first (so today's
+  // matches always lead over a bigger future edge), best edge as the
+  // tiebreaker within the same day.
   const edgeOf = (s: (typeof signals)[number]) => s.bestValue.model_prob - s.bestValue.market_prob;
+  const dayOf = (s: (typeof signals)[number]) => (s.kickoff_utc ? s.kickoff_utc.slice(0, 10) : null);
+  const byDayThenEdge = (a: (typeof signals)[number], b: (typeof signals)[number]) => {
+    const da = dayOf(a), db = dayOf(b);
+    if (da !== db) {
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return da < db ? -1 : 1;
+    }
+    return edgeOf(b) - edgeOf(a);
+  };
   const byLeague = new Map<string, (typeof signals)[number][]>();
   for (const s of signals) {
     const arr = byLeague.get(s.league) ?? [];
@@ -49,7 +61,7 @@ export default async function HomePage() {
   }
   const topEdges = LEAGUE_ORDER
     .filter((lg) => byLeague.has(lg))
-    .flatMap((lg) => byLeague.get(lg)!.sort((a, b) => edgeOf(b) - edgeOf(a)).slice(0, 2));
+    .flatMap((lg) => byLeague.get(lg)!.sort(byDayThenEdge).slice(0, 2));
 
   const all = stats.find((s) => s.league === "ALL");
   const accuracy = all ? Math.round(all.accuracy * 100) : null;

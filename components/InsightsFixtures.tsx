@@ -6,6 +6,7 @@ import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
 import OddsPanel from "@/components/OddsPanel";
 import MatchWidget from "@/components/MatchWidget";
+import StatsInsights from "@/components/StatsInsights";
 import ValueSignalCard, { type OddsFormat } from "@/components/ValueSignalCard";
 import BetanoPromo from "@/components/BetanoPromo";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
@@ -93,6 +94,7 @@ function teamLink(id: string, name: string) {
 
 function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWithSignal; highlighted: boolean; backFrom: string }) {
   const { fixture, prediction, bestSignal } = item;
+  const [statsOpen, setStatsOpen] = useState(false);
   return (
     <article
       id={`match-${fixture.match_id}`}
@@ -159,6 +161,28 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
           selection={bestSignal?.selection}
           bestPrice={bestSignal?.best_price}
         />
+        {/* always-available stats toggle — independent of odds/prediction,
+            matching ValueSignalCard's own "Stats" drawer */}
+        <button
+          type="button"
+          onClick={() => setStatsOpen((o) => !o)}
+          className="flex w-full items-center justify-center gap-1 border-t border-line py-2.5 font-data text-xs font-semibold text-muted hover:text-ink"
+        >
+          Stats {statsOpen ? "▴" : "▾"}
+        </button>
+        {statsOpen && (
+          <div className="border-t border-line">
+            <StatsInsights
+              homeTeamId={fixture.home_team_id}
+              awayTeamId={fixture.away_team_id}
+              league={fixture.league}
+              season={fixture.season}
+              homeTeam={fixture.home_team}
+              awayTeam={fixture.away_team}
+            />
+          </div>
+        )}
+
         {prediction && (
           <MatchWidget
             matchId={fixture.match_id}
