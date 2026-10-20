@@ -86,6 +86,7 @@ export default function LiveMatchesBar({ initial }: { initial: LiveMatchCard[] }
     <section>
       <h2 className="mb-3.5 flex items-center gap-2 font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-live" aria-hidden="true" /> Live now
+        <Link href="/live" className="ml-auto font-body text-xs font-semibold normal-case tracking-normal text-accent-ink hover:underline">Live hub →</Link>
       </h2>
       <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {matches.map((m) => <Card key={m.matchId} m={m} backFrom={backFrom} />)}
