@@ -115,6 +115,21 @@ export interface LiveMatch {
 // in-progress code; FT/AET/PEN-shootout-finished/NS/PST/CANC/ABD are excluded.
 const LIVE_STATUS_SHORTS = new Set(["1H", "HT", "2H", "ET", "BT", "P", "PEN", "SUSP", "INT"]);
 
+// The poller is supposed to flip status.short to FT once a match ends, but
+// it occasionally stops polling a fixture mid-match without ever writing
+// that final update (observed directly: a match stuck at "2H"/90' with
+// updatedAt 23 hours stale). status.short alone can't be trusted as "is this
+// really still live" — a doc this old hasn't been touched by the poller in
+// far longer than its normal ~30-60s cadence, so treat it as abandoned.
+const STALE_AFTER_MS = 5 * 60 * 1000;
+
+function isFresh(doc: LiveFixtureDoc): boolean {
+  const ts = doc.updatedAt ?? doc.polledAt;
+  if (!ts) return true;
+  const age = Date.now() - new Date(ts).getTime();
+  return !Number.isFinite(age) || age < STALE_AFTER_MS;
+}
+
 const STATUS_LABELS: Record<string, string> = {
   "1H": "1st Half",
   HT: "Half-Time",
@@ -250,7 +265,7 @@ async function withPrematchFallback(m: LiveMatch): Promise<LiveMatch> {
 export async function getLiveMatches(): Promise<LiveMatch[]> {
   const col = await collection();
   const docs = await col.find({ "status.short": { $in: [...LIVE_STATUS_SHORTS] } }).toArray();
-  const matches = docs.map(toLiveMatch).sort((a, b) => (b.status.elapsed ?? 0) - (a.status.elapsed ?? 0));
+  const matches = docs.filter(isFresh).map(toLiveMatch).sort((a, b) => (b.status.elapsed ?? 0) - (a.status.elapsed ?? 0));
   return Promise.all(matches.map(withPrematchFallback));
 }
 
