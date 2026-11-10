@@ -140,6 +140,19 @@ function OutcomeBlock({
   );
 }
 
+// Shown in place of the full Best value block when it's the same outcome as the
+// model pick, so every card carries both labels and the layout stays consistent.
+function SameAsModelRow({ signal }: { signal: EvSignal }) {
+  const name = outcomeName(signal, signal.model);
+  return (
+    <div className="mb-3.5 flex items-center gap-2.5 rounded-[10px] border border-line bg-panel2 px-3 py-2.5">
+      <span className="font-data text-[10px] font-bold uppercase tracking-wider text-muted">Best value</span>
+      <span className="font-data text-sm font-bold">{name}{signal.model.selection !== "draw" ? " win" : ""}</span>
+      <span className="ml-auto font-data text-[10.5px] uppercase tracking-wide text-muted">Same as model pick</span>
+    </div>
+  );
+}
+
 // ---- back CTA --------------------------------------------------------------
 function BackCta({
   signal, outcome, oddsFmt, tag, primary,
@@ -231,8 +244,14 @@ export default function ValueSignalCard({
 
       {/* EdgeIQ's own pick, always shown */}
       <OutcomeBlock title="Model pick" signal={signal} outcome={signal.model} />
-      {/* Best-value outcome, only broken out separately when it differs from the model's pick */}
-      {!signal.sameAsModel && <OutcomeBlock title="Best value" signal={signal} outcome={signal.bestValue} />}
+      {/* Best-value outcome: full block when it differs from the model pick, compact row when it's the same */}
+      {signal.sameAsModel
+        ? <SameAsModelRow signal={signal} />
+        : <OutcomeBlock title="Best value" signal={signal} outcome={signal.bestValue} />}
+
+      {/* Spacer: the grid stretches cards in a row to equal height, so this pushes
+          the CTAs, tools and footer to the bottom and lines them up across cards. */}
+      <div className="mt-auto" aria-hidden="true" />
 
       {/* back CTA(s) */}
       {signal.sameAsModel ? (
