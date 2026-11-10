@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getWeekPickCards, submitPick, GAME_COOKIE } from "@/lib/game";
+import { getWeekPickCards, submitPick, GAME_COOKIE, GAME_ENABLED } from "@/lib/game";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!GAME_ENABLED) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const userId = (await cookies()).get(GAME_COOKIE)?.value ?? null;
   const cards = await getWeekPickCards(userId);
   return NextResponse.json(cards);
 }
 
 export async function POST(req: Request) {
+  if (!GAME_ENABLED) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const userId = (await cookies()).get(GAME_COOKIE)?.value;
   if (!userId) return NextResponse.json({ error: "Register to play." }, { status: 401 });
 

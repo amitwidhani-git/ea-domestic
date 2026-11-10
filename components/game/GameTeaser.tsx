@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { getGameTeaserStats } from "@/lib/game";
+import { getGameTeaserStats, GAME_ENABLED } from "@/lib/game";
 
 export default async function GameTeaser() {
+  if (!GAME_ENABLED) return null;
   const { players, topPlayer } = await getGameTeaserStats();
 
   return (

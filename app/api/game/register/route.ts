@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { registerUser, GAME_COOKIE } from "@/lib/game";
+import { registerUser, GAME_COOKIE, GAME_ENABLED } from "@/lib/game";
 
 export async function POST(req: Request) {
+  if (!GAME_ENABLED) return NextResponse.json({ error: "Not found." }, { status: 404 });
   let body: { email?: string; displayName?: string };
   try {
     body = await req.json();

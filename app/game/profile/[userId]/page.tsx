@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import BetanoPromo from "@/components/BetanoPromo";
-import { getGameProfile } from "@/lib/game";
+import { getGameProfile, GAME_ENABLED } from "@/lib/game";
 import { decodeParam } from "@/lib/decodeParam";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 const PICK_LABEL: Record<"home" | "draw" | "away", string> = { home: "Home", draw: "Draw", away: "Away" };
 
 export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }): Promise<Metadata> {
+  if (!GAME_ENABLED) return {};
   const { userId } = await params;
   const profile = await getGameProfile(decodeParam(userId));
   if (!profile) return {};
@@ -16,6 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ userId: s
 }
 
 export default async function GameProfilePage({ params }: { params: Promise<{ userId: string }> }) {
+  if (!GAME_ENABLED) notFound();
   const { userId: rawUserId } = await params;
   const profile = await getGameProfile(decodeParam(rawUserId));
   if (!profile) notFound();

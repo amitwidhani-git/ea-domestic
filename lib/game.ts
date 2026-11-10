@@ -34,6 +34,12 @@ async function db(): Promise<Db> {
   return client.db(process.env.MONGODB_DB ?? "edgeanalysts");
 }
 
+// Feature toggle — off by default, same convention as the other NEXT_PUBLIC_*_ENABLED flags.
+// Set NEXT_PUBLIC_GAME_ENABLED=true to show the EdgeIQ Challenge (homepage teaser,
+// /game pages and the player-facing /api/game routes). /api/game/settle stays live
+// regardless, so picks keep getting scored while the game is hidden.
+export const GAME_ENABLED = process.env.NEXT_PUBLIC_GAME_ENABLED === "true";
+
 export const GAME_COOKIE = "edgeiq_user_id";
 type Selection = "home" | "draw" | "away";
 

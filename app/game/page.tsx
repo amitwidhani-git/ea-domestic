@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import BetanoPromo from "@/components/BetanoPromo";
 import GameClient from "./GameClient";
-import { getUserById, getWeekPickCards, getLeaderboard, effectiveWeeklyPts, GAME_COOKIE } from "@/lib/game";
+import { getUserById, getWeekPickCards, getLeaderboard, effectiveWeeklyPts, GAME_COOKIE, GAME_ENABLED } from "@/lib/game";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function GamePage() {
+  if (!GAME_ENABLED) notFound();
   const userId = (await cookies()).get(GAME_COOKIE)?.value ?? null;
   const [user, cards, leaderboard] = await Promise.all([
     userId ? getUserById(userId) : Promise.resolve(null),

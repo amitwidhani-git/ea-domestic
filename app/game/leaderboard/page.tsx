@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import BetanoPromo from "@/components/BetanoPromo";
 import LeaderboardClient from "./LeaderboardClient";
-import { getLeaderboard, GAME_COOKIE } from "@/lib/game";
+import { getLeaderboard, GAME_COOKIE, GAME_ENABLED } from "@/lib/game";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LeaderboardPage() {
+  if (!GAME_ENABLED) notFound();
   const userId = (await cookies()).get(GAME_COOKIE)?.value ?? null;
   const initial = await getLeaderboard("weekly", 1, 20, userId);
 
