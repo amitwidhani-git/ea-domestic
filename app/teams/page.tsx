@@ -160,7 +160,7 @@ export default async function TeamsPage() {
     <Suspense fallback={null}>
       <EuroFilterProvider>
         <div className="space-y-10">
-          <BetanoPromo />
+          <LivescorebetPromo />
           <div>
             <h1 className="font-display text-4xl tracking-wide">Teams</h1>
             <p className="mt-2 max-w-2xl text-sm text-ink">

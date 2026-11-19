@@ -25,7 +25,7 @@ import { IS_CUP, type League } from "@/lib/types";
 import { nlTierFromRound, NL_TIER_LABEL } from "@/lib/leagues";
 
 // A single strip banner sits above each week's date line. The first match
-// week always leads with LiveScoreBet; later weeks draw a randomised pick
+// week always leads with Betano; later weeks draw a randomised pick
 // from the full pool so the schedule doesn't repeat the same partner every round.
 const STRIP_PROMOS: { id: string; Promo: React.ComponentType }[] = [
   { id: "betano", Promo: BetanoPromo },
@@ -39,7 +39,7 @@ const STRIP_PROMOS: { id: string; Promo: React.ComponentType }[] = [
   { id: "betmaze", Promo: BetMazePromo },
   { id: "10bet", Promo: Bet10Promo },
 ];
-const FIRST_WEEK_ID = "livescorebet";
+const FIRST_WEEK_ID = "betano";
 
 // Deterministic PRNG seeded from the week key, so a given week always shows
 // the same partner (no reshuffle on re-render/filter) but different weeks vary.
@@ -264,7 +264,7 @@ function SchedulePageInner() {
 
   return (
     <div className="space-y-8">
-      <BetanoPromo />
+      <LivescorebetPromo />
       <div>
         <h1 className="font-display text-4xl tracking-wide">2026/27 Season Schedule</h1>
         <p className="mt-2 text-sm text-ink max-w-2xl">

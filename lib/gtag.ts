@@ -1,3 +1,9 @@
+/** Fires a GA4 share event (article share buttons). No-op if gtag hasn't loaded. */
+export function trackShare(params: { method: string; slug: string }) {
+  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
+  window.gtag("event", "share", { method: params.method, content_type: "article", item_id: params.slug });
+}
+
 /** Fires a GA4 affiliate_click event. No-op if gtag hasn't loaded (e.g. consent declined). */
 export function trackAffiliateClick(params: {
   bookmaker: string;

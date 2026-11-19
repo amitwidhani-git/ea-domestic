@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import BetanoPromo from "@/components/BetanoPromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
 import BetwayPromo from "@/components/BetwayPromo";
 import GrosvenorBannerCard from "@/components/GrosvenorBannerCard";
 import CopyBetBannerCard from "@/components/CopyBetBannerCard";
@@ -71,7 +71,7 @@ export default async function TrackRecordPage({ searchParams }: { searchParams: 
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       )}
-      <BetanoPromo />
+      <LivescorebetPromo />
 
       {report ? (
         <TrackRecordDashboard report={report} tab={tab} games={games} gameQuery={gameQuery} gameLeagues={gameLeagues} />

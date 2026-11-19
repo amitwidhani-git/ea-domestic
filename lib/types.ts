@@ -59,7 +59,7 @@ export interface SettledEvSignal {
   home_team: string; away_team: string;
   home_team_id: string; away_team_id: string;
 }
-export interface Article { slug: string; title: string; published_at: string; summary: string; }
+export interface Article { slug: string; title: string; published_at: string; summary: string; /** Card label, e.g. "Insights"; defaults to "Analysis". */ category?: string; }
 export interface ArticleSection { heading?: string; paragraphs: string[]; }
 export interface ArticleDetail extends Article {
   dek?: string;
@@ -67,6 +67,10 @@ export interface ArticleDetail extends Article {
   author?: string;
   sections: ArticleSection[];
   disclaimer?: string;
+  /** Optional LinkedIn page shown as a "Follow on LinkedIn" link at the end of the article. */
+  linkedin_url?: string;
+  /** Phrases in the body to render as links, e.g. { text: "edgeanalysts.com/track-record", href: "/track-record" }. */
+  links?: { text: string; href: string }[];
 }
 export interface UpcomingFixtureWithSignal {
   fixture: Fixture;

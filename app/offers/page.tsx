@@ -51,7 +51,7 @@ export default async function OffersPage() {
 
   return (
     <div className="space-y-8">
-      <BetanoPromo />
+      <LivescorebetPromo />
 
       <section>
         <h1 className="font-display text-4xl tracking-wide">Partner Offers</h1>

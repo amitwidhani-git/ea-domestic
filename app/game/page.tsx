@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import BetanoPromo from "@/components/BetanoPromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
 import GameClient from "./GameClient";
 import { getUserById, getWeekPickCards, getLeaderboard, effectiveWeeklyPts, GAME_COOKIE, GAME_ENABLED } from "@/lib/game";
 
@@ -23,7 +23,7 @@ export default async function GamePage() {
 
   return (
     <div className="space-y-6">
-      <BetanoPromo />
+      <LivescorebetPromo />
       <GameClient
         initialUser={user ? { userId: String(user._id), displayName: user.displayName, weeklyPts: effectiveWeeklyPts(user), seasonPts: user.seasonPts, streak: user.streak } : null}
         initialCards={cards}

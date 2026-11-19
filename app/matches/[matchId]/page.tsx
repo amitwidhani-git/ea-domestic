@@ -4,7 +4,7 @@ import { getMatchDetail } from "@/lib/matchDetail";
 import { decodeParam } from "@/lib/decodeParam";
 import MatchLiveUpdater from "@/components/MatchLiveUpdater";
 import BackLink from "@/components/BackLink";
-import BetanoPromo from "@/components/BetanoPromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
 import BetwayPromo from "@/components/BetwayPromo";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
 
   return (
     <div className="space-y-6">
-      <BetanoPromo />
+      <LivescorebetPromo />
       <BackLink fallbackHref="/insights" />
       <MatchLiveUpdater matchId={matchId} initialData={detail} isLive={isLive} />
       <BetwayPromo />

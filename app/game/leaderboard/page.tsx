@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import BetanoPromo from "@/components/BetanoPromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
 import LeaderboardClient from "./LeaderboardClient";
 import { getLeaderboard, GAME_COOKIE, GAME_ENABLED } from "@/lib/game";
 
@@ -19,7 +19,7 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="space-y-6">
-      <BetanoPromo />
+      <LivescorebetPromo />
       <div>
         <h1 className="font-display text-4xl tracking-wide">EdgeIQ Challenge Leaderboard</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink">

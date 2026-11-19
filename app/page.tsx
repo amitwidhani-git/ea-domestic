@@ -78,7 +78,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <BetanoPromo />
+      <LivescorebetPromo />
 
       <div className="mt-5 space-y-12">
         <LiveMatchesBar initial={liveMatches} />
@@ -111,7 +111,7 @@ export default async function HomePage() {
         )}
 
         {/* ── NATIVE OFFER ── */}
-        <LivescorebetPromo />
+        <BetanoPromo />
 
         {/* ── TRACK RECORD ── */}
         <section>
@@ -168,7 +168,7 @@ export default async function HomePage() {
               {stories.map((a) => (
                 <Link key={a.slug} href={`/insights/articles/${a.slug}`}
                   className="rounded-xl border border-line bg-panel p-4 shadow-[var(--shadow)] transition-transform hover:-translate-y-0.5">
-                  <div className="font-body text-[10px] font-bold uppercase tracking-wider text-accent-ink">Analysis</div>
+                  <div className="font-body text-[10px] font-bold uppercase tracking-wider text-accent-ink">{a.category ?? "Analysis"}</div>
                   <h4 className="mt-2 font-body text-[15px] font-semibold leading-snug">{a.title}</h4>
                   <p className="mt-1.5 font-body text-[12.5px] leading-relaxed text-muted">{a.summary}</p>
                   <div className="mt-2.5 font-body text-[10.5px] text-muted">{a.published_at.slice(0, 10)}</div>

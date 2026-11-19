@@ -156,7 +156,7 @@ function SameAsModelRow({ signal }: { signal: EvSignal }) {
 // ---- back CTA --------------------------------------------------------------
 function BackCta({
   signal, outcome, oddsFmt, tag, primary,
-}: { signal: EvSignal; outcome: EvOutcome; oddsFmt: OddsFormat; tag?: string; primary: boolean }) {
+}: { signal: EvSignal; outcome: EvOutcome; oddsFmt: OddsFormat; tag: "Model pick" | "Best value"; primary: boolean }) {
   const name = outcomeName(signal, outcome);
   if (!outcome.cta) {
     return (
@@ -174,7 +174,7 @@ function BackCta({
       }`}
     >
       <AffiliateLogo cta={outcome.cta} />
-      <span>Back {name}{tag ? <span className="ml-1.5 font-data text-[10px] font-normal uppercase tracking-wide opacity-80">{tag}</span> : null}</span>
+      <span>{name}<span className="ml-1.5 font-data text-[10px] font-normal uppercase tracking-wide opacity-80">{tag}</span></span>
       <span className="ml-auto font-data text-[15px]">{showPrice(outcome.best_price, oddsFmt)}</span>
       <span className="flex"><Arrow /></span>
     </a>
@@ -255,7 +255,7 @@ export default function ValueSignalCard({
 
       {/* back CTA(s) */}
       {signal.sameAsModel ? (
-        <BackCta signal={signal} outcome={signal.bestValue} oddsFmt={oddsFmt} primary />
+        <BackCta signal={signal} outcome={signal.bestValue} oddsFmt={oddsFmt} tag="Best value" primary />
       ) : (
         <>
           <BackCta signal={signal} outcome={signal.model} oddsFmt={oddsFmt} tag="Model pick" primary={false} />

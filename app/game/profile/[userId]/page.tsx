@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import BetanoPromo from "@/components/BetanoPromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
 import { getGameProfile, GAME_ENABLED } from "@/lib/game";
 import { decodeParam } from "@/lib/decodeParam";
 
@@ -24,7 +24,7 @@ export default async function GameProfilePage({ params }: { params: Promise<{ us
 
   return (
     <div className="space-y-8">
-      <BetanoPromo />
+      <LivescorebetPromo />
       <div>
         <h1 className="font-display text-4xl tracking-wide">{profile.user.displayName}</h1>
         <p className="mt-1 font-data text-xs text-muted">Joined {profile.user.joinedAt.slice(0, 10)}</p>

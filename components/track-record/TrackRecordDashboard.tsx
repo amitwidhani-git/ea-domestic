@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import LivescorebetPromo from "@/components/LivescorebetPromo";
+import BetanoPromo from "@/components/BetanoPromo";
 import WorldCupProof from "@/components/WorldCupProof";
 import GameRecord from "@/components/track-record/GameRecord";
 import { MIN_SAMPLE, type GamePage, type GameQuery, type Report, type Tier } from "@/lib/trackRecord";
@@ -385,7 +385,7 @@ export default function TrackRecordDashboard({
           <Tiers report={report} />
           <Staircase report={report} />
           <div className="sec" style={{ maxWidth: 420 }}><DrawStat report={report} /></div>
-          <div className="sec"><LivescorebetPromo /></div>
+          <div className="sec"><BetanoPromo /></div>
           <Ladder report={report} />
           <Form report={report} />
         </>

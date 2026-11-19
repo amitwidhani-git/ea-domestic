@@ -742,6 +742,7 @@ export async function getArticles(): Promise<Article[]> {
       title: a.title as string,
       published_at: a.publishedAt as string,
       summary: a.summary as string,
+      category: a.category as string | undefined,
     }));
 }
 
@@ -760,5 +761,7 @@ export async function getArticleBySlug(slug: string): Promise<ArticleDetail | nu
     summary: a.summary as string,
     sections: (a.sections as ArticleDetail["sections"]) ?? [],
     disclaimer: a.disclaimer as string | undefined,
+    linkedin_url: a.linkedinUrl as string | undefined,
+    links: a.links as ArticleDetail["links"],
   };
 }

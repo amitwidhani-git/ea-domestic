@@ -1,5 +1,5 @@
 import Link from "next/link";
-import BetanoPromo from "@/components/BetanoPromo";
+import LivescorebetPromo from "@/components/LivescorebetPromo";
 import BetwayPromo from "@/components/BetwayPromo";
 import InsightsFixtures from "@/components/InsightsFixtures";
 import SettledSignalsSection from "@/components/SettledSignalsSection";
@@ -14,7 +14,7 @@ export default async function InsightsPage() {
 
   return (
     <div className="space-y-12">
-      <BetanoPromo />
+      <LivescorebetPromo />
 
       <InsightsFixtures signals={signals} />
 
