@@ -51,6 +51,8 @@ export interface EvSignal {
   bestValue: EvOutcome;
   /** true when model.selection === bestValue.selection, i.e. there's only one thing to recommend. */
   sameAsModel: boolean;
+  /** All three outcomes (model %, market %, best affiliate-first price), for the card's 3-row table. */
+  outcomes: Record<"home" | "draw" | "away", EvOutcome>;
 }
 export interface SettledEvSignal {
   match_id: string; league: League; selection: "home" | "draw" | "away";

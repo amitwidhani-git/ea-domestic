@@ -200,15 +200,7 @@ function SubscribeRegisterForm({ source = "unknown", compact = false }: Props) {
       {messageEl && <div className="mt-3">{messageEl}</div>}
 
       <p className="mt-4 font-data text-[10px] leading-relaxed text-muted">
-        No spam. Unsubscribe any time. 18+{" "}
-        <a
-          href="https://www.begambleaware.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-ink"
-        >
-          BeGambleAware.org
-        </a>
+        No spam. Unsubscribe any time.
       </p>
     </div>
   );

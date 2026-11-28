@@ -29,7 +29,7 @@ const price = (o: OddsRow, k: Outcome): number | null =>
   typeof o.prices?.[k] === "number" ? o.prices[k] : null;
 
 export default function OddsPanel({
-  matchId, homeTeam, awayTeam, modelProbs, ev, selection, bestPrice,
+  matchId, homeTeam, awayTeam, modelProbs, ev, selection, bestPrice, flat = false,
 }: {
   matchId: string;
   homeTeam: string;
@@ -38,6 +38,8 @@ export default function OddsPanel({
   ev?: number;
   selection?: Outcome;
   bestPrice?: number;
+  /** Insights flat cards: a plain text toggle and an unboxed drawer (Schedule keeps the bordered bar). */
+  flat?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [odds, setOdds] = useState<OddsRow[] | null>(null);
@@ -55,17 +57,17 @@ export default function OddsPanel({
     }
   }
 
-  const toggleClass =
-    "flex min-h-[44px] w-full cursor-pointer items-center justify-center font-data text-[10px] text-muted transition-colors hover:text-accent";
+  const toggleClass = flat
+    ? "inline-flex min-h-9 cursor-pointer items-center gap-1 font-body text-xs font-medium text-muted transition-colors hover:text-ink"
+    : "flex min-h-[44px] w-full cursor-pointer items-center justify-center font-data text-[10px] text-muted transition-colors hover:text-accent";
 
   if (!isOpen) {
-    return (
-      <div className="border-t border-line">
-        <button type="button" onClick={open} className={toggleClass}>
-          Compare odds ▾
-        </button>
-      </div>
+    const toggle = (
+      <button type="button" onClick={open} aria-expanded={false} className={toggleClass}>
+        Compare odds ▾
+      </button>
     );
+    return flat ? toggle : <div className="border-t border-line">{toggle}</div>;
   }
 
   // Highest price per outcome (best for the bettor) and who offers it.
@@ -104,17 +106,17 @@ export default function OddsPanel({
   };
 
   return (
-    <div className="border-t border-line bg-panel2">
+    <div className={flat ? "w-full basis-full" : "border-t border-line bg-panel2"}>
       {loading && !odds ? (
-        <div className="space-y-2 px-3 py-3">
+        <div className={`space-y-2 ${flat ? "py-3" : "px-3 py-3"}`}>
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-6 animate-pulse rounded bg-line/60" />
           ))}
         </div>
       ) : !odds || odds.length === 0 ? (
-        <p className="px-3 py-4 text-center font-data text-xs text-muted">No bookmaker odds available yet.</p>
+        <p className={`py-4 font-data text-xs text-muted ${flat ? "" : "px-3 text-center"}`}>No bookmaker odds available yet.</p>
       ) : (
-        <div className="space-y-4 px-3 pt-3">
+        <div className={`space-y-4 pt-3 ${flat ? "" : "px-3"}`}>
           {/* Section 1 — Model Prediction */}
           {modelProbs && (
             <div>
@@ -175,7 +177,7 @@ export default function OddsPanel({
           {/* Section 4 — Full bookmaker table */}
           <div className="border-t border-line pt-3">
             <p className="font-data text-[9px] uppercase tracking-widest text-muted">All Bookmaker Prices</p>
-            <div className="mt-2 max-h-80 overflow-auto pr-1 [scrollbar-color:var(--muted)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-thumb]:hover:bg-muted [&::-webkit-scrollbar-track]:bg-transparent">
+            <div className="mt-2 max-h-80 overflow-auto pr-1">
               <table className="w-full border-collapse font-data text-xs">
                 <thead className="sticky top-0 bg-panel2">
                   <tr className="text-[9px] uppercase tracking-widest text-muted">
@@ -209,12 +211,12 @@ export default function OddsPanel({
           {/* Footer */}
           <div>
             <p className="font-data text-[9px] text-muted">Odds updated: {formatOddsTime(latestFetched)}</p>
-            <p className="font-data text-[9px] text-muted">Prices from The Odds API. Verify before betting. 18+</p>
+            <p className="font-data text-[9px] text-muted">Prices from The Odds API.</p>
           </div>
         </div>
       )}
 
-      <button type="button" onClick={() => setIsOpen(false)} className={toggleClass}>
+      <button type="button" onClick={() => setIsOpen(false)} aria-expanded={true} className={toggleClass}>
         Close ▴
       </button>
     </div>

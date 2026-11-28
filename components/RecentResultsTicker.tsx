@@ -31,7 +31,7 @@ function Chip({ r, backFrom }: { r: ResultRow; backFrom: string }) {
   return (
     <Link
       href={`/matches/${r.matchId}?from=${backFrom}`}
-      className={`flex h-[52px] w-[230px] shrink-0 items-center gap-2.5 rounded-[10px] border px-3 transition-colors hover:border-muted ${correct ? "border-accent/30 bg-accent/5" : "border-line"}`}
+      className="flex h-[44px] w-[230px] shrink-0 items-center gap-2.5 pr-8 transition-colors hover:text-ink"
     >
       <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${correct ? "bg-accent text-accent-fg" : "bg-loss text-white"}`}>
         {correct ? <Check /> : <Cross />}
@@ -41,8 +41,8 @@ function Chip({ r, backFrom }: { r: ResultRow; backFrom: string }) {
         <ClubCrest apiFootballId={r.awayTeam.apiFootballId} clubName={r.awayTeam.name} size={18} />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate font-body text-[11.5px] font-semibold">{pickTeam}{pick !== "draw" ? " win" : ""}</div>
-        <div className="truncate font-data text-[10px] text-muted">{r.homeTeam.name} {r.score.home}-{r.score.away} {r.awayTeam.name}</div>
+        <div className="truncate font-body text-[12.5px] font-medium">{pickTeam}{pick !== "draw" ? " win" : ""}</div>
+        <div className="truncate font-data text-[11px] text-muted">{r.homeTeam.name} {r.score.home}-{r.score.away} {r.awayTeam.name}</div>
       </div>
     </Link>
   );
@@ -70,10 +70,10 @@ export default function RecentResultsTicker({ initial }: { initial: ResultRow[] 
   if (settled.length === 0) return null;
 
   return (
-    <div className="mt-5 border-t border-line pt-5">
-      <em className="mb-2.5 block font-body text-[10px] not-italic uppercase tracking-wider text-muted">Recent settled picks</em>
+    <div className="mt-7">
+      <em className="mb-2 block font-body text-[12.5px] font-medium not-italic text-muted">Recent settled picks</em>
       <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_24px,black_calc(100%-24px),transparent)]">
-        <div className="ea-ticker-track flex w-max gap-2.5">
+        <div className="ea-ticker-track flex w-max">
           {[...settled, ...settled].map((r, i) => <Chip key={`${r.matchId}-${i}`} r={r} backFrom={backFrom} />)}
         </div>
       </div>

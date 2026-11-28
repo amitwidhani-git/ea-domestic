@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import ValueSignalCard from "@/components/ValueSignalCard";
+import EdgesExplorer from "@/components/EdgesExplorer";
 import LiveMatchesBar from "@/components/LiveMatchesBar";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
-import BetanoPromo from "@/components/BetanoPromo";
 import BetwayPromo from "@/components/BetwayPromo";
 import RecentResultsTicker from "@/components/RecentResultsTicker";
 import GameTeaser from "@/components/game/GameTeaser";
 import { getEvSignals, getStats, getArticles, getLiveMatches } from "@/lib/data";
 import { getResults } from "@/lib/results";
+import { getRecordStats } from "@/lib/trackRecord";
 import { LEAGUE_CODES } from "@/lib/leagues";
 
 // Display order for grouping the best upcoming edges by competition.
@@ -23,19 +23,19 @@ export const metadata: Metadata = {
 
 function TrustCell({ title, body, icon }: { title: string; body: string; icon: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-line bg-panel p-4 shadow-[var(--shadow)]">
+    <div className="flex items-start gap-3">
       <span className="mt-0.5 shrink-0 text-accent">{icon}</span>
       <div>
-        <b className="block font-body text-[13.5px]">{title}</b>
-        <span className="font-body text-xs text-muted">{body}</span>
+        <b className="block font-body text-[14px] font-semibold leading-snug">{title}</b>
+        <span className="mt-1 block font-body text-[13px] leading-relaxed text-muted">{body}</span>
       </div>
     </div>
   );
 }
 
 export default async function HomePage() {
-  const [signals, stats, articles, liveMatches, recentResultsData] = await Promise.all([
-    getEvSignals(), getStats(), getArticles(), getLiveMatches(), getResults({ limit: 12 }),
+  const [signals, stats, articles, liveMatches, recentResultsData, recordStats] = await Promise.all([
+    getEvSignals(), getStats(), getArticles(), getLiveMatches(), getResults({ limit: 12 }), getRecordStats(),
   ]);
 
   // getEvSignals() already returns one card per match — group by league/cup
@@ -70,6 +70,9 @@ export default async function HomePage() {
 
   const all = stats.find((s) => s.league === "ALL");
   const accuracy = all ? Math.round(all.accuracy * 100) : null;
+  // Proof strip: the last four ISO weeks of settled picks (the closest the weekly record gets to 30 days).
+  const recent = recordStats.weekly.slice(-4).reduce((a, w) => ({ c: a.c + w.c, n: a.n + w.n }), { c: 0, n: 0 });
+  const recentPct = recent.n > 0 ? Math.round((recent.c / recent.n) * 100) : null;
   const logged = all ? all.settled : 0;
   const stories = articles.slice(0, 3);
 
@@ -80,67 +83,64 @@ export default async function HomePage() {
     <div>
       <LivescorebetPromo />
 
-      <div className="mt-5 space-y-12">
+      <div className="mt-5 space-y-10 sm:space-y-12">
         <LiveMatchesBar initial={liveMatches} />
 
-        <GameTeaser />
-
         {/* ── HERO ── */}
-        <section className="max-w-3xl pt-2">
-          <h1 className="font-display text-[clamp(1.9rem,5vw,2.4rem)] font-extrabold leading-[1.07] tracking-[-0.03em]">
+        <section className="max-w-3xl">
+          <h1 className="font-display text-[clamp(1.75rem,4.2vw,2.125rem)] font-semibold leading-[1.12] tracking-[-0.025em]">
             Edge Analysts: Football Predictions &amp; Odds Intelligence Platform
           </h1>
-          <h2 className="mt-3.5 max-w-xl font-body text-base font-bold text-accent">
-            Premier League &amp; EFL Predictions, Frozen Pre-Kick-Off, Auditable Record
+          <h2 className="mt-2 max-w-xl font-body text-[15px] font-medium leading-snug text-accent">
+            Football Predictions, Frozen Pre-Kick-Off, Auditable Record
           </h2>
+          {/* Proof strip: one line of audited record under the subhead. */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-7 gap-y-1 font-data text-[13px]">
+            <span>
+              <b className="font-medium">{logged.toLocaleString("en-GB")}</b> <span className="text-muted">predictions audited</span>
+            </span>
+            {recentPct != null && (
+              <span>
+                <span className="text-muted">Last 4 weeks</span> <b className="font-medium">{recentPct}%</b>
+              </span>
+            )}
+            <Link href="/track-record" className="inline-flex w-full items-center gap-1 font-body text-[13px] font-medium text-accent-ink underline-offset-4 hover:underline sm:w-auto">
+              View Track Record →
+            </Link>
+          </div>
         </section>
 
         {/* ── BEST UPCOMING EDGES ── */}
-        {topEdges.length > 0 && (
-          <section>
-            <h2 className="mb-3.5 flex items-center font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">
-              Best upcoming edges
-              <Link href="/insights" className="ml-auto font-body text-xs font-semibold normal-case tracking-normal text-accent-ink hover:underline">Full odds →</Link>
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {topEdges.map((s) => (
-                <ValueSignalCard key={s.match_id} signal={s} oddsFmt="frac" featured />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── NATIVE OFFER ── */}
-        <BetanoPromo />
+        {topEdges.length > 0 && <EdgesExplorer featured={topEdges} signals={signals} />}
 
         {/* ── TRACK RECORD ── */}
         <section>
-          <h2 className="mb-3.5 flex items-center font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">
+          <h2 className="mb-3 flex items-baseline font-body text-[17px] font-semibold leading-tight tracking-[-0.01em] text-ink">
             Track record
-            <Link href="/track-record" className="ml-auto font-body text-xs font-semibold normal-case tracking-normal text-accent-ink hover:underline">See full audit →</Link>
+            <Link href="/track-record" className="ml-auto font-body text-[13px] font-medium tracking-normal text-accent-ink underline-offset-4 hover:underline">See full audit →</Link>
           </h2>
-          <div className="rounded-[14px] border border-line bg-panel p-6 shadow-[var(--shadow)]">
-            <div className="flex flex-wrap items-center gap-7">
+          <div>
+            <div className="flex flex-wrap items-center gap-x-10 gap-y-5">
               <div className="flex flex-col">
-                <b className="font-data text-[44px] font-semibold leading-none tracking-[-0.03em]">{accuracy != null ? `${accuracy}%` : "—"}</b>
-                <em className="mt-1 font-body text-xs not-italic uppercase tracking-wider text-muted">Season accuracy</em>
+                <b className="font-data text-[36px] font-medium leading-none tracking-[-0.02em]">{accuracy != null ? `${accuracy}%` : "—"}</b>
+                <em className="mt-1.5 font-body text-[12.5px] not-italic text-muted">Season accuracy</em>
               </div>
               <div className="flex flex-col">
-                <b className="font-data text-[44px] font-semibold leading-none tracking-[-0.03em]">{logged}</b>
-                <em className="mt-1 font-body text-xs not-italic uppercase tracking-wider text-muted">Picks logged</em>
+                <b className="font-data text-[36px] font-medium leading-none tracking-[-0.02em]">{logged}</b>
+                <em className="mt-1.5 font-body text-[12.5px] not-italic text-muted">Picks logged</em>
               </div>
-              <p className="max-w-[280px] font-body text-[12.5px] text-muted">
+              <p className="max-w-[320px] font-body text-[13px] leading-relaxed text-muted">
                 Every call published before kick-off, hashed and time-stamped. Nothing edited after the whistle.
               </p>
 
               {/* Division breakdown — the depth signal: this isn't one number, it's four leagues. */}
-              <div className="ml-auto grid grid-cols-4 gap-2.5">
+              <div className="ml-auto grid grid-cols-4 gap-x-8">
                 {DIVS.map(([lg, label]) => {
                   const d = stats.find((s) => s.league === lg);
                   return (
-                    <div key={lg} className="rounded-[10px] border border-line bg-panel2 px-3 py-2 text-center">
-                      <b className="font-data text-[17px] font-semibold leading-none">{d ? `${Math.round(d.accuracy * 100)}%` : "—"}</b>
-                      <em className="mt-1 block font-body text-[9px] not-italic uppercase tracking-wider text-muted">{label}</em>
+                    <div key={lg} className="text-center">
+                      <b className="font-data text-[18px] font-medium leading-none">{d ? `${Math.round(d.accuracy * 100)}%` : "—"}</b>
+                      <em className="mt-1.5 block font-body text-[11.5px] not-italic text-muted">{label}</em>
                     </div>
                   );
                 })}
@@ -153,7 +153,7 @@ export default async function HomePage() {
 
             <Link
               href="/track-record"
-              className="mt-5 inline-flex items-center gap-1.5 rounded-[10px] bg-ink px-4 py-2.5 font-body text-[13px] font-bold text-panel"
+              className="mt-4 inline-flex items-center gap-1.5 font-body text-[13px] font-medium text-accent-ink underline-offset-4 hover:underline"
             >
               View the full audit trail →
             </Link>
@@ -163,15 +163,15 @@ export default async function HomePage() {
         {/* ── LATEST ANALYSIS ── */}
         {stories.length > 0 && (
           <section>
-            <h2 className="mb-3.5 font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">Top Stories</h2>
-            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+            <h2 className="mb-3 font-body text-[17px] font-semibold leading-tight tracking-[-0.01em] text-ink">Top Stories</h2>
+            <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
               {stories.map((a) => (
                 <Link key={a.slug} href={`/insights/articles/${a.slug}`}
-                  className="rounded-xl border border-line bg-panel p-4 shadow-[var(--shadow)] transition-transform hover:-translate-y-0.5">
-                  <div className="font-body text-[10px] font-bold uppercase tracking-wider text-accent-ink">{a.category ?? "Analysis"}</div>
-                  <h4 className="mt-2 font-body text-[15px] font-semibold leading-snug">{a.title}</h4>
-                  <p className="mt-1.5 font-body text-[12.5px] leading-relaxed text-muted">{a.summary}</p>
-                  <div className="mt-2.5 font-body text-[10.5px] text-muted">{a.published_at.slice(0, 10)}</div>
+                  className="group block">
+                  <div className="font-body text-xs font-medium text-accent-ink">{a.category ?? "Analysis"}</div>
+                  <h4 className="mt-1.5 font-body text-[16px] font-semibold leading-snug tracking-[-0.01em] underline-offset-4 group-hover:underline">{a.title}</h4>
+                  <p className="mt-1.5 font-body text-[13px] leading-relaxed text-muted">{a.summary}</p>
+                  <div className="mt-2 font-body text-xs text-muted">{a.published_at.slice(0, 10)}</div>
                 </Link>
               ))}
             </div>
@@ -180,8 +180,8 @@ export default async function HomePage() {
 
         {/* ── WHAT MAKES US DIFFERENT ── */}
         <section>
-          <h2 className="mb-3.5 font-body text-[13px] font-bold uppercase tracking-[0.1em] text-muted">What Makes Us Different</h2>
-          <div className="grid gap-3.5 sm:grid-cols-3">
+          <h2 className="mb-3 font-body text-[17px] font-semibold leading-tight tracking-[-0.01em] text-ink">What Makes Us Different</h2>
+          <div className="grid gap-x-8 gap-y-5 sm:grid-cols-3">
             <TrustCell title="Pre-match lock" body="We lock in every football prediction before kick-off and timestamp it, so we can never quietly change our pick after seeing the result."
               icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>} />
             <TrustCell title="Every competition, one model" body="Our EdgeIQ model uses cross-league data across England, Scotland and Europe's top leagues, plus the Women's Super League, European cups and the Nations League. Promoted clubs carry earned ratings, so no cold-start guessing."
@@ -190,6 +190,8 @@ export default async function HomePage() {
               icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>} />
           </div>
         </section>
+
+        <GameTeaser />
 
         <BetwayPromo />
       </div>

@@ -25,8 +25,8 @@ function SettledSignalsSectionInner({ settled }: { settled: SettledEvSignal[] })
     <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-2xl tracking-wide">Settled Odds Value Signals</h2>
-          <p className="mt-2 max-w-2xl text-sm text-ink">
+          <h2 className="font-body text-[17px] font-semibold leading-tight tracking-[-0.01em] text-ink">Settled Odds Value Signals</h2>
+          <p className="mt-2 max-w-2xl font-body text-[13px] text-muted">
             Every Value Signal we&apos;ve published, win or lose, the auditable record.
           </p>
         </div>

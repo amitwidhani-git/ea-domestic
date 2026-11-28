@@ -92,7 +92,7 @@ export interface MatchEvSignal {
   created_at: string | null;
 }
 
-export interface LineupPlayer { number: number | null; name: string | null; pos: string | null; rating: number | string | null }
+export interface LineupPlayer { number: number | null; name: string | null; pos: string | null; rating: number | string | null; /** API-Football formation slot "row:col" (row 1 = goalkeeper). */ grid?: string | null }
 export interface LineupTeam { formation: string | null; coach: string | null; startXI: LineupPlayer[]; substitutes: LineupPlayer[] }
 
 export interface H2HMeeting {

@@ -1,10 +1,11 @@
 /**
  * Track Record data layer.
  *
- * Headline stats come from the weekly `track_record_snapshots` doc written by
- * build_track_record.py (Monday run). Facts that must be current (pulse,
- * last logged pick, latest results, integrity check, Game record table) are
- * queried live from `predictions` + `matches`.
+ * Everything on the page is computed live from `predictions`, `matches` and
+ * `odds_snapshots` (record stats, market comparison, pulse, integrity, Game
+ * record). The weekly `track_record_snapshots` doc written by
+ * build_track_record.py is still read for competition tiers, the deleted count
+ * and as the market comparison's fallback.
  *
  * Everything returned here is plain JSON (strings/numbers/booleans) so it can
  * cross the server -> client boundary and sit in Next's data cache.
@@ -21,6 +22,8 @@ export const MIN_SAMPLE = 20;
 export const CHANCE_BASELINE = 33.3;
 /** Market calls below this market probability are treated as likely odds-feed errors and hidden. */
 const MIN_MARKET_CALL_PROB = 10;
+/** EdgeIQ and the market "agree" on a shared wrong pick only while no outcome differs by this many points. */
+const DIVERGENCE_THRESHOLD = 10;
 const GAMES_PER_PAGE = 50;
 const TZ = "Europe/London";
 
@@ -328,6 +331,139 @@ export const getRecordStats = unstable_cache(
   { revalidate: 300, tags: [TRACK_RECORD_TAG] }
 );
 
+// ---------------------------------------------------------------- live market comparison
+
+/**
+ * The "Compared against the market" tab, computed live. Definitions reproduce
+ * build_track_record.py (within 1 to 3 matches per bucket over its 1 Aug to
+ * 3 Oct snapshot): the market's probability for each outcome is the median of
+ * the bookmakers' implied probabilities and its favourite is the highest;
+ * "agree" is both right, or both wrong on the same pick with every outcome
+ * within DIVERGENCE_THRESHOLD points; divergence is the largest gap on any outcome.
+ *
+ * One deliberate difference: only prices fetched before kick-off count.
+ * odds_snapshots keeps each bookmaker's latest fetch, which for many finished
+ * matches is an in-play price that already reflects the score (the script
+ * counted those). Matches with no pre-kick-off price are left out.
+ */
+export interface MarketStats {
+  total: number;
+  modelCorrect: number;
+  marketCorrect: number;
+  aligned: { correct: number; wrong: number };
+  diverged: { model: number; market: number; neither: number };
+  /** Model right, market wrong, largest divergence first. Probabilities in %. */
+  calls: { match: string; date: string; modelProb: number; marketProb: number; divergence: number }[];
+  first: string | null;
+  last: string | null;
+}
+
+const OUTCOMES = ["home", "draw", "away"] as const;
+type Outcome3 = (typeof OUTCOMES)[number];
+const FTR: Record<Outcome3, string> = { home: "H", draw: "D", away: "A" };
+
+/** Exact median of an array field of `$pre` (sorted on the server). */
+function medianOf(field: string) {
+  return {
+    $let: {
+      vars: { s: { $sortArray: { input: { $map: { input: "$pre", in: `$$this.${field}` } }, sortBy: 1 } }, n: { $size: "$pre" } },
+      in: {
+        $cond: [
+          { $eq: [{ $mod: ["$$n", 2] }, 1] },
+          { $arrayElemAt: ["$$s", { $floor: { $divide: ["$$n", 2] } }] },
+          { $avg: [{ $arrayElemAt: ["$$s", { $subtract: [{ $divide: ["$$n", 2] }, 1] }] }, { $arrayElemAt: ["$$s", { $divide: ["$$n", 2] }] }] },
+        ],
+      },
+    },
+  };
+}
+
+type MarketRow = {
+  pick: Outcome3;
+  probs: Record<Outcome3, number>;
+  ok: boolean;
+  m: { kickoffUtc: string; ftr: string; homeTeamId: string; awayTeamId: string };
+  /** The market's probability per outcome: median implied probability across pre-kick-off prices. */
+  kp: Record<Outcome3, number>;
+};
+
+export const getMarketStats = unstable_cache(
+  async (): Promise<MarketStats> => {
+    const d = await trDb();
+    const nowIso = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+    const [settled, market] = await Promise.all([
+      d.collection("predictions")
+        .aggregate<Omit<MarketRow, "kp"> & { matchId: string }>([
+          { $match: { modelCorrect: { $in: [true, false] } } },
+          { $project: { _id: 0, matchId: 1, pick: 1, probs: 1, ok: "$modelCorrect" } },
+          { $lookup: { from: "matches", localField: "matchId", foreignField: "_id", as: "m", pipeline: [{ $project: { _id: 0, kickoffUtc: 1, ftr: 1, homeTeamId: 1, awayTeamId: 1 } }] } },
+          { $unwind: "$m" },
+          { $match: { "m.kickoffUtc": { $lte: nowIso }, "m.ftr": { $in: ["H", "D", "A"] } } },
+        ])
+        .toArray(),
+      // Medians are taken on the server: reading the ~40k price rows out takes about a minute, and a
+      // $lookup per price row ~20s; grouping by match first means one kick-off lookup per match (~2s).
+      // Both timestamps are "YYYY-MM-DDTHH:MM:SSZ" strings, so string comparison is chronological.
+      d.collection("odds_snapshots")
+        .aggregate<{ _id: string } & Record<Outcome3, number>>([
+          { $match: { impliedProbs: { $type: "object" } } },
+          { $group: { _id: "$matchId", o: { $push: { f: "$fetchedAt", h: "$impliedProbs.home", d: "$impliedProbs.draw", a: "$impliedProbs.away" } } } },
+          { $lookup: { from: "matches", localField: "_id", foreignField: "_id", as: "m", pipeline: [{ $project: { _id: 0, kickoffUtc: 1 } }] } },
+          { $set: { pre: { $filter: { input: "$o", cond: { $lt: ["$$this.f", { $first: "$m.kickoffUtc" }] } } } } },
+          { $match: { "pre.0": { $exists: true } } },
+          { $project: { home: medianOf("h"), draw: medianOf("d"), away: medianOf("a") } },
+        ])
+        .toArray(),
+    ]);
+    const kpBy = new Map(market.map(({ _id, home, draw, away }) => [_id, { home, draw, away }]));
+    const rows: MarketRow[] = settled.flatMap((r) => { const kp = kpBy.get(r.matchId); return kp ? [{ ...r, kp }] : []; });
+
+    let modelCorrect = 0, marketCorrect = 0;
+    const aligned = { correct: 0, wrong: 0 }, diverged = { model: 0, market: 0, neither: 0 };
+    const callRows: (MarketRow & { div: number })[] = [];
+    let first: string | null = null, last: string | null = null;
+
+    for (const r of rows) {
+      const kp = r.kp;
+      const fav = OUTCOMES.reduce((a, b) => (kp[b] > kp[a] ? b : a), "home" as Outcome3);
+      const mOk = r.ok, kOk = FTR[fav] === r.m.ftr;
+      const div = Math.max(...OUTCOMES.map((k) => Math.abs((r.probs?.[k] ?? 0) - kp[k]))) * 100;
+      modelCorrect += mOk ? 1 : 0;
+      marketCorrect += kOk ? 1 : 0;
+      if (mOk && kOk) aligned.correct++;
+      else if (mOk) { diverged.model++; if (div >= DIVERGENCE_THRESHOLD) callRows.push({ ...r, div }); }
+      else if (kOk) diverged.market++;
+      else if (fav === r.pick && div < DIVERGENCE_THRESHOLD) aligned.wrong++;
+      else diverged.neither++;
+      if (!first || r.m.kickoffUtc < first) first = r.m.kickoffUtc;
+      if (!last || r.m.kickoffUtc > last) last = r.m.kickoffUtc;
+    }
+
+    callRows.sort((a, b) => b.div - a.div).splice(20);
+    const names = await teamNames(d, callRows.flatMap((r) => [r.m.homeTeamId, r.m.awayTeamId]));
+    const name = (id: string) => names.get(String(id)) ?? String(id);
+    const round1 = (v: number) => Math.round(v * 10) / 10;
+    return {
+      total: rows.length,
+      modelCorrect,
+      marketCorrect,
+      aligned,
+      diverged,
+      calls: callRows.map((r) => ({
+        match: `${name(r.m.homeTeamId)} v ${name(r.m.awayTeamId)}`,
+        date: r.m.kickoffUtc.slice(0, 10),
+        modelProb: round1((r.probs?.[r.pick] ?? 0) * 100),
+        marketProb: round1(r.kp[r.pick] * 100),
+        divergence: round1(r.div),
+      })),
+      first,
+      last,
+    };
+  },
+  ["track-record-market"],
+  { revalidate: 900, tags: [TRACK_RECORD_TAG] }
+);
+
 // ---------------------------------------------------------------- report
 
 export type Tier = "top" | "lower" | "cup" | "women" | "international";
@@ -338,8 +474,10 @@ export interface Report {
   generatedAt: string;
   /** Range of kick-offs covered by the live "Our record" figures. */
   period: { start: string; end: string };
-  /** Range covered by the weekly snapshot (market comparison only). */
+  /** Kick-offs covered by the market comparison. */
   marketPeriod: string;
+  /** False when the live comparison was unavailable and the weekly snapshot was used instead. */
+  marketLive: boolean;
   integrity: { logged: number; edited: number; deleted: number };
   lastLogged: LiveFacts["lastLogged"];
   unpredicted: { fixtures: number; withoutPick: number };
@@ -367,10 +505,22 @@ export interface Report {
   recent: LiveFacts["recent"];
 }
 
-export function buildReport(snap: TrackRecordSnapshot, live: LiveFacts, stats: RecordStats): Report {
-  const marketRange = fmtRange(snap.period.start, snap.period.end);
-  const liveRange = stats.first && stats.last ? fmtRange(stats.first, stats.last) : marketRange;
+export function buildReport(snap: TrackRecordSnapshot, live: LiveFacts, stats: RecordStats, liveMarket: MarketStats | null): Report {
   const mvm = snap.model_vs_market;
+  // Live comparison when it has data; otherwise the last weekly snapshot, in the same shape.
+  const useLive = !!(liveMarket?.total && liveMarket.first && liveMarket.last);
+  const mk: MarketStats = useLive ? liveMarket! : {
+    total: mvm.total,
+    modelCorrect: mvm.model_correct,
+    marketCorrect: mvm.market_correct,
+    aligned: { correct: mvm.aligned_correct, wrong: mvm.aligned_wrong },
+    diverged: { model: mvm.model_edge, market: mvm.market_edge, neither: mvm.both_wrong_div },
+    calls: mvm.model_calls.map((m) => ({ match: matchLabel(m.match), date: m.date, modelProb: m.model_prob, marketProb: m.market_prob_actual, divergence: m.divergence })),
+    first: snap.period.start,
+    last: snap.period.end,
+  };
+  const marketRange = fmtRange(mk.first!.slice(0, 10), mk.last!.slice(0, 10));
+  const liveRange = stats.first && stats.last ? fmtRange(stats.first, stats.last) : marketRange;
   // Prefer the pipeline's tier for each competition; fall back for any it doesn't list yet.
   const snapTier = new Map(snap.by_league.map((r) => [r.league, r.tier as Tier]));
   const weekRows = stats.weekly.map((w) => {
@@ -383,6 +533,7 @@ export function buildReport(snap: TrackRecordSnapshot, live: LiveFacts, stats: R
     generatedAt: live.updatedIso,
     period: { start: (stats.first ?? snap.period.start).slice(0, 10), end: (stats.last ?? snap.period.end).slice(0, 10) },
     marketPeriod: marketRange,
+    marketLive: useLive,
     integrity: { logged: live.logged, edited: live.editedAfterKickoff, deleted: snap.integrity.deleted },
     lastLogged: live.lastLogged,
     unpredicted: { fixtures: live.coverage.totalFinished, withoutPick: Math.max(0, live.coverage.totalFinished - live.coverage.predicting) },
@@ -398,17 +549,17 @@ export function buildReport(snap: TrackRecordSnapshot, live: LiveFacts, stats: R
       weeks: weekRows.filter((w) => w.n >= MIN_SAMPLE),
       small: weekRows.filter((w) => w.n < MIN_SAMPLE).map(({ wk, c, n }) => ({ wk, c, n })),
     },
-    modelCalls: mvm.model_calls
-      .filter((m) => m.market_prob_actual >= MIN_MARKET_CALL_PROB)
+    modelCalls: mk.calls
+      .filter((m) => m.marketProb >= MIN_MARKET_CALL_PROB)
       .sort((a, b) => b.divergence - a.divergence)
       .slice(0, 3)
-      .map((m) => ({ match: matchLabel(m.match), date: fmtShortDate(m.date), marketProb: Math.round(m.market_prob_actual), modelProb: Math.round(m.model_prob) })),
+      .map((m) => ({ match: m.match, date: fmtShortDate(m.date), marketProb: Math.round(m.marketProb), modelProb: Math.round(m.modelProb) })),
     market: {
-      sample: `${mvm.total} matches, ${marketRange}`,
-      model: { c: mvm.model_correct, n: mvm.total },
-      market: { c: mvm.market_correct, n: mvm.total },
-      aligned: { correct: mvm.aligned_correct, wrong: mvm.aligned_wrong },
-      diverged: { model: mvm.model_edge, market: mvm.market_edge, neither: mvm.both_wrong_div },
+      sample: `${mk.total} matches, ${marketRange}`,
+      model: { c: mk.modelCorrect, n: mk.total },
+      market: { c: mk.marketCorrect, n: mk.total },
+      aligned: mk.aligned,
+      diverged: mk.diverged,
       edgeReady: false,
     },
     recent: live.recent,

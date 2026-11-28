@@ -15,6 +15,9 @@ import { resolveCtaAffiliates, getAffiliateList, pickRandomAffiliate, type CtaAf
 import { LEAGUE_CODES } from "./leagues";
 import { getLiveApiFixtures, getLiveFixtureEvents } from "./liveScores";
 import { mapMatchEvent, type MatchEvent } from "./matchEvents";
+import { getLiveOddsForFixtures } from "./liveFixtures";
+import { MIN_EV, deVig, type Triple } from "./marketDisplay";
+import { bestPrice as sharedBestPrice } from "./bestPrice";
 
 /** Runs `fn` over `items` with at most `limit` in flight at once, preserving order. */
 async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
@@ -329,10 +332,6 @@ async function attachFixtureInfo(d: Db, matchIds: string[]): Promise<Map<string,
   return out;
 }
 
-// Every match gets one ev_signals doc per selection (home/draw/away), most of
-// which are negative EV — i.e. not actually value. Without this floor every
-// match would show, drowning genuine value signals in noise.
-const MIN_EV = 0.05;
 
 /**
  * Live (unsettled) value signals, one card per MATCH — not per selection.
@@ -428,16 +427,13 @@ export async function getEvSignals(): Promise<EvSignal[]> {
       const marketBest = rows.reduce((a, b) => (b.price > a.price ? b : a));
       marketProb = 1 / marketBest.price;
 
-      // Prefer the highest live price among bookmakers we actually have a
-      // real (non-fallback) affiliate deal with — that's the only price a
-      // "Back" click can honestly promise, and what Compare-books marks
-      // "Bet"-able.
-      const genuineRows = rows.filter((r): r is { bookmaker: string; price: number; cta: CtaAffiliate } => !!r.cta && !r.cta.isFallback);
-      if (genuineRows.length > 0) {
-        const best = genuineRows.reduce((a, b) => (b.price > a.price ? b : a));
-        bestPrice = best.price;
-        bestBookmaker = best.bookmaker;
-        cta = best.cta;
+      // Shared best-price logic (lib/bestPrice): partners first, then best price,
+      // so this card shows exactly the top row of the match page Best Odds panel.
+      const top = sharedBestPrice(rows.map((r) => ({ bookmaker: r.bookmaker, prices: { [selection]: r.price }, cta: r.cta })), selection).best;
+      if (top) {
+        bestPrice = top.price;
+        bestBookmaker = top.bookmaker;
+        cta = top.cta;
       }
     }
 
@@ -491,6 +487,16 @@ export async function getEvSignals(): Promise<EvSignal[]> {
         bestBookmaker: bestValueDoc.bestBookmaker as string,
       }),
       sameAsModel: pick === bestValueDoc.selection,
+      outcomes: Object.fromEntries((["home", "draw", "away"] as const).map((sel) => {
+        const doc = docs.find((s) => s.selection === sel);
+        return [sel, resolveOutcome(mid, sel, {
+          modelProb: ((pred.probs as Record<string, number> | undefined)?.[sel]) ?? (doc?.modelProb as number | undefined) ?? 0,
+          marketProb: (doc?.marketProb as number | undefined) ?? 0,
+          ev: (doc?.ev as number | undefined) ?? 0,
+          bestPrice: (doc?.bestPrice as number | undefined) ?? 0,
+          bestBookmaker: (doc?.bestBookmaker as string | undefined) ?? "",
+        })];
+      })) as EvSignal["outcomes"],
     });
   }
 
@@ -520,6 +526,40 @@ export interface LiveMatchCard {
   cta: CtaAffiliate | null;  // random Betano/LiveScoreBet split — no single "best bookmaker" for a live match
   /** Most recent goal or card, for a one-line "⚽ 67' Kane" under the score. Null until the first one happens. */
   latestEvent: MatchEvent | null;
+  /** Margin-free probabilities from the live odds feed (live_fixtures); null when no live price. */
+  liveMarket: Triple | null;
+  /** Red cards per side, counted from the same live events as latestEvent. */
+  redCards: { home: number; away: number };
+  /**
+   * Best current partner price for the model's outcome, from the latest bookmaker snapshots via the
+   * shared best-price logic (partners first), so it matches the top row of the match page Best odds
+   * whenever a partner prices it. null when no partner has a price for that outcome; non-partner
+   * prices are never shown on the live card.
+   */
+  bestOdds: { price: number; bookmaker: string; name: string; partner: boolean; cta: CtaAffiliate | null; at: string | null } | null;
+}
+
+/** Attach each live card's best price (one odds_snapshots read for all cards). */
+async function attachLiveBestOdds(d: Db, cards: Omit<LiveMatchCard, "bestOdds">[]): Promise<LiveMatchCard[]> {
+  if (cards.length === 0) return [];
+  const snaps = await d.collection("odds_snapshots")
+    .find({ matchId: { $in: cards.map((c) => c.matchId) as any[] } }, { projection: { matchId: 1, bookmaker: 1, prices: 1, fetchedAt: 1 } })
+    .toArray();
+  const ctaByBookmaker = await resolveCtaAffiliates([...new Set(snaps.map((s) => String(s.bookmaker)))]);
+  return cards.map((c) => {
+    if (!c.modelPick) return { ...c, bestOdds: null };
+    const rows = snaps.filter((s) => String(s.matchId) === c.matchId).map((s) => ({
+      bookmaker: String(s.bookmaker),
+      prices: (s.prices ?? {}) as Record<"home" | "draw" | "away", number | null>,
+      fetchedAt: s.fetchedAt instanceof Date ? s.fetchedAt.toISOString() : s.fetchedAt ? String(s.fetchedAt) : null,
+      cta: ctaByBookmaker.get(String(s.bookmaker)) ?? null,
+    }));
+    const { best, at } = sharedBestPrice(rows, c.modelPick);
+    return {
+      ...c,
+      bestOdds: best?.partner && best.cta ? { price: best.price, bookmaker: best.bookmaker, name: best.name, partner: true, cta: best.cta, at } : null,
+    };
+  });
 }
 
 /**
@@ -539,10 +579,11 @@ export async function getLiveMatches(): Promise<LiveMatchCard[]> {
   if (matches.length === 0) return [];
 
   const matchIds = matches.map((m) => String(m._id));
-  const [preds, sigs, affiliateList] = await Promise.all([
+  const [preds, sigs, affiliateList, liveOdds] = await Promise.all([
     d.collection("predictions").find({ matchId: { $in: matchIds as any[] } }).toArray(),
     d.collection("ev_signals").find({ matchId: { $in: matchIds as any[] } }).toArray(),
     getAffiliateList(),
+    getLiveOddsForFixtures(apiIds),
   ]);
   const predByMatch = new Map(preds.map((p) => [String(p.matchId), p]));
   const sigByKey = new Map(sigs.map((s) => [`${s.matchId}:${s.selection}`, s]));
@@ -566,7 +607,7 @@ export async function getLiveMatches(): Promise<LiveMatchCard[]> {
     await mapWithConcurrency(apiIdList, 5, async (id) => [id, await getLiveFixtureEvents(id)] as const)
   );
 
-  return matches.map((m): LiveMatchCard => {
+  return attachLiveBestOdds(d, matches.map((m): Omit<LiveMatchCard, "bestOdds"> => {
     const mid = String(m._id);
     const apiId = m.sourceRefs?.apiFootballFixtureId as number | undefined;
     const live = apiId != null ? fixtureByApiId.get(apiId) : undefined;
@@ -585,6 +626,9 @@ export async function getLiveMatches(): Promise<LiveMatchCard[]> {
       return k.includes("goal") || k.includes("card");
     });
     const latestEvent = latestRaw ? mapMatchEvent(latestRaw, homeApiFootballId) : null;
+    const mapped = rawEvents.map((e) => mapMatchEvent(e, homeApiFootballId)).filter((e) => /red/i.test(e.detail ?? ""));
+    const redCards = { home: mapped.filter((e) => e.side === "home").length, away: mapped.filter((e) => e.side === "away").length };
+    const odds = apiId != null ? liveOdds.get(apiId) : undefined;
 
     return {
       matchId: mid,
@@ -604,8 +648,10 @@ export async function getLiveMatches(): Promise<LiveMatchCard[]> {
       marketProb: sig ? (sig.marketProb as number) : null,
       cta: pickRandomAffiliate(affiliateList),
       latestEvent,
+      liveMarket: deVig(odds?.liveOdds),
+      redCards,
     };
-  });
+  }));
 }
 
 /** Settled EV signals (WIN/LOSE/VOID), most recent first — the public track record. */

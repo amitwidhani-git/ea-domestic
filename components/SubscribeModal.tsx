@@ -95,7 +95,7 @@ function SubscribeModalInner() {
               </button>
             </form>
             {status === "error" && <p className="mt-2 font-body text-xs text-loss">Something went wrong — please try again.</p>}
-            <p className="mt-3 font-body text-[11px] text-muted">No spam. Unsubscribe anytime. 18+ · BeGambleAware.org</p>
+            <p className="mt-3 font-body text-[11px] text-muted">No spam. Unsubscribe anytime.</p>
           </>
         )}
       </div>

@@ -275,6 +275,19 @@ export async function getLiveMatch(fixtureId: number): Promise<LiveMatch | null>
   return doc ? withPrematchFallback(toLiveMatch(doc)) : null;
 }
 
+/**
+ * Live odds triples for a batch of fixtures, keyed by fixtureId, for the
+ * homepage live cards' "Live market" row. One projected read with no
+ * odds_snapshots fallback (unlike getLiveMatch), since the homepage polls
+ * this for every visitor.
+ */
+export async function getLiveOddsForFixtures(fixtureIds: number[]): Promise<Map<number, { liveOdds: LiveMatch["liveOdds"] }>> {
+  if (fixtureIds.length === 0) return new Map();
+  const col = await collection();
+  const docs = await col.find({ fixtureId: { $in: fixtureIds } }, { projection: { fixtureId: 1, liveOdds: 1, updatedAt: 1, polledAt: 1 } }).toArray();
+  return new Map(docs.filter(isFresh).map((d) => [d.fixtureId, { liveOdds: mapOddsSnapshot(d.liveOdds) }]));
+}
+
 export async function getLiveOddsHistory(fixtureId: number): Promise<LiveOddsPoint[]> {
   const col = await collection();
   const doc = await col.findOne({ fixtureId }, { projection: { oddsHistory: 1 } });

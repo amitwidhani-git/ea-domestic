@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
 import BetwayPromo from "@/components/BetwayPromo";
-import GrosvenorBannerCard from "@/components/GrosvenorBannerCard";
-import CopyBetBannerCard from "@/components/CopyBetBannerCard";
-import Bet10BannerCard from "@/components/Bet10BannerCard";
+import GrosvenorPromo from "@/components/GrosvenorPromo";
+import CopyBetPromo from "@/components/CopyBetPromo";
+import Bet10Promo from "@/components/Bet10Promo";
 import TrackRecordDashboard, { SHOW_FULL_RESULTS_LINK, TABS, type TrackRecordTab } from "@/components/track-record/TrackRecordDashboard";
-import { buildReport, getGameRecord, getLiveFacts, getRecordStats, getSnapshot, parseGameQuery } from "@/lib/trackRecord";
+import { buildReport, getGameRecord, getLiveFacts, getMarketStats, getRecordStats, getSnapshot, parseGameQuery } from "@/lib/trackRecord";
 
 // Fallback refresh. Data is cached per query in lib/trackRecord (snapshot hourly,
 // live facts and Game record every 5 min) and flushed on demand by
@@ -42,13 +42,15 @@ export default async function TrackRecordPage({ searchParams }: { searchParams: 
   const tab = parseTab(sp);
   const gameQuery = parseGameQuery(sp);
 
-  const [snap, live, stats, games] = await Promise.all([
+  const [snap, live, stats, market, games] = await Promise.all([
     getSnapshot("all-time"),
     getLiveFacts(),
     getRecordStats(),
+    // A failed live comparison falls back to the weekly snapshot rather than taking the page down.
+    getMarketStats().catch((e) => { console.error("[track-record] live market comparison failed, using snapshot:", e); return null; }),
     tab === "games" ? getGameRecord(gameQuery) : Promise.resolve(null),
   ]);
-  const report = snap ? buildReport(snap, live, stats) : null;
+  const report = snap ? buildReport(snap, live, stats, market) : null;
   const gameLeagues = report ? report.competitions.filter((c) => c.n > 0).map(({ code, name }) => ({ code, name })) : [];
 
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://edgeanalysts.com";
@@ -77,28 +79,28 @@ export default async function TrackRecordPage({ searchParams }: { searchParams: 
         <TrackRecordDashboard report={report} tab={tab} games={games} gameQuery={gameQuery} gameLeagues={gameLeagues} />
       ) : (
         <section>
-          <h1 className="font-display text-4xl tracking-wide">Track Record</h1>
+          <h1 className="font-display text-[clamp(1.75rem,4.2vw,2.125rem)] font-semibold leading-[1.12] tracking-[-0.025em]">Track record</h1>
           <p className="mt-2 max-w-2xl text-sm text-ink">The track record is being refreshed. Please check back shortly.</p>
           {SHOW_FULL_RESULTS_LINK && (
-            <Link href="/results" className="mt-3 inline-block font-data text-xs text-accent hover:underline">
+            <Link href="/results" className="mt-3 inline-block font-body text-[13px] font-medium text-accent-ink underline-offset-4 hover:underline">
               View full results →
             </Link>
           )}
         </section>
       )}
 
-      {/* ── OUR PARTNERS ──────────────────────────────────────────────── */}
+      {/* ── OUR PARTNERS: flat promo rows, as on the homepage and Insights ── */}
       <section>
-        <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="font-display text-2xl tracking-wide">Partner Offers</h2>
-          <Link href="/offers" className="font-data text-xs text-accent hover:underline">
-            All Partner Offers →
+        <h2 className="mb-2 flex items-baseline font-body text-[17px] font-semibold leading-tight tracking-[-0.01em] text-ink">
+          Partner offers
+          <Link href="/offers" className="ml-auto font-body text-[13px] font-medium tracking-normal text-accent-ink underline-offset-4 hover:underline">
+            All partner offers →
           </Link>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Bet10BannerCard />
-          <CopyBetBannerCard />
-          <GrosvenorBannerCard />
+        </h2>
+        <div className="divide-y divide-line border-y border-line">
+          <Bet10Promo />
+          <CopyBetPromo />
+          <GrosvenorPromo />
         </div>
       </section>
 

@@ -86,17 +86,6 @@ export default function PromoStrip({ affiliates }: { affiliates: Affiliate[] }) 
           );
         })}
       </div>
-
-      {/* Terms line */}
-      <p className="mt-2 font-data text-[9px] text-ink">
-        We earn commission if you sign up via these links — this does not affect our predictions or analysis.
-        {" "}
-        <a href="https://www.begambleaware.org" target="_blank" rel="noopener noreferrer"
-          className="underline hover:text-ink">BeGambleAware.org</a>
-        {" · "}
-        <a href="https://www.gamstop.co.uk" target="_blank" rel="noopener noreferrer"
-          className="underline hover:text-ink">GamStop.co.uk</a>
-      </p>
     </section>
   );
 }

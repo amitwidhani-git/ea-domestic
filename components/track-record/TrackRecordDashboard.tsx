@@ -186,28 +186,40 @@ function Trend({ report }: { report: Report }) {
   const { weeks, small } = report.trend;
   if (weeks.length < 4) return null;
   const rates = weeks.map((w) => w.rate);
-  const W = 640, H = 200, P = 32;
   // y-axis scales to the data (with the chance baseline always in view)
   const lo = Math.min(Math.floor(report.chanceBaseline / 5) * 5 - 5, Math.floor((Math.min(...rates) - 5) / 5) * 5);
   const hi = Math.max(60, Math.ceil((Math.max(...rates) + 5) / 5) * 5);
-  const x = (i: number) => P + (i * (W - P * 2)) / Math.max(weeks.length - 1, 1);
-  const y = (v: number) => H - P - ((v - lo) / (hi - lo)) * (H - P * 2);
-  const pts = weeks.map((w, i) => `${x(i)},${y(w.rate)}`).join(" ");
+  const label = `Weekly hit rate over ${weeks.length} weeks: ${weeks.map((w) => `${w.wk} ${w.rate}%`).join(", ")}`;
+  // The SVG scales with its width, so text sizes are in viewBox units: a wide viewBox for desktop
+  // and a narrow one for phones keep labels at roughly 11-12px on screen either way.
+  // `every`: label every nth week (counting back from the latest) so labels never collide; the wide
+  // chart still shows every week's rate, the narrow one only the labelled weeks' (all are in the aria-label).
+  const chart = (W: number, H: number, fs: number, every: number, allRates: boolean, cls: string) => {
+    const P = fs * 2.6;
+    const x = (i: number) => P + (i * (W - P * 2)) / Math.max(weeks.length - 1, 1);
+    const y = (v: number) => H - P - ((v - lo) / (hi - lo)) * (H - P * 2);
+    const pts = weeks.map((w, i) => `${x(i)},${y(w.rate)}`).join(" ");
+    return (
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} className={cls}>
+        <line x1={P} x2={W - P} y1={H - P + 8} y2={H - P + 8} stroke="var(--line)" />
+        <line x1={P} x2={W - P} y1={y(report.chanceBaseline)} y2={y(report.chanceBaseline)} stroke="var(--mut)" strokeOpacity="0.6" strokeDasharray="3 4" />
+        <polyline points={pts} fill="none" stroke="var(--g)" strokeWidth={fs / 5.5} strokeLinejoin="round" />
+        {weeks.map((w, i) => (
+          <g key={w.wk}>
+            <circle cx={x(i)} cy={y(w.rate)} r={fs / 3.6} fill="var(--g)" />
+            {(weeks.length - 1 - i) % every === 0 && <text x={x(i)} y={H - fs * 0.6} textAnchor="middle" fontSize={fs} fill="var(--mut)">{w.wk}</text>}
+            {(allRates || (weeks.length - 1 - i) % every === 0) && <text x={x(i)} y={y(w.rate) - fs * 0.8} textAnchor="middle" fontSize={fs} fontWeight="600" fill="var(--tx)">{w.rate}%</text>}
+          </g>
+        ))}
+      </svg>
+    );
+  };
   return (
     <div className="sec panel trend">
       <h2>Weekly hit rate</h2>
       <div className="sub">Every week&apos;s picks, win or lose, by week commencing. The dashed line marks what guessing would get</div>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Weekly hit rate over ${weeks.length} weeks: ${weeks.map((w) => `${w.wk} ${w.rate}%`).join(", ")}`}>
-        <line x1={P} x2={W - P} y1={y(report.chanceBaseline)} y2={y(report.chanceBaseline)} stroke="var(--mut)" strokeDasharray="4 4" />
-        <polyline points={pts} fill="none" stroke="var(--g)" strokeWidth="3" strokeLinejoin="round" />
-        {weeks.map((w, i) => (
-          <g key={w.wk}>
-            <circle cx={x(i)} cy={y(w.rate)} r="4" fill="var(--g)" />
-            <text x={x(i)} y={H - 8} textAnchor="middle" fontSize="12" fill="var(--mut)">{w.wk}</text>
-            <text x={x(i)} y={y(w.rate) - 10} textAnchor="middle" fontSize="12" fill="var(--tx)">{w.rate}%</text>
-          </g>
-        ))}
-      </svg>
+      {chart(1100, 280, 12, weeks.length > 18 ? 2 : 1, true, "wide")}
+      {chart(420, 260, 11, Math.ceil(weeks.length / 5), false, "narrow")}
       {small.length > 0 && (
         <p className="note">
           Weeks with fewer than {MIN_SAMPLE} picks are left off the chart: {small.map((w) => `w/c ${w.wk} (${w.c} of ${w.n})`).join(", ")}
@@ -292,12 +304,14 @@ function MarketTab({ report }: { report: Report }) {
   const alignedN = m.aligned.correct + m.aligned.wrong;
   const d = m.diverged, dn = d.model + d.market + d.neither;
   const seg = (v: number, c: string, l: string) => ({ v, c, l, w: pct(v, dn) });
-  const segs = [seg(d.model, "var(--g)", "EdgeIQ right"), seg(d.market, "var(--mk)", "Market right"), seg(d.neither, "var(--line)", "Neither")];
+  const segs = [seg(d.model, "var(--g)", "EdgeIQ right"), seg(d.market, "var(--mk)", "Market right"), seg(d.neither, "var(--s2)", "Neither")];
   return (
     <>
       <div className="panel sec">
         <h2>EdgeIQ compared against the market favourite</h2>
-        <div className="sub">Same fixtures, {m.sample}. EdgeIQ&apos;s probabilities are set independently of the odds</div>
+        <div className="sub">
+          Same fixtures, {m.sample}. {report.marketLive ? "The market favourite is the result bookmakers rated most likely before kick-off. " : ""}EdgeIQ&apos;s probabilities are set independently of the odds
+        </div>
         <div className="vs">
           <div className="vsrow"><span>EdgeIQ</span><div className="tk"><div className="fl" style={{ width: `${mr}%` }} /></div><b>{fmt(mr)}</b></div>
           <div className="vsrow"><span>Market favourite</span><div className="tk"><div className="fl" style={{ width: `${kr}%`, background: "var(--mk)" }} /></div><b>{fmt(kr)}</b></div>
@@ -318,7 +332,7 @@ function MarketTab({ report }: { report: Report }) {
         <div className="panel">
           <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>When they disagree ({dn} matches)</h3>
           <div className="stack" role="img" aria-label={segs.map((s) => `${s.l} ${s.v}`).join(", ")}>
-            {segs.map((s) => <div key={s.l} style={{ width: `${s.w}%`, background: s.c }}>{s.v}</div>)}
+            {segs.map((s) => <div key={s.l} style={{ width: `${s.w}%`, background: s.c, color: s.l === "Neither" ? "var(--mut)" : undefined }}>{s.v}</div>)}
           </div>
           <div className="legend">{segs.map((s) => <span key={s.l} style={{ "--c": s.c } as CSSProperties}>{s.l}</span>)}</div>
         </div>
@@ -377,14 +391,15 @@ export default function TrackRecordDashboard({
         <>
           <p className="note" style={{ marginTop: 24 }}>
             Every figure on this tab is calculated from the full prediction log and updates automatically as results
-            come in, so the latest games are always included. Last updated {report.asOf}. The comparison against the
-            market uses a weekly snapshot, currently covering {report.marketPeriod}.
+            come in, so the latest games are always included. Last updated {report.asOf}. {report.marketLive
+              ? <>The comparison against the market uses bookmaker prices from before kick-off and covers {report.marketPeriod}.</>
+              : <>The comparison against the market uses a weekly snapshot, currently covering {report.marketPeriod}.</>}
           </p>
           <Headline report={report} />
           <Trend report={report} />
           <Tiers report={report} />
           <Staircase report={report} />
-          <div className="sec" style={{ maxWidth: 420 }}><DrawStat report={report} /></div>
+          <div className="sec"><div style={{ maxWidth: 420 }}><DrawStat report={report} /></div></div>
           <div className="sec"><BetanoPromo /></div>
           <Ladder report={report} />
           <Form report={report} />
@@ -421,7 +436,6 @@ export default function TrackRecordDashboard({
         </div>
       </section>
 
-      <div className="disc">Model probability only. Not a betting recommendation. 18+ BeGambleAware.org</div>
     </div>
   );
 }

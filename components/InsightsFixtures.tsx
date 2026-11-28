@@ -7,7 +7,7 @@ import FrozenStamp from "@/components/FrozenStamp";
 import OddsPanel from "@/components/OddsPanel";
 import MatchWidget from "@/components/MatchWidget";
 import StatsInsights from "@/components/StatsInsights";
-import ValueSignalCard, { type OddsFormat } from "@/components/ValueSignalCard";
+import ValueSignalCard, { FeedHeader, type OddsFormat } from "@/components/ValueSignalCard";
 import BetanoPromo from "@/components/BetanoPromo";
 import LivescorebetPromo from "@/components/LivescorebetPromo";
 import BetMazePromo from "@/components/BetMazePromo";
@@ -20,7 +20,9 @@ import SpinzwinPromo from "@/components/SpinzwinPromo";
 import Bet247Promo from "@/components/Bet247Promo";
 import BetwayPromo from "@/components/BetwayPromo";
 import { useBackFrom } from "@/lib/useBackFrom";
-import { LEAGUE_CODES, NL_TIERS, NL_TIER_LABEL, nlTierFromRound, type NLTier } from "@/lib/leagues";
+import { WHENS, inWhen, type WhenKey } from "@/lib/when";
+import { Count, OptLabel, OverflowGroup, competitionOptions, optClass } from "@/components/FilterTabs";
+import { NL_TIERS, NL_TIER_LABEL, nlTierFromRound, type NLTier } from "@/lib/leagues";
 import type { EvSignal, League, UpcomingFixtureWithSignal } from "@/lib/types";
 
 // The real partner strip banners — randomised into the All Fixtures list
@@ -98,32 +100,31 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
   return (
     <article
       id={`match-${fixture.match_id}`}
-      className={`relative flex flex-col overflow-hidden rounded-[14px] border bg-panel p-4 transition-colors duration-700 ${highlighted ? "border-accent" : "border-line hover:border-muted"}`}
-      style={{ boxShadow: "var(--shadow)" }}
+      className={`relative -m-2 flex min-w-0 flex-col rounded-[6px] p-2 transition-colors duration-700 ${highlighted ? "bg-[var(--ea-signal)]/[0.07]" : ""}`}
     >
       {/* top row */}
-      <div className="mb-3.5 flex items-center gap-2">
-        <span className="rounded-md bg-chip px-1.5 py-1 font-data text-[10.5px] font-semibold tracking-wide text-muted">{fixture.league}</span>
+      <div className="mb-2.5 flex items-center gap-2">
+        <span className="font-body text-xs font-medium text-muted">{fixture.league}</span>
         {fixture.league === "NL" && (
-          <span className="font-data text-[10px] text-muted">{nlCompetitionLabel(fixture.round)}</span>
+          <span className="font-body text-xs text-muted">{nlCompetitionLabel(fixture.round)}</span>
         )}
         <span className="font-data text-xs text-muted">{kickoffLabel(fixture.kickoff_utc)}</span>
         {bestSignal && (
-          <span className="ml-auto rounded-full bg-accent/10 px-2.5 py-1 font-data text-xs font-semibold text-accent-ink">
+          <span className="ml-auto rounded-full bg-accent/10 px-2.5 py-1 font-data text-xs font-medium text-accent-ink">
             +{(bestSignal.ev * 100).toFixed(1)}% EV
           </span>
         )}
       </div>
 
       {/* teams — the whole title area links to the match centre */}
-      <div className="relative mb-3.5 flex items-center gap-2.5">
+      <div className="relative mb-3 flex items-center gap-2.5">
         <Link href={`/matches/${fixture.match_id}?from=${backFrom}`} aria-label={`Match centre: ${fixture.home_team} v ${fixture.away_team}`} className="absolute inset-0 z-10" />
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-[15.5px] font-semibold">
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-[15px] font-semibold tracking-[-0.01em]">
           <ClubCrest apiFootballId={fixture.home_api_football_id ?? null} clubName={fixture.home_team} size={26} />
           {teamLink(fixture.home_team_id, fixture.home_team)}
         </div>
         <span className="font-data text-[11px] text-muted">v</span>
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-[15.5px] font-semibold">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-[15px] font-semibold tracking-[-0.01em]">
           {teamLink(fixture.away_team_id, fixture.away_team)}
           <ClubCrest apiFootballId={fixture.away_api_football_id ?? null} clubName={fixture.away_team} size={26} />
         </div>
@@ -131,28 +132,29 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
 
       {prediction ? (
         <div className="space-y-2">
-          <div className="flex items-center gap-2.5 rounded-[10px] border border-line bg-panel2 px-3 py-2.5">
-            <span className="font-data text-[10px] font-bold uppercase tracking-wider text-muted">Pick</span>
-            <span className="font-data text-sm font-bold">
+          <div className="flex items-center gap-2.5">
+            <span className="rounded bg-[var(--ea-pick)]/15 text-[var(--ea-pick)] px-1.5 py-px font-body text-xs font-semibold">Pick</span>
+            <span className="font-body text-[14px] font-semibold">
               {prediction.pick === "draw" ? "Draw" : prediction.pick === "home" ? fixture.home_team : fixture.away_team}
               {prediction.pick !== "draw" ? " win" : ""}
             </span>
-            <span className="ml-auto font-data text-lg font-semibold">{(prediction.probs[prediction.pick] * 100).toFixed(0)}%</span>
+            <span className="ml-auto font-data text-base font-medium">{(prediction.probs[prediction.pick] * 100).toFixed(0)}%</span>
           </div>
           <ProbBar probs={prediction.probs} pick={prediction.pick} />
           <div className="flex flex-wrap items-center justify-between gap-1">
-            <span className="font-data text-xs">
+            <span className="font-body text-xs text-muted">
               EdgeIQ Prediction: <span className="text-accent">{PICK_LABEL[prediction.pick]}</span>
             </span>
             <FrozenStamp frozenAt={prediction.frozen_at} hash={prediction.hash} />
           </div>
         </div>
       ) : (
-        <p className="font-data text-[10px] text-muted">Prediction locks before KO</p>
+        <p className="font-body text-xs text-muted">Prediction locks before KO</p>
       )}
 
-      <div className="-mx-4 -mb-4 mt-3.5">
+      <div className="mt-2 flex flex-wrap items-start gap-x-5">
         <OddsPanel
+          flat
           matchId={fixture.match_id}
           homeTeam={fixture.home_team}
           awayTeam={fixture.away_team}
@@ -166,12 +168,13 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
         <button
           type="button"
           onClick={() => setStatsOpen((o) => !o)}
-          className="flex w-full items-center justify-center gap-1 border-t border-line py-2.5 font-data text-xs font-semibold text-muted hover:text-ink"
+          aria-expanded={statsOpen}
+          className="inline-flex min-h-9 items-center gap-1 font-body text-xs font-medium text-muted hover:text-ink aria-expanded:text-ink"
         >
           Stats {statsOpen ? "▴" : "▾"}
         </button>
         {statsOpen && (
-          <div className="border-t border-line">
+          <div className="w-full basis-full">
             <StatsInsights
               homeTeamId={fixture.home_team_id}
               awayTeamId={fixture.away_team_id}
@@ -184,7 +187,7 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
         )}
 
         {prediction && (
-          <MatchWidget
+          <div className="w-full basis-full"><MatchWidget
             matchId={fixture.match_id}
             homeTeam={fixture.home_team}
             awayTeam={fixture.away_team}
@@ -201,7 +204,7 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
                 ? { selection: bestSignal.selection, ev: bestSignal.ev, bestPrice: bestSignal.best_price, bestBookmaker: bestSignal.best_bookmaker }
                 : undefined
             }
-          />
+          /></div>
         )}
       </div>
     </article>
@@ -210,7 +213,6 @@ function FixtureCard({ item, highlighted, backFrom }: { item: UpcomingFixtureWit
 
 // ---------------------------------------------------------------- main
 
-const LEAGUE_FILTERS: ("ALL" | League)[] = ["ALL", ...LEAGUE_CODES];
 type SortKey = "date" | "ev" | "confidence";
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "date", label: "Date" },
@@ -218,46 +220,17 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: "confidence", label: "Confidence" },
 ];
 
-function pillClass(active: boolean): string {
-  return `shrink-0 rounded-full border px-3.5 py-1.5 font-body text-[13px] font-semibold transition-colors ${
-    active ? "border-ink bg-ink text-panel" : "border-line text-muted hover:border-muted hover:text-ink"
-  }`;
-}
-
-type WhenKey = "today" | "weekend" | "week";
-const WHENS: { key: WhenKey; label: string }[] = [
-  { key: "today", label: "Today" },
-  { key: "weekend", label: "This weekend" },
-  { key: "week", label: "Full week" },
-];
-// Loose timeframe filter over a fixture's kickoff time (Europe/London aware).
-function inWhen(iso: string, when: WhenKey): boolean {
-  if (!iso) return when === "week";
-  const now = new Date();
-  const t = new Date(iso);
-  const diffDays = (t.getTime() - now.getTime()) / 86_400_000;
-  if (when === "today") {
-    const f = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" });
-    return f.format(now) === f.format(t);
-  }
-  if (when === "weekend") {
-    const wd = t.getUTCDay(); // Fri 5 · Sat 6 · Sun 0
-    return (wd === 5 || wd === 6 || wd === 0) && diffDays >= -1 && diffDays <= 9;
-  }
-  return diffDays >= -1 && diffDays <= 14; // full week (generous)
-}
-
-// "International" group — Nations League tier chips. Picking a tier implies
-// league=NL (handled by the caller); picking "All tiers" clears the tier
-// without touching whatever league chip is already selected.
+// Nations League tiers — a second, narrower filter shown only when NL has
+// fixtures. Picking a tier implies league=NL (handled by the caller); "All
+// tiers" clears the tier without touching the league.
+const TIER_OPTIONS = [{ key: "ALL" as const, label: "All tiers" }, ...NL_TIERS.map((t) => ({ key: t, label: NL_TIER_LABEL[t] }))];
 function TierFilterBar({ tier, onChange }: { tier: NLTier | null; onChange: (t: NLTier | null) => void }) {
   return (
-    <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <span className="shrink-0 font-data text-[10px] uppercase tracking-widest text-muted">International:</span>
-      <button onClick={() => onChange(null)} className={pillClass(tier === null)}>Nations League (all tiers)</button>
-      {NL_TIERS.map((t) => (
-        <button key={t} onClick={() => onChange(t)} className={pillClass(tier === t)}>Nations League - {NL_TIER_LABEL[t]}</button>
-      ))}
+    <div className="flex items-end gap-4">
+      <span className="shrink-0 py-2 font-body text-xs font-medium text-muted">Nations League</span>
+      <div className="min-w-0 flex-1">
+        <OverflowGroup label="Nations League tier" options={TIER_OPTIONS} value={tier ?? "ALL"} onChange={(k) => onChange(k === "ALL" ? null : k)} />
+      </div>
     </div>
   );
 }
@@ -351,6 +324,16 @@ export default function InsightsFixtures({
     return () => clearTimeout(timer);
   }, [highlightId]);
 
+  const inTimeframe = useMemo(() => signals.filter((s) => inWhen(s.kickoff_utc, when)), [signals, when]);
+  const signalLeagues = competitionOptions(inTimeframe.map((s) => s.league), league);
+  const fixtureLeagues = competitionOptions(upcoming.map((u) => u.fixture.league), league);
+  const pickLeague = (lg: "ALL" | League) => { setLeague(lg); setTier(null); };
+  const pickWhen = (w: WhenKey) => {
+    setWhen(w);
+    // Keep the competition only if the new timeframe still has fixtures in it.
+    if (league !== "ALL" && !signals.some((s) => s.league === league && inWhen(s.kickoff_utc, w))) { setLeague("ALL"); setTier(null); }
+  };
+
   const visible = useMemo(() => {
     const list = upcoming.filter((u) =>
       (league === "ALL" || u.fixture.league === league) &&
@@ -375,8 +358,8 @@ export default function InsightsFixtures({
 
   return (
     <section>
-      <h1 className="font-display text-4xl tracking-wide">Odds Value Signals</h1>
-      <p className="mt-2 max-w-2xl text-sm text-ink">
+      <h1 className="font-display text-[clamp(1.75rem,4.2vw,2.125rem)] font-semibold leading-[1.12] tracking-[-0.025em]">Odds Value Signals</h1>
+      <p className="mt-2 max-w-2xl font-body text-[15px] leading-relaxed text-muted">
         We compare our model&apos;s predicted chances against the best odds on the market.
         If our probability differs from the price on offer, that&apos;s considered a Value Signal.
       </p>
@@ -392,18 +375,24 @@ export default function InsightsFixtures({
 
       {tab === "signals" ? (
         signals.length === 0 ? (
-          <div className="mt-6 rounded-[14px] border border-line bg-panel px-6 py-10 text-center">
-            <p className="font-display text-xl text-ink">No live value signals</p>
-            <p className="mt-1 font-data text-xs text-ink">Check back on matchdays.</p>
+          <div className="mt-8">
+            <p className="font-body text-[15px] font-semibold text-ink">No live value signals</p>
+            <p className="mt-1 font-body text-[13px] text-muted">Check back on matchdays.</p>
           </div>
         ) : (
           <>
             {/* timeframe + odds format toggle */}
-            <div className="mt-6 flex flex-wrap items-center gap-2">
-              <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {WHENS.map((w) => (
-                  <button key={w.key} onClick={() => setWhen(w.key)} className={pillClass(when === w.key)}>{w.label}</button>
-                ))}
+            <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-2">
+              <div role="group" aria-label="Matchday" className="-mx-4 flex items-end gap-x-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:gap-x-5 sm:px-0 [&::-webkit-scrollbar]:hidden">
+                {WHENS.map((w) => {
+                  const n = signals.filter((s) => inWhen(s.kickoff_utc, w.key)).length;
+                  return (
+                    <button key={w.key} type="button" onClick={() => pickWhen(w.key)} aria-pressed={when === w.key}
+                      disabled={n === 0} className={`${optClass(when === w.key)} text-[13px] font-medium sm:text-[14px]`}>
+                      <OptLabel label={w.label} short={w.short} /> <Count n={n} />
+                    </button>
+                  );
+                })}
               </div>
               <div className="ml-auto flex items-center gap-2">
                 <span className="font-data text-[11px] uppercase tracking-widest text-muted">Odds</span>
@@ -421,16 +410,14 @@ export default function InsightsFixtures({
             </div>
 
             {/* competition chips */}
-            <div className="mt-3 -mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {LEAGUE_FILTERS.map((lg) => (
-                <button key={lg} onClick={() => { setLeague(lg); setTier(null); }} className={pillClass(league === lg)}>
-                  {lg === "ALL" ? "All" : lg}
-                </button>
-              ))}
-            </div>
-            <div className="mt-2">
-              <TierFilterBar tier={tier} onChange={(t) => { setTier(t); setLeague("NL"); }} />
-            </div>
+            {signalLeagues.length > 2 && (
+              <OverflowGroup label="Competition" options={signalLeagues} value={league} onChange={pickLeague} />
+            )}
+            {signalLeagues.some((o) => o.key === "NL" && o.n) && (
+              <div>
+                <TierFilterBar tier={tier} onChange={(t) => { setTier(t); setLeague("NL"); }} />
+              </div>
+            )}
 
             {(() => {
               const list = signals.filter((s) =>
@@ -439,7 +426,7 @@ export default function InsightsFixtures({
                 inWhen(s.kickoff_utc, when),
               );
               if (list.length === 0) {
-                return <p className="mt-8 font-data text-sm text-muted">No value signals for this filter.</p>;
+                return <p className="mt-8 font-body text-[13px] text-muted">No value signals for this filter.</p>;
               }
               const edgeOf = (s: EvSignal) => s.bestValue.model_prob - s.bestValue.market_prob;
               const featured = [...list].sort((a, b) => edgeOf(b) - edgeOf(a))[0];
@@ -449,25 +436,25 @@ export default function InsightsFixtures({
               const rest = list.filter((s) => s.match_id !== featured.match_id);
               return (
                 <>
-                  <h2 className="mb-3 mt-6 flex items-center gap-2 font-data text-[13px] font-bold uppercase tracking-wider text-muted">
+                  <h2 className="mb-3 mt-8 flex items-center gap-2 font-body text-[17px] font-semibold leading-tight tracking-[-0.01em] text-ink">
                     Biggest edge
                     <span title="Edge = our model's probability minus the probability implied by the best available price. Positive means we rate it likelier than the market does."
                       className="inline-flex h-[15px] w-[15px] cursor-help items-center justify-center rounded-full border border-muted/60 text-[10px] font-bold normal-case tracking-normal text-muted">?</span>
                   </h2>
-                  <div className="max-w-xl">
-                    <ValueSignalCard signal={featured} oddsFmt={oddsFmt} featured />
-                  </div>
+                  <FeedHeader />
+                  <ValueSignalCard signal={featured} oddsFmt={oddsFmt} featured flat />
 
                   {rest.length > 0 && (
                   <>
-                  <h2 className="mb-3 mt-8 font-data text-[13px] font-bold uppercase tracking-wider text-muted">All odds &amp; value</h2>
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <h2 className="mb-3 mt-12 font-body text-[17px] font-semibold leading-tight tracking-[-0.01em] text-ink">All odds &amp; value</h2>
+                  <FeedHeader />
+                  <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2 sm:gap-y-10 lg:grid-cols-1 lg:gap-y-0">
                     {rest.map((s, i) => {
                       const StripBanner = (i + 1) % 8 === 0 ? valueStripPicks[Math.floor(i / 8)] : undefined;
                       return (
                         <Fragment key={s.match_id}>
-                          <ValueSignalCard signal={s} oddsFmt={oddsFmt} />
-                          {StripBanner && <div className="sm:col-span-2"><StripBanner /></div>}
+                          <ValueSignalCard signal={s} oddsFmt={oddsFmt} flat />
+                          {StripBanner && <div className="sm:col-span-2 lg:col-span-1 lg:py-3"><StripBanner /></div>}
                         </Fragment>
                       );
                     })}
@@ -482,12 +469,7 @@ export default function InsightsFixtures({
       ) : (
         <div className="mt-6">
           <div className="flex flex-wrap items-center gap-2">
-            {LEAGUE_FILTERS.map((lg) => (
-              <button key={lg} onClick={() => { setLeague(lg); setTier(null); }} className={pillClass(league === lg)}>
-                {lg === "ALL" ? "All" : lg}
-              </button>
-            ))}
-
+            <span className="font-data text-xs text-ink">{visible.length} fixtures</span>
             <div className="ml-auto flex items-center gap-2">
               <span className="font-data text-[11px] uppercase tracking-widest text-muted">Sort</span>
               <div className="inline-flex rounded-lg bg-chip p-0.5">
@@ -501,26 +483,32 @@ export default function InsightsFixtures({
                 ))}
               </div>
             </div>
-            <span className="font-data text-xs text-ink self-center">{visible.length} fixtures</span>
           </div>
-          <div className="mt-2">
-            <TierFilterBar tier={tier} onChange={(t) => { setTier(t); setLeague("NL"); }} />
-          </div>
+          {fixtureLeagues.length > 2 && (
+            <div className="mt-2">
+              <OverflowGroup label="Competition" options={fixtureLeagues} value={league} onChange={pickLeague} />
+            </div>
+          )}
+          {fixtureLeagues.some((o) => o.key === "NL" && o.n) && (
+            <div>
+              <TierFilterBar tier={tier} onChange={(t) => { setTier(t); setLeague("NL"); }} />
+            </div>
+          )}
 
           {loading && !loaded ? (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="mt-6 grid gap-x-10 gap-y-10 sm:grid-cols-2">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-40 animate-pulse rounded-[14px] border border-line bg-panel" />
+                <div key={i} className="h-40 animate-pulse rounded-[6px] bg-chip/50" />
               ))}
             </div>
           ) : visible.length === 0 ? (
-            <p className="mt-6 font-data text-sm text-muted">
+            <p className="mt-6 font-body text-[13px] text-muted">
               {loaded && upcoming.length === 0
                 ? "No upcoming fixtures in the next 14 days."
                 : "No fixtures match the current filter."}
             </p>
           ) : (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="mt-6 grid gap-x-10 gap-y-10 sm:grid-cols-2">
               {visible.map((u, i) => {
                 const StripBanner = (i + 1) % 8 === 0 ? stripPicks[Math.floor(i / 8)] : undefined;
                 return (

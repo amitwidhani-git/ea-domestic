@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { MongoClient, type Db } from "mongodb";
 import { resolveCtaAffiliates } from "@/lib/affiliates";
+import { bookmakerName } from "@/lib/bookmakers";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -23,30 +24,7 @@ async function getDb(): Promise<Db | null> {
   return client.db(process.env.MONGODB_DB ?? "edgeanalysts");
 }
 
-const DISPLAY_NAMES: Record<string, string> = {
-  betfair_ex_uk: "Betfair Exchange",
-  betfair_sb_uk: "Betfair Sportsbook",
-  bet365: "Bet365",
-  williamhill: "William Hill",
-  skybet: "Sky Bet",
-  coral: "Coral",
-  ladbrokes: "Ladbrokes",
-  paddypower: "Paddy Power",
-  betway: "Betway",
-  boylesports: "BoyleSports",
-  unibet_uk: "Unibet",
-  grosvenor: "Grosvenor Sport",
-  livescorebet: "LiveScore Bet",
-  matchbook: "Matchbook",
-  casumo: "Casumo",
-  betano_uk: "Betano",
-  "10bet": "10Bet",
-  copybet: "CopyBet",
-};
-
-function displayName(key: string): string {
-  return DISPLAY_NAMES[key] ?? key.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-}
+const displayName = bookmakerName;
 
 export async function GET(_req: Request, { params }: { params: Promise<{ matchId: string }> }) {
   const { matchId } = await params;

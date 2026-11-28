@@ -152,10 +152,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </p>
         )}
 
-        <p className="font-data text-[9px] uppercase tracking-widest text-ink">
-          Model probability only · Not a betting recommendation
-        </p>
-        <p className="font-data text-[9px] text-ink">18+ · BeGambleAware.org</p>
       </article>
     </div>
   );

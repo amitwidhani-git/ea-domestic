@@ -36,7 +36,7 @@ export default function NavTabs() {
   return (
     <nav aria-label="Primary" className="flex items-center gap-5">
       {TABS.map((t) => (
-        <Link key={t.href} href={t.href} className={linkCls(pathname.startsWith(t.href))}>
+        <Link key={t.href} href={t.href} aria-current={pathname.startsWith(t.href) ? "page" : undefined} className={linkCls(pathname.startsWith(t.href))}>
           {t.label}
         </Link>
       ))}
@@ -54,7 +54,7 @@ export default function NavTabs() {
           </svg>
         </button>
         {teamsOpen && (
-          <div className="absolute left-0 top-full z-50 mt-2 max-h-[70vh] min-w-[220px] overflow-y-auto rounded-xl border border-line bg-panel p-2 shadow-[var(--shadow)] [scrollbar-color:var(--muted)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-thumb]:hover:bg-muted [&::-webkit-scrollbar-track]:bg-transparent">
+          <div className="absolute left-0 top-full z-50 mt-2 max-h-[70vh] min-w-[220px] overflow-y-auto rounded-xl border border-line bg-panel p-2 shadow-[var(--shadow)]">
             <span className="block px-3 pb-1 pt-1.5 font-body text-[10px] uppercase tracking-wider text-muted">Browse by division</span>
             {DIVISIONS_BY_COUNTRY.map(({ country, leagues }) => (
               <div key={country}>
@@ -82,7 +82,7 @@ export default function NavTabs() {
         )}
       </div>
 
-      <Link href={OFFERS_TAB.href} className={linkCls(pathname.startsWith(OFFERS_TAB.href))}>
+      <Link href={OFFERS_TAB.href} aria-current={pathname.startsWith(OFFERS_TAB.href) ? "page" : undefined} className={linkCls(pathname.startsWith(OFFERS_TAB.href))}>
         {OFFERS_TAB.label}
       </Link>
     </nav>

@@ -1,11 +1,19 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ClubCrest from "@/components/ClubCrest";
-import ProbBar from "@/components/ProbBar";
 import FrozenStamp from "@/components/FrozenStamp";
-import MatchWidget from "@/components/MatchWidget";
-import MatchSquadTab, { FormRow } from "@/components/MatchSquadTab";
+import { FormRow } from "@/components/MatchSquadTab";
+import { KeyStatsInline, RedCards, redCardCount } from "@/components/KeyStatsStrip";
+import MatchFeed from "@/components/MatchFeed";
+import { LiveCard, useLiveMatches } from "@/components/LiveMatchesBar";
+import { BestOddsPanel, MarketChart, MatchOddsTable, useOddsSnapshots, type Phase as MarketPhase } from "@/components/MatchMarket";
+import LineupsModule from "@/components/LineupsModule";
+import { MatchFaq, RelatedFixturesPanel, type RelatedFixtures } from "@/components/MatchExtras";
+import { marketFromBest, type Outcome } from "@/lib/bestPrice";
+import { MIN_EV, deVig, shortCode } from "@/lib/marketDisplay";
+import { trackSectionJump, trackSectionView } from "@/lib/gtag";
+import type { LiveMatch } from "@/lib/liveFixtures";
 import type { MatchDetail, MatchEvent, MatchInjury, MatchNews, LineupPlayer, LineupTeam } from "@/lib/matchDetail";
 import { mapMatchEvent, formatMinute, eventIcon, type RawMatchEvent } from "@/lib/matchEvents";
 
@@ -15,6 +23,66 @@ import { mapMatchEvent, formatMinute, eventIcon, type RawMatchEvent } from "@/li
 const PRE = new Set(["SCHEDULED"]);
 const LIVE = new Set(["LIVE"]);
 const POST = new Set(["FINISHED"]);
+
+// Postponed / cancelled / abandoned / suspended: show the status, no odds actions.
+const OFF_STATUSES = new Set(["PST", "CANC", "ABD", "SUSP", "INT", "AWD", "WO"]);
+const OFF_LABEL: Record<string, string> = { PST: "Postponed", CANC: "Cancelled", ABD: "Abandoned", SUSP: "Suspended", INT: "Interrupted", AWD: "Awarded", WO: "Walkover" };
+const LIVE_FEED_POLL_MS = 30_000;
+
+// One scrolling page with a sticky jump bar replaces the tabs (spec v3 4.4).
+type SectionKey = "odds" | "events" | "lineups" | "h2h" | "stats" | "preview" | "faq";
+const SECTION_LABEL: Record<SectionKey, string> = {
+  odds: "Odds", events: "Events", lineups: "Lineups", h2h: "Head to head", stats: "Stats", preview: "Preview", faq: "FAQ",
+};
+/** Site header height (60px + 1px border); the sticky bar sits directly under it. */
+const STICKY_TOP = 61;
+
+/** Collapses a long section to a preview with "Show more", expanding in place. */
+function ShowMore({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <div className={open ? "" : "relative max-h-[420px] overflow-hidden"}>
+        {children}
+        {!open && <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-bg to-transparent" aria-hidden="true" />}
+      </div>
+      <button onClick={() => setOpen((o) => !o)} className="mt-2 font-data text-xs font-semibold text-muted hover:text-ink">
+        {open ? "Show less" : "Show more"}
+      </button>
+    </div>
+  );
+}
+
+/** Collapsed by default on mobile, always open from md up (used for the market chart). */
+function MobileCollapse({ label, children }: { label: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button onClick={() => setOpen((o) => !o)} className="mb-2 font-data text-xs font-semibold text-muted hover:text-ink md:hidden">
+        {open ? `Hide ${label}` : `Show ${label}`}
+      </button>
+      <div className={open ? "" : "hidden md:block"}>{children}</div>
+    </div>
+  );
+}
+
+/** Live ticker (spec v3 2.3 compact): every live match, current one highlighted. Hidden when nothing is in play. */
+function LiveTicker({ currentMatchId }: { currentMatchId: string }) {
+  const matches = useLiveMatches(null);
+  const strip = useRef<HTMLDivElement>(null);
+  if (!matches || matches.length === 0) return null;
+  return (
+    <div className="relative" aria-label="Live now">
+      <div ref={strip} className="flex gap-2 overflow-x-auto pr-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {matches.map((m) => <LiveCard key={m.matchId} m={m} backFrom="" compact current={m.matchId === currentMatchId} />)}
+      </div>
+      <button type="button" aria-label="Scroll live matches" onClick={() => strip.current?.scrollBy({ left: 280, behavior: "smooth" })}
+        className="absolute right-0 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-chip text-muted hover:text-ink">
+        ›
+      </button>
+    </div>
+  );
+}
 
 const PICK_LABEL = { home: "Home win", draw: "Draw", away: "Away win" } as const;
 const HOME_COLOR = "var(--accent)";
@@ -70,19 +138,25 @@ function num(v: number | string | null | undefined): number {
   return 0;
 }
 export default function MatchLiveUpdater({
-  matchId, initialData, isLive,
+  matchId, initialData, related: relatedFixtures,
 }: {
   matchId: string;
   initialData: MatchDetail;
   isLive: boolean;
+  related: RelatedFixtures;
 }) {
   const [data, setData] = useState<MatchDetail>(initialData);
   const status = data.fixture.status ?? "";
   const phase: "PRE" | "LIVE" | "POST" = LIVE.has(status) ? "LIVE" : POST.has(status) ? "POST" : "PRE";
-
-  const [tab, setTab] = useState<"prediction" | "stats" | "h2h" | "lineups" | "squad" | "news">(
-    isLive || POST.has(initialData.fixture.status ?? "") ? "stats" : "prediction"
-  );
+  const marketPhase: MarketPhase = OFF_STATUSES.has(data.fixture.afStatus ?? "") ? "OFF" : phase;
+  const apiFixtureId = data.fixture.apiFootballFixtureId;
+  const oddsRows = useOddsSnapshots(matchId);
+  const [selected, setSelected] = useState<Outcome>(initialData.prediction?.pick ?? "home");
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerInView, setHeaderInView] = useState(true);
+  const [activeSection, setActiveSection] = useState<SectionKey | null>(null);
+  // In-play feed (live_fixtures: live odds, odds history, events). undefined = loading, null = none.
+  const [liveFeed, setLiveFeed] = useState<LiveMatch | null | undefined>(undefined);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
 
@@ -123,6 +197,24 @@ export default function MatchLiveUpdater({
     const id = setInterval(poll, 60000);
     return () => { cancelled = true; clearInterval(id); };
   }, [liveActive, matchId, initialData.homeTeam.apiFootballId]);
+
+  // Live odds feed (chart, live market %): every 30s while live; fetched once at full time,
+  // since finished fixtures keep their in-play odds history for the full-time chart.
+  const postMatch = phase === "POST";
+  useEffect(() => {
+    if ((!liveActive && !postMatch) || apiFixtureId == null) return;
+    let cancelled = false;
+    const poll = () => {
+      fetch(`/api/live/${apiFixtureId}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((m: LiveMatch | null) => { if (!cancelled) setLiveFeed(m); })
+        .catch(() => { if (!cancelled) setLiveFeed((prev) => prev ?? null); });
+    };
+    poll();
+    if (!liveActive) return () => { cancelled = true; };
+    const id = setInterval(poll, LIVE_FEED_POLL_MS);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [liveActive, postMatch, apiFixtureId]);
 
   // 1s ticker so "updated Xs ago" counts up.
   useEffect(() => {
@@ -169,67 +261,227 @@ export default function MatchLiveUpdater({
     statusChip = <span className="font-data text-[10px] text-muted">{countdown(fixture.kickoffUtc)}</span>;
   }
 
-  const TABS: { key: typeof tab; label: string }[] = [
-    { key: "prediction", label: "Prediction" },
-    { key: "stats", label: "Match Stats" },
-    { key: "h2h", label: "Head to Head" },
-    { key: "lineups", label: "Lineups" },
-    { key: "squad", label: "Squad" },
-    { key: "news", label: "News" },
-  ];
+  if (marketPhase === "OFF") {
+    statusChip = <span className="font-data text-[10px] uppercase tracking-widest text-muted">{OFF_LABEL[fixture.afStatus ?? ""] ?? fixture.afStatus}</span>;
+  }
+
+  // ── market data: EdgeIQ frozen probs; kick-off, now / closing market; Value Signal (pre-match) ──
+  const names: Record<Outcome, string> = { home: homeTeam.name, draw: "Draw", away: awayTeam.name };
+  const edgeiq = data.prediction?.probs ?? null;
+  const market = marketPhase === "LIVE" ? deVig(liveFeed?.liveOdds) : marketPhase === "OFF" ? null : marketFromBest(oddsRows ?? []);
+  const kickoffMarket = marketPhase === "LIVE" || marketPhase === "POST" ? deVig(liveFeed?.prematchOdds) : null;
+  const valueSignal = (() => {
+    if (marketPhase !== "PRE" || !edgeiq || !market) return null;
+    const top = evSignals.filter((s) => s.settled_result == null && s.ev >= MIN_EV).sort((a, b) => b.ev - a.ev)[0];
+    if (!top) return null;
+    const gap = (edgeiq[top.selection] - market[top.selection]) * 100;
+    return Math.round(gap) > 0 ? { side: top.selection, gap } : null;
+  })();
+  const hasChart = (phase === "LIVE" || phase === "POST") && !!liveFeed && liveFeed.oddsHistory.length >= 2;
+  const result: Outcome | null = phase === "POST" && score ? (score.home > score.away ? "home" : score.away > score.home ? "away" : "draw") : null;
+
+  // Live feed events once loaded (fresher), else the match payload's events.
+  const feedEvents = phase === "LIVE" && liveFeed && liveFeed.events.length > 0 ? liveFeed.events : data.events;
+  const latest = phase !== "PRE" && feedEvents.length > 0 ? feedEvents[feedEvents.length - 1] : null;
+  const redHome = phase === "PRE" ? 0 : redCardCount(data.stats, data.events, "home");
+  const redAway = phase === "PRE" ? 0 : redCardCount(data.stats, data.events, "away");
+  const scoreText = hasScore && score ? `${score.home} – ${score.away}` : phase === "PRE" ? "v" : "–";
+
+  // ── sections, placed as in the spec v3 4.2 diagram ──
+  const h2h = data.headToHead;
+  const hasH2H = !!h2h && (h2h.meetings.length > 0 || h2h.homeWins + h2h.draws + h2h.awayWins > 0);
+  // Left column: match feed + lineups (pre-match: lineups if published, else head to head).
+  const leftKeys = (phase === "PRE"
+    ? ([data.lineups ? "lineups" : null, hasH2H ? "h2h" : null] as (SectionKey | null)[])
+    // Events: always while live (the feed fills in); at full time only when event data exists.
+    : ([phase === "LIVE" || feedEvents.length > 0 ? "events" : null, data.lineups ? "lineups" : null] as (SectionKey | null)[])).filter((k): k is SectionKey => k !== null);
+  // Below, left two thirds: stats, preview (pre-match: preview first), FAQ. Right third: related fixtures.
+  const belowKeys = (phase === "PRE" ? (["preview", "stats", "faq"] as SectionKey[]) : (["stats", "preview", "faq"] as SectionKey[]))
+    .filter((k) => k !== "stats" || !!data.stats);
+  const order: SectionKey[] = ["odds", ...leftKeys, ...belowKeys];
+  const orderKey = order.join(",");
+  const sectionLabel = (k: SectionKey) => (k === "preview" && phase === "POST" ? "Result and preview" : SECTION_LABEL[k]);
+  const node: Record<Exclude<SectionKey, "odds">, React.ReactNode> = {
+    events: <MatchFeed events={feedEvents} homeName={homeTeam.name} awayName={awayTeam.name} />,
+    lineups: data.lineups ? <LineupsModule lineups={data.lineups} events={feedEvents} homeName={homeTeam.name} awayName={awayTeam.name} /> : null,
+    h2h: <H2HTab data={data} />,
+    stats: <StatsTab data={data} phase={phase} />,
+    preview: <PreviewBlock data={data} phase={phase} />,
+    faq: <MatchFaq home={homeTeam.name} away={awayTeam.name} league={fixture.league ?? ""} kickoffUtc={fixture.kickoffUtc} venue={fixture.venue}
+      edgeiq={edgeiq} frozenAt={data.prediction?.frozen_at ?? null} rows={phase === "PRE" ? oddsRows : null} />,
+  };
+  const LONG = new Set<SectionKey>(["h2h", "faq", "preview"]);
+
+  // Sticky bar shows once the full score header has scrolled away.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => setHeaderInView(e.isIntersecting), { rootMargin: `-${STICKY_TOP}px 0px 0px 0px` });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Active jump link: the section nearest the top under the sticky bar.
+  useEffect(() => {
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        let current: SectionKey | null = null, best = -Infinity;
+        for (const k of orderKey.split(",") as SectionKey[]) {
+          const top = document.getElementById(k)?.getBoundingClientRect().top;
+          if (top != null && top <= STICKY_TOP + 80 && top > best) { best = top; current = k; }
+        }
+        setActiveSection(current);
+      });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(frame); };
+  }, [orderKey]);
+
+  // section_view: once per section per page view, when at least half of it (or half the screen) is visible.
+  const viewed = useRef(new Set<string>());
+  useEffect(() => {
+    const obs = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        const key = (e.target as HTMLElement).id;
+        const half = e.intersectionRatio >= 0.5 || e.intersectionRect.height >= window.innerHeight * 0.5;
+        if (e.isIntersecting && half && !viewed.current.has(key)) {
+          viewed.current.add(key);
+          trackSectionView({ section: key, matchId });
+        }
+      }
+    }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
+    for (const k of orderKey.split(",")) {
+      const el = document.getElementById(k);
+      if (el) obs.observe(el);
+    }
+    return () => obs.disconnect();
+  }, [orderKey, matchId]);
+
+  const MAIN_ORDER = ["order-4", "order-5", "order-6", "order-7", "order-8", "order-9"];
+  const section = (k: Exclude<SectionKey, "odds">, extra = "") => (
+    <section key={k} id={k} aria-labelledby={`${k}-heading`} className={`space-y-3 ${extra}`} style={{ scrollMarginTop: STICKY_TOP + 56 }}>
+      <h2 id={`${k}-heading`} className="font-body text-[17px] font-semibold leading-tight tracking-[-0.01em] text-ink">{sectionLabel(k)}</h2>
+      {LONG.has(k) ? <ShowMore>{node[k]}</ShowMore> : node[k]}
+    </section>
+  );
 
   return (
-    <div className="space-y-6">
-      {/* ── HEADER ── */}
-      <div className="rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex flex-1 items-center gap-3 min-w-0">
-            <ClubCrest apiFootballId={homeTeam.apiFootballId} clubName={homeTeam.name} size={48} />
-            <Link href={`/teams/${homeTeam.id}`} className="truncate font-display text-2xl tracking-wide hover:text-accent">{homeTeam.name}</Link>
-          </div>
-          <div className="shrink-0 text-center">
-            <div className="font-display text-3xl text-ink">
-              {hasScore && score ? `${score.home} – ${score.away}` : phase === "PRE" ? "v" : "–"}
-            </div>
-            <div className="mt-0.5">
-              {phase === "PRE" && !hasScore
-                ? <span className="font-data text-sm text-muted">{countdown(fixture.kickoffUtc)}</span>
-                : statusChip}
-            </div>
-          </div>
-          <div className="flex flex-1 items-center justify-end gap-3 min-w-0">
-            <Link href={`/teams/${awayTeam.id}`} className="truncate text-right font-display text-2xl tracking-wide hover:text-accent">{awayTeam.name}</Link>
-            <ClubCrest apiFootballId={awayTeam.apiFootballId} clubName={awayTeam.name} size={48} />
+    <div className="space-y-8 sm:space-y-10">
+      {/* ── STICKY BAR (appears once the hero scrolls away) ── */}
+      {!headerInView && (
+        <div className="fixed inset-x-0 z-40 border-b border-line bg-panel/95 backdrop-blur" style={{ top: STICKY_TOP }}>
+          <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-2 sm:px-6">
+            <span className="flex shrink-0 items-center gap-1.5 font-data text-xs font-semibold">
+              {shortCode(homeTeam.name)} <RedCards count={redHome} /> <span className="font-display text-sm">{scoreText}</span> <RedCards count={redAway} /> {shortCode(awayTeam.name)}
+              <span className="ml-1">{statusChip}</span>
+            </span>
+            <nav aria-label="Match sections" className="flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {order.map((k) => (
+                <a key={k} href={`#${k}`} onClick={() => trackSectionJump({ section: k, matchId })}
+                  className={`shrink-0 rounded-full px-3 py-1 font-body text-xs font-semibold transition-colors ${activeSection === k ? "bg-ink text-panel" : "text-muted hover:text-ink"}`}>
+                  {sectionLabel(k)}
+                </a>
+              ))}
+            </nav>
           </div>
         </div>
-        <p className="mt-3 text-center font-data text-[11px] text-muted">
-          {fixture.league} · {fmtKickoff(fixture.kickoffUtc)}
-        </p>
-        {(fixture.venue || fixture.referee) && (
-          <p className="mt-0.5 text-center font-data text-[10px] text-muted">
-            {[fixture.venue, fixture.referee ? `Ref: ${fixture.referee}` : null].filter(Boolean).join(" · ")}
+      )}
+
+      <LiveTicker currentMatchId={matchId} />
+
+      {/* ── HERO: full-width score, then latest event + key stats on one strip ── */}
+      <div ref={headerRef}>
+        <div className="pb-1 pt-2">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-6">
+            <div className="flex min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+              <ClubCrest apiFootballId={homeTeam.apiFootballId} clubName={homeTeam.name} size={48} />
+              <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+                <Link href={`/teams/${homeTeam.id}`} className="font-body text-[15px] font-semibold leading-tight tracking-[-0.015em] [overflow-wrap:anywhere] hover:text-accent sm:text-[22px]">{homeTeam.name}</Link>
+                <RedCards count={redHome} />
+              </span>
+            </div>
+            <div className="text-center">
+              <div className="font-data text-4xl font-semibold leading-none tracking-[-0.02em] text-ink sm:text-5xl">{scoreText}</div>
+              <div className="mt-1.5">{phase === "PRE" && !hasScore && marketPhase !== "OFF" ? <span className="font-data text-sm text-muted">{countdown(fixture.kickoffUtc)}</span> : statusChip}</div>
+            </div>
+            <div className="flex min-w-0 flex-col items-end gap-1.5 text-right sm:flex-row-reverse sm:items-center sm:gap-3">
+              <ClubCrest apiFootballId={awayTeam.apiFootballId} clubName={awayTeam.name} size={48} />
+              <span className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
+                <RedCards count={redAway} />
+                <Link href={`/teams/${awayTeam.id}`} className="font-body text-[15px] font-semibold leading-tight tracking-[-0.015em] [overflow-wrap:anywhere] hover:text-accent sm:text-[22px]">{awayTeam.name}</Link>
+              </span>
+            </div>
+          </div>
+          <p className="mt-3 text-center font-body text-xs text-muted">
+            {fixture.league} · {fmtKickoff(fixture.kickoffUtc)}{fixture.venue ? ` · ${fixture.venue}` : ""}{fixture.referee ? ` · Ref: ${fixture.referee}` : ""}
           </p>
+        </div>
+        {(latest || phase === "LIVE" || (phase !== "PRE" && data.stats)) && (
+          <div className="mt-3 flex min-h-5 flex-wrap items-center justify-between gap-x-6 gap-y-2">
+            {latest ? (
+              <span className="flex min-w-0 items-center gap-2 font-data text-xs">
+                <span className="font-body font-medium text-muted">Latest</span>
+                <span>{eventIcon(latest)}</span>
+                <span className="min-w-0 truncate">
+                  {[latest.detail, latest.player].filter(Boolean).join(" · ")}
+                  {latest.side ? ` · ${shortCode(latest.side === "home" ? homeTeam.name : awayTeam.name)}` : ""}
+                </span>
+                <span className="shrink-0 text-muted">{formatMinute(latest.minute, latest.extra)}</span>
+              </span>
+            ) : <span />}
+            {phase !== "PRE" && <KeyStatsInline stats={data.stats} />}
+          </div>
         )}
       </div>
 
-      {/* ── TABS ── */}
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-        {TABS.map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={`shrink-0 rounded-[10px] border px-4 py-2 font-data text-xs uppercase tracking-widest transition-colors ${
-              tab === t.key ? "border-accent bg-accent/10 text-accent" : "border-line text-ink hover:border-muted"
-            }`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* ── HOOK + ODDS: the market chart (live, and at full time from the stored in-play history) with
+          Match odds beside it on desktop, so the odds sit at the top; then Best odds, three outcomes side by side ── */}
+      <section id="odds" aria-label="Odds" className="space-y-10" style={{ scrollMarginTop: STICKY_TOP + 56 }}>
+        <div className={hasChart ? "grid gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start" : ""}>
+          {hasChart && liveFeed && (
+            <MarketChart points={liveFeed.oddsHistory} events={feedEvents} names={names} edgeiq={edgeiq}
+              focus={selected} onFocus={setSelected} updatedAt={liveFeed.updatedAt} final={phase === "POST"} />
+          )}
+          <MatchOddsTable phase={marketPhase} names={names} edgeiq={edgeiq} kickoff={kickoffMarket} now={market} result={result}
+            valueSignal={valueSignal} rows={oddsRows} selected={selected} onSelect={setSelected} compact={hasChart} matchId={matchId} league={fixture.league ?? ""}
+            pick={data.prediction?.pick ?? null} />
+        </div>
+        <BestOddsPanel names={names} phase={marketPhase} rows={oddsRows} matchId={matchId} league={fixture.league ?? ""} />
+      </section>
 
-      {tab === "prediction" && <PredictionTab data={data} phase={phase} bestSignal={bestSignal} />}
-      {tab === "stats" && <StatsTab data={data} phase={phase} />}
-      {tab === "h2h" && <H2HTab data={data} />}
-      {tab === "lineups" && <LineupsTab data={data} phase={phase} />}
-      {tab === "squad" && <MatchSquadTab data={data} phase={phase} />}
-      {tab === "news" && <NewsTab data={data} />}
+      {/* ── EVENTS | STATS | RELATED FIXTURES in one row (stats between events and related), the rest below ── */}
+      {(() => {
+        const all = [...leftKeys, ...belowKeys] as Exclude<SectionKey, "odds">[];
+        const rowKeys: Exclude<SectionKey, "odds">[] = all.filter((k) => k === "events" || k === "stats");
+        const restKeys = all.filter((k) => !rowKeys.includes(k));
+        const related = (
+          <aside className={rowKeys.length === 2 ? "md:col-span-2 xl:col-span-1" : ""}>
+            <RelatedFixturesPanel related={relatedFixtures} home={homeTeam.name} away={awayTeam.name} leagueName={fixture.league ?? ""} />
+          </aside>
+        );
+        if (rowKeys.length === 0) {
+          // Pre-match without stats: sections (2/3) beside related fixtures (1/3).
+          return (
+            <div className="grid gap-x-10 gap-y-10 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] md:items-start">
+              <div className="min-w-0 space-y-10">{restKeys.map((k) => section(k))}</div>
+              {related}
+            </div>
+          );
+        }
+        return (
+          <>
+            <div className={`grid gap-x-10 gap-y-10 md:items-start ${rowKeys.length === 2 ? "md:grid-cols-2 xl:grid-cols-3" : "md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"}`}>
+              {rowKeys.map((k) => section(k, "min-w-0"))}
+              {related}
+            </div>
+            {restKeys.map((k) => section(k))}
+          </>
+        );
+      })()}
+
 
       {phase === "LIVE" && lastUpdated && (
         <p className="text-center font-data text-[10px] text-muted">
@@ -244,89 +496,39 @@ export default function MatchLiveUpdater({
 
 // ---------------------------------------------------------------- tabs
 
-function PredictionTab({ data, phase, bestSignal }: {
-  data: MatchDetail; phase: "PRE" | "LIVE" | "POST";
-  bestSignal?: { selection: "home" | "draw" | "away"; ev: number; bestPrice: number; bestBookmaker: string };
-}) {
-  const { fixture, homeTeam, awayTeam, prediction, evSignals, homeForm, awayForm } = data;
+/**
+ * Preview (#preview): there is no written preview article for fixtures, so this is
+ * the existing preview data: form guide and squad absences, with the EdgeIQ
+ * freeze stamp. At full time a short recap with the Track Record link sits above it.
+ */
+function PreviewBlock({ data, phase }: { data: MatchDetail; phase: "PRE" | "LIVE" | "POST" }) {
+  const { fixture, homeTeam, awayTeam, prediction, homeForm, awayForm } = data;
   return (
     <div className="space-y-6">
-      {!prediction || !prediction.probs ? (
-        <p className="font-data text-sm text-muted">Prediction not available for this fixture.</p>
-      ) : (
-        <>
-          {phase === "POST" && prediction.model_correct != null && (
-            <div className="rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
-              <span className={`font-display text-3xl ${prediction.model_correct ? "text-accent" : "text-loss"}`}>
-                {prediction.model_correct ? "✓ CORRECT" : "✗ WRONG"}
-              </span>
-              {prediction.pick && (
-                <p className="mt-1 font-data text-xs text-ink">
-                  Model picked {PICK_LABEL[prediction.pick]} ({(prediction.probs[prediction.pick] * 100).toFixed(0)}%)
-                  {fixture.score ? ` — result was ${fixture.score.home}–${fixture.score.away}` : ""}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
-            <ProbBar probs={prediction.probs} pick={prediction.pick ?? "home"} />
-            {prediction.pick && (
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-1">
-                <span className="font-data text-xs">EdgeIQ Prediction: <span className="text-accent">{PICK_LABEL[prediction.pick]}</span></span>
-                {prediction.frozen_at && prediction.hash && <FrozenStamp frozenAt={prediction.frozen_at} hash={prediction.hash} />}
-              </div>
-            )}
-          </div>
-
-          <MatchWidget
-            matchId={fixture.matchId}
-            homeTeam={homeTeam.name}
-            awayTeam={awayTeam.name}
-            homeTeamId={homeTeam.id}
-            awayTeamId={awayTeam.id}
-            kickoffUtc={fixture.kickoffUtc ?? ""}
-            modelProbs={prediction.probs}
-            modelPick={prediction.pick ?? undefined}
-            currentScore={fixture.score}
-            status={fixture.status ?? "SCHEDULED"}
-            elapsed={fixture.elapsed}
-            bestSignal={bestSignal}
-            league={fixture.league}
-            season={fixture.season}
-          />
-        </>
+      {phase === "POST" && prediction?.pick && prediction.probs && (
+        <div>
+          <p className="font-body text-sm">
+            Full time {fixture.score ? `${fixture.score.home}–${fixture.score.away}` : ""}. EdgeIQ&apos;s pre-match pick was {PICK_LABEL[prediction.pick]} ({Math.round(prediction.probs[prediction.pick] * 100)}%)
+            {prediction.model_correct != null ? `, which was ${prediction.model_correct ? "correct" : "not correct"}.` : "."}
+          </p>
+          <Link href="/track-record" className="mt-2 inline-block font-body text-[13px] font-medium text-accent-ink underline-offset-4 hover:underline">View Track Record →</Link>
+        </div>
       )}
-
+      {prediction?.frozen_at && prediction.hash && (
+        <p className="font-data text-xs text-muted">EdgeIQ prediction locked before kick-off: <FrozenStamp frozenAt={prediction.frozen_at} hash={prediction.hash} /></p>
+      )}
       <div>
-        <h2 className="mb-3 font-display text-xl tracking-wide">Form Guide</h2>
+        <h3 className="mb-3 font-body text-[15px] font-semibold leading-tight text-ink">Form guide</h3>
         <div className="grid gap-6 sm:grid-cols-2">
           <FormRow team={homeTeam.name} form={homeForm} />
           <FormRow team={awayTeam.name} form={awayForm} />
         </div>
       </div>
-
-      {evSignals.length > 0 && (
-        <div>
-          <p className="mb-2 font-data text-[9px] uppercase tracking-widest text-muted">Value Signals</p>
-          <div className="divide-y divide-line/60 overflow-hidden rounded-[14px] border border-line">
-            {evSignals.map((s, i) => {
-              const sel = s.selection === "draw" ? "Draw" : s.selection === "home" ? homeTeam.name : awayTeam.name;
-              return (
-                <div key={i} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2 font-data text-xs">
-                  <span className="text-ink">{sel} @ {s.best_price?.toFixed(2) ?? "—"} <span className="text-muted">({s.best_bookmaker})</span></span>
-                  <span className={s.ev > 0 ? "text-accent" : "text-muted"}>Edge {s.ev >= 0 ? "+" : ""}{(s.ev * 100).toFixed(1)}%</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       <InjurySection data={data} />
     </div>
   );
 }
+
 
 function StatBar({ home, away, label }: { home: number | string; away: number | string; label: string }) {
   const h = num(home), a = num(away);
@@ -335,7 +537,7 @@ function StatBar({ home, away, label }: { home: number | string; away: number | 
     <div>
       <div className="flex items-center justify-between font-data text-xs text-ink">
         <span>{home ?? 0}</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted">{label}</span>
+        <span className="font-body text-[11px] text-muted">{label}</span>
         <span>{away ?? 0}</span>
       </div>
       <div className="mt-1 flex h-1.5 overflow-hidden rounded-full bg-line/30">
@@ -347,7 +549,7 @@ function StatBar({ home, away, label }: { home: number | string; away: number | 
 }
 
 function StatsTab({ data, phase }: { data: MatchDetail; phase: "PRE" | "LIVE" | "POST" }) {
-  const { stats, events, homeTeam, awayTeam } = data;
+  const { stats, homeTeam, awayTeam } = data;
   return (
     <div className="space-y-6">
       {phase === "LIVE" && (
@@ -362,8 +564,8 @@ function StatsTab({ data, phase }: { data: MatchDetail; phase: "PRE" | "LIVE" | 
           {phase === "PRE" && <p className="font-data text-[10px] text-muted">Recent form data not yet available.</p>}
         </div>
       ) : (
-        <div className="space-y-3 rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
-          <div className="flex items-center justify-between font-display text-sm">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between font-body text-[13px] font-semibold">
             <span className="text-accent">{homeTeam.name}</span>
             <span className="text-sky-400">{awayTeam.name}</span>
           </div>
@@ -373,24 +575,6 @@ function StatsTab({ data, phase }: { data: MatchDetail; phase: "PRE" | "LIVE" | 
         </div>
       )}
 
-      {events && events.length > 0 && (
-        <div>
-          <p className="mb-2 font-data text-[9px] uppercase tracking-widest text-muted">Timeline</p>
-          <div className="space-y-2 rounded-[14px] border border-line bg-panel p-4 shadow-[var(--shadow)]">
-            {[...events].reverse().map((e, i) => {
-              const away = e.side === "away";
-              return (
-                <div key={i} className={`flex items-center gap-2 ${away ? "flex-row-reverse text-right" : ""}`}>
-                  <span className="w-10 shrink-0 font-data text-[10px] text-muted">{formatMinute(e.minute, e.extra)}</span>
-                  <span>{eventIcon(e)}</span>
-                  <span className="font-data text-xs" style={{ color: away ? AWAY_COLOR : HOME_COLOR }}>{e.player ?? ""}</span>
-                  {e.detail && <span className="font-data text-[10px] text-muted">{e.detail}</span>}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -421,7 +605,7 @@ function H2HTab({ data }: { data: MatchDetail }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] border-collapse font-data text-xs">
             <thead>
-              <tr className="border-b border-line text-left text-[10px] uppercase tracking-widest text-muted">
+              <tr className="border-b border-line text-left font-body text-[11px] font-medium text-muted">
                 <th className="py-2 pr-3">Date</th><th className="py-2 pr-3">Home</th><th className="py-2 pr-3">Score</th>
                 <th className="py-2 pr-3">Away</th><th className="py-2 pr-3">Comp</th><th className="py-2">R</th>
               </tr>
@@ -451,76 +635,9 @@ function H2HTab({ data }: { data: MatchDetail }) {
   );
 }
 
-function LineupColumn({ team, lineup, showRatings }: { team: string; lineup: LineupTeam | undefined; showRatings: boolean }) {
-  if (!lineup) return null;
-  const row = (p: LineupPlayer, i: number) => (
-    <li key={i} className="flex items-center gap-2 font-data text-xs text-ink">
-      <span className="w-5 shrink-0 text-right text-muted">{p.number ?? ""}</span>
-      <span className="flex-1 truncate">{p.name}{p.pos ? <span className="text-muted"> ({p.pos})</span> : null}</span>
-      {showRatings && p.rating != null && <span className="text-accent">{p.rating} ★</span>}
-    </li>
-  );
-  return (
-    <div>
-      <p className="font-display text-lg tracking-wide">{team}</p>
-      <p className="font-data text-[10px] text-muted">{lineup.formation ? `Formation ${lineup.formation}` : ""}{lineup.coach ? ` · ${lineup.coach}` : ""}</p>
-      <ul className="mt-2 space-y-1">{(lineup.startXI ?? []).map(row)}</ul>
-      {(lineup.substitutes ?? []).length > 0 && (
-        <>
-          <div className="my-2 border-t border-line" />
-          <p className="font-data text-[9px] uppercase tracking-widest text-muted">Substitutes</p>
-          <ul className="mt-1 space-y-1">{(lineup.substitutes ?? []).map(row)}</ul>
-        </>
-      )}
-    </div>
-  );
-}
 
-function LineupsTab({ data, phase }: { data: MatchDetail; phase: "PRE" | "LIVE" | "POST" }) {
-  const { lineups, homeTeam, awayTeam } = data;
-  return (
-    <div className="space-y-6">
-      {!lineups ? (
-        <p className="font-data text-sm text-muted">Lineups confirmed approximately 1 hour before kick-off.</p>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2">
-          <LineupColumn team={homeTeam.name} lineup={lineups.home} showRatings={phase === "POST"} />
-          <LineupColumn team={awayTeam.name} lineup={lineups.away} showRatings={phase === "POST"} />
-        </div>
-      )}
-      <InjurySection data={data} />
-    </div>
-  );
-}
 
-function NewsColumn({ team, articles }: { team: string; articles: MatchNews[] }) {
-  return (
-    <div>
-      <p className="mb-2 font-data text-[9px] uppercase tracking-widest text-muted">Latest {team} News</p>
-      {articles.length === 0 ? (
-        <p className="font-data text-xs text-muted">No recent news.</p>
-      ) : (
-        <div className="divide-y divide-line/60 overflow-hidden rounded-[14px] border border-line">
-          {articles.map((a, i) => (
-            <div key={i} className="px-3 py-3">
-              <a href={a.url ?? "#"} target="_blank" rel="noopener noreferrer" className="font-medium text-ink hover:text-accent">{a.title}</a>
-              {a.published_at && <p className="mt-1 font-data text-[10px] text-muted">{a.published_at.slice(0, 10)}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
-function NewsTab({ data }: { data: MatchDetail }) {
-  return (
-    <div className="grid gap-6 sm:grid-cols-2">
-      <NewsColumn team={data.homeTeam.name} articles={data.homeNews} />
-      <NewsColumn team={data.awayTeam.name} articles={data.awayNews} />
-    </div>
-  );
-}
 
 function InjuryList({ injuries }: { injuries: MatchInjury[] }) {
   if (injuries.length === 0) return <p className="font-data text-xs text-muted">No reported absences.</p>;
@@ -542,14 +659,14 @@ function InjuryList({ injuries }: { injuries: MatchInjury[] }) {
 function InjurySection({ data }: { data: MatchDetail }) {
   return (
     <div>
-      <h2 className="font-display text-xl tracking-wide">Squad Absences</h2>
+      <h2 className="font-body text-[15px] font-semibold leading-tight text-ink">Squad Absences</h2>
       <div className="mt-3 grid gap-6 sm:grid-cols-2">
         <div>
-          <p className="mb-2 font-data text-[9px] uppercase tracking-widest text-muted">{data.homeTeam.name}</p>
+          <p className="mb-2 font-body text-xs font-medium text-muted">{data.homeTeam.name}</p>
           <InjuryList injuries={data.homeInjuries} />
         </div>
         <div>
-          <p className="mb-2 font-data text-[9px] uppercase tracking-widest text-muted">{data.awayTeam.name}</p>
+          <p className="mb-2 font-body text-xs font-medium text-muted">{data.awayTeam.name}</p>
           <InjuryList injuries={data.awayInjuries} />
         </div>
       </div>
